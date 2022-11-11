@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="20px"
+   height="20px"
+   version="1.1"
+   xml:space="preserve"
+   style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;"
+   id="svg26570"
+   sodipodi:docname="tool_transform_rollover.svg"
+   inkscape:version="1.2.1 (9c6d41e410, 2022-07-14)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"><defs
+   id="defs26574" /><sodipodi:namedview
+   id="namedview26572"
+   pagecolor="#ffffff"
+   bordercolor="#000000"
+   borderopacity="0.25"
+   inkscape:showpageshadow="2"
+   inkscape:pageopacity="0.0"
+   inkscape:pagecheckerboard="0"
+   inkscape:deskcolor="#d1d1d1"
+   showgrid="false"
+   inkscape:zoom="51.35"
+   inkscape:cx="6.1441091"
+   inkscape:cy="9.9902629"
+   inkscape:window-width="2560"
+   inkscape:window-height="1377"
+   inkscape:window-x="-8"
+   inkscape:window-y="-8"
+   inkscape:window-maximized="1"
+   inkscape:current-layer="g26568" />
+    <rect
+   x="0"
+   y="0"
+   width="20"
+   height="20"
+   style="fill-opacity:0;"
+   id="rect26564" />
+    <g
+   transform="matrix(0.765355,-0.329661,0.388389,0.9017,-22.4415,-9.0896)"
+   id="g26568">
+        <path
+   d="M26,22L32.6,35L27.5,32.936L27.5,39L24.5,39L24.5,32.936L19.4,35L26,22Z"
+   style="fill:#e6e6e6"
+   id="path26566" />
+    </g>
+</svg>

@@ -1,0 +1,343 @@
+/* -----------------------------------------------------------------------------
+   Main
+----------------------------------------------------------------------------- */
+
+QWidget {
+  background-color: @bg;
+  color: @text-color;
+  &:disabled {
+    color: @text-color-disabled;
+  }
+}
+
+QFrame {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
+QToolTip,
+#helpToolTip {
+  background-color: @tooltip-bg-color;
+  border: 1 solid @tooltip-border-color;
+  color: @tooltip-text-color;
+  padding: 1 1;
+}
+
+#DockSeparator,
+QMainWindow::separator,
+QSplitter::handle {
+  background-color: @dock-bg-color;
+  height: 4;
+  width: 4;
+}
+
+#TDockPlaceholder {
+  background-color: @dock-placeholder-color;
+}
+
+TPanel {
+  background-color: @dock-bg-color;
+}
+
+/* -----------------------------------------------------------------------------
+   Topbar
+----------------------------------------------------------------------------- */
+
+QMenuBar {
+  background-color: @topbar-bg-color;
+  border: 0;
+  &::item {
+    background-color: @topbar-bg-color;
+    border-left: 1 solid @topbar-bg-color; // Helps to align with QMenu
+    margin: 0;
+    padding: 3 5;
+    &:selected {
+      .hl-color-secondary;
+    }
+    &:pressed {
+      .hl-color;
+    }
+  }
+}
+
+
+/* -----------------------------------------------------------------------------
+   Menu
+----------------------------------------------------------------------------- */
+
+QMenu {
+  background-color: @menu-bg-color;
+  border: 1 solid @menu-border-color;
+  padding: 2 0;
+  &::item {
+    padding: 3 28;
+    &:selected {
+      .hl-color;
+    }
+    &:checked {
+      color: @menu-checkbox-text-color-selected;
+      &:selected {
+        .hl-color;
+      }
+    }
+    &:disabled {
+      background: none;
+      color: @text-color-disabled;
+      &:selected {
+        border-color: transparent;
+      }
+    }
+  }
+  &::separator {
+    border-top: 1 solid @menu-separator-color;
+    height: 0;
+    margin: 2 0;
+  }
+  &::icon {
+    border-radius: 2;
+    margin: 0 0 0 3;
+    padding: 1;
+    &:checked {
+      background-color: @hl-bg-color;
+    }
+  }
+  &::indicator {
+    &:extend(.CheckBox::indicator all);
+    margin-left: 7;
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   Scrollbars
+----------------------------------------------------------------------------- */
+
+QAbstractScrollArea::corner {
+  background-color: @scrollbar-bg-color;
+}
+
+QScrollBar {
+  background-color: @scrollbar-bg-color;
+  border: 0;
+  &:horizontal {
+    height: 16;
+    margin: 0;
+  }
+  &:vertical {
+    margin: 0;
+    width: 16;
+  }
+
+  &::handle {
+    border: @scrollbar-handle-border-size solid @scrollbar-handle-border-color;
+    border-radius: @scrollbar-handle-radius;
+    &:horizontal,
+    &:vertical {
+      &:hover {
+        background-color: @scrollbar-handle-bg-color-hover;
+        border-color: @scrollbar-handle-border-color-hover;
+      }
+      &:pressed {
+        background-color: @scrollbar-handle-bg-color-pressed;
+        border-color: @scrollbar-handle-border-color-pressed;
+      }
+    }
+    &:horizontal {
+      background-color: @scrollbar-handle-bg-color;
+      margin: @scrollbar-handle-margin 16;
+      min-width: 20;
+    }
+    &:vertical {
+      background-color: @scrollbar-handle-bg-color;
+      margin: 16 @scrollbar-handle-margin;
+      min-height: 20;
+    }
+  }
+
+  &::add-line {
+    subcontrol-origin: margin;
+    border: 0;
+    &:horizontal { // right
+      subcontrol-position: right;
+      background-color: @scrollbar-bg-color;
+      margin: 0;
+      width: 16;
+    }
+    &:vertical { // down
+      subcontrol-position: bottom;
+      background-color: @scrollbar-bg-color;
+      margin: 0;
+      height: 16;
+    }
+  }
+
+  &::sub-line {
+    border: 0;
+    subcontrol-origin: margin;
+    &:horizontal { // left
+      subcontrol-position: left;
+      background-color: @scrollbar-bg-color;
+      margin: 0;
+      width: 16;
+    }
+    &:vertical { // up
+      subcontrol-position: top;
+      background-color: @scrollbar-bg-color;
+      margin: 0;
+      height: 16;
+    }
+  }
+
+  @arrow-pressed: 1 0 0 0; // press effect shortcut
+                           // nudge arrow down 1 on pressed event
+
+  &::up-arrow:vertical {
+    image: url('@{img-url}/scroll-up.svg');
+    image-position: center center;
+    &:pressed {
+      margin: @arrow-pressed;
+    }
+  }
+
+  &::down-arrow:vertical {
+    image: url('@{img-url}/scroll-down.svg');
+    image-position: center center;
+    &:pressed {
+      margin: @arrow-pressed;
+    }
+  }
+
+  &::left-arrow:horizontal {
+    image: url('@{img-url}/scroll-left.svg');
+    image-position: center center;
+    &:pressed {
+      margin: @arrow-pressed;
+    }
+  }
+
+  &::right-arrow:horizontal {
+    image: url('@{img-url}/scroll-right.svg');
+    image-position: center center;
+    &:pressed {
+      margin: @arrow-pressed;
+    }
+  }
+
+  &::sub-page,
+  &::add-page {
+    &:horizontal,
+    &:vertical {
+      background: none;
+    }
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   Tool Bars
+----------------------------------------------------------------------------- */
+
+// this applies to QToolBar
+// !!!! this is not the #ToolBar window !!!!
+// look in [layouts/toolbar] for the window
+
+QToolBar {
+  padding: 0;
+  &::separator {
+    &:horizontal {
+      border-left: 1 solid @accent;
+      margin: 0 1;
+      width: 0;
+    }
+    &:vertical {
+      border-top: 1 solid @accent;
+      height: 0;
+      margin: 1 0;
+    }
+  }
+  & QLabel {
+    margin-top: 1;
+  }
+  & QToolBar {
+    border: 0;
+  }
+}
+
+QToolButton {
+  &:extend(.button-tool all);
+  &::menu-indicator {
+    image: none;
+  }
+  &::menu-button {
+    border-image: none;
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   Trees
+----------------------------------------------------------------------------- */
+
+.treeview {
+  background-color: @tree-bg-color;
+  alternate-background-color: @tree-bg-color-alt;
+  border: 0;
+  margin: 0;
+  outline: 0;
+  
+  &::item {
+    &:selected {
+      .hl-color;
+    }
+  }
+  
+  &::branch {
+    &:adjoins-item {
+      // Adding a blank URL hides in-built branch design
+      // where it is not wanted.
+      border-image: url('');
+    }
+    &:has-siblings {
+      border-image: url('');
+      &:adjoins-item {
+        border-image: url('');
+      }
+    }
+    &:has-children {
+      &:closed {
+        background: url('@{img-url}/treebranch-closed.svg') no-repeat;
+        background-position: center center;
+        border-image: none;
+        image: none;
+      }
+      &:open {
+        background: url('@{img-url}/treebranch-open.svg') no-repeat;
+        background-position: center center;
+        image: none;
+      }
+      &:has-siblings {
+        &:closed {
+          background: url('@{img-url}/treebranch-closed.svg') no-repeat;
+          background-position: center center;
+          border-image: none;
+          image: none;
+        }
+        &:open {
+          background: url('@{img-url}/treebranch-open.svg') no-repeat;
+          background-position: center center;
+          border-image: none;
+          image: none;
+        }
+      }
+    }
+  }
+}
+
+QTreeWidget,
+QTreeView {
+  &:extend(.treeview all);
+}
+
+QListView {
+  outline: 0; // hide focus border
+  background: @tree-bg-color;
+  alternate-background-color: @tree-bg-color-alt;
+}
