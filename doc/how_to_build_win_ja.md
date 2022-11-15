@@ -45,7 +45,7 @@ Visual Studio 2019 と Qt 5.15 でビルドできることを確認していま�
 4. Configure をクリックして、 Visual Studio 16 2019 Win64 を選択します
 5. Qt のインストール先がデフォルトではない場合、 `Specify QTDIR properly` というエラーが表示されるので、 `QTDIR` に Qt5 をインストールしたパスを指定します
 6. Generate をクリック
-  - CMakeLists.txt に変更があった場合は、ビルド時に自動的に処理が走るので、以降は CMake を直接使用する必要はありません
+    - CMakeLists.txt に変更があった場合は、ビルド時に自動的に処理が走るので、以降は CMake を直接使用する必要はありません
 
 ## ビルド
 1. `$iwawarper/build/OpenToonz.sln` を開いて Release 構成を選択してビルドします
@@ -56,9 +56,9 @@ Visual Studio 2019 と Qt 5.15 でビルドできることを確認していま�
 1. `$iwawarper/build/Release` の中身を適当なフォルダにコピーします
 2. `IwaWarper.exe` と同じフォルダに`$iwawarper/thirdparty/OpenToonz/bin`の中身をすべてコピーします
 3. `IwaWarper.exe`、`image.dll`、 `toonzlib.dll` のパスを引数にして Qt に付属の `windeployqt.exe` をそれぞれ実行します
-  - 必要な Qt のライブラリなどが `IwaWarper.exe` と同じフォルダに集められます
-3. 下記のファイルを `IwaWarper.exe` と同じフォルダにコピーします
-  - `$iwawarper/thirdparty/glut/3.7.6/lib/glut64.dll`
+    - 必要な Qt のライブラリなどが `IwaWarper.exe` と同じフォルダに集められます
+4. 下記のファイルを `IwaWarper.exe` と同じフォルダにコピーします
+    - `$iwawarper/thirdparty/glut/3.7.6/lib/glut64.dll`
 
 ### conf.ini (Stuffフォルダの場所の設定)
 - `IwaWarper.exe`と同じフォルダに`$iwawarper/doc/conf.ini`をコピーします。このファイルはStuffフォルダまでの相対パスを指定するものです（Stuffフォルダはデフォルトでは`$iwawarper/stuff`にあります）。`IwaWarper.exe`の場所を`$iwawarper/build/Release`以外に移動したり、Stuffフォルダの場所を移動したりした場合は、`conf.ini`の中の`IWSTUFFROOT`の値を変更してください。

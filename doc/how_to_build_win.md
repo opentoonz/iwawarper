@@ -57,13 +57,13 @@ This software can be built using Visual Studio 2019 and Qt 5.15
 ### Setting Up the Program's Path
 1. Copy the entire contents of `$iwawarper/build/Release` to an appropriate folder.
 
-2. Copy all files under `$iwawarper/thirdparty/OpenToonz/bin` to the same folder as `IwaWarper.exe`
+1. Copy all files under `$iwawarper/thirdparty/OpenToonz/bin` to the same folder as `IwaWarper.exe`
 
-3. Open a Command Prompt and navigate to `QTDIR/msvc2015_64/bin`. Run the Qt program `windeployqt.exe` with the path for `IwaWarper.exe`, `image.dll` and `toonzlib.dll` as an argument. (Another way to do this is navigate to the exe that was created in your Release folder and drag and drop the IwaWarper.exe + dlls and on top of the windeployqt.exe This will automatically generate the QT files and folders you will need.)
- - The necessary Qt library files should be in the same folder as `IwaWarper.exe`
+1. Open a Command Prompt and navigate to `QTDIR/msvc2015_64/bin`. Run the Qt program `windeployqt.exe` with the path for `IwaWarper.exe`, `image.dll` and `toonzlib.dll` as an argument. (Another way to do this is navigate to the exe that was created in your Release folder and drag and drop the IwaWarper.exe + dlls and on top of the windeployqt.exe This will automatically generate the QT files and folders you will need.)
+    - The necessary Qt library files should be in the same folder as `IwaWarper.exe`
 
-3. Copy the following files to the same folder as `IwaWarper.exe`
-  - `$opentoonz/thirdparty/glut/3.7.6/lib/glut64.dll`
+1. Copy the following file(s) to the same folder as `IwaWarper.exe`
+      - `$opentoonz/thirdparty/glut/3.7.6/lib/glut64.dll`
   
 ### Prepare conf.ini (stuff folder location setting)
 
