@@ -40,7 +40,7 @@ class TPixelGR16;
     A set of predefined colors are included as well.
     Note that channel ordering is platform depending. */
 
-class DVAPI alignas(4) TPixelRGBM32 {
+class DVAPI DV_ALIGNED(4) TPixelRGBM32 {
   TPixelRGBM32(TUINT32 mask) { *(TUINT32 *)this = mask; };
 
 public:
@@ -124,7 +124,7 @@ static inline TPixelRGBM32 from(const TPixelRGBM64 &pix);
 static TPixelRGBM32 from(const TPixelGR8 &pix);
 //!Converts TPixelGR16 into TPixelRGBM32
 static TPixelRGBM32 from(const TPixelGR16 &pix);
-//!In this conversion instead of truncating values fron 64 to 32 a randomic
+//!In this conversion instead of truncating values from 64 to 32 a randomic
 dithering is performed.
 //!r is a unsigned int random value
 static inline TPixelRGBM32 from(const TPixelRGBM64 &pix, TUINT32 r); // per il
@@ -154,9 +154,9 @@ dithering
 //  Since SSE2 mostly require 16 byte aligned, changing 8 byte align to 4 byte
 //  align will not cause problems.
 #if defined(_MSC_VER) && !defined(x64)
-class DVAPI alignas(4) TPixelRGBM64 {
+class DVAPI DV_ALIGNED(4) TPixelRGBM64 {
 #else
-class DVAPI alignas(8) TPixelRGBM64 {
+class DVAPI DV_ALIGNED(8) TPixelRGBM64 {
 #endif
 public:
   static const int maxChannelValue;
@@ -177,7 +177,7 @@ undefined machine order !!!!
   TPixelRGBM64(int rr, int gg, int bb, int mm = maxChannelValue)
       : r(rr), g(gg), b(bb), m(mm){};
 #else
-#if defined(LINUX) || defined(MACOSX)
+#if defined(LINUX) || defined(FREEBSD) || defined(MACOSX)
 
 #ifdef powerpc
 

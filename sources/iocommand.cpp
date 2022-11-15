@@ -410,12 +410,12 @@ TImageP IoCmd::loadImage(QString path) {
     TFilePath fp(path.toStdWString());
     // multiFileLevelEnabled‚ðOFF‚É‚·‚é‚±‚Æ
     TLevelReaderP lr(fp);
-    lr->disableMultiFileLevel();
+    TImageReaderP ir(fp);
+    //lr->disableMultiFileLevel();
 
     TImageP img;
 
-    // TImageReaderP ir(fp);
-    TImageReaderP ir = lr->getFrameReader(0);
+    //TImageReaderP ir = lr->getFrameReader(0);
     ir->enable16BitRead(true);
     img = ir->load();
     // img = lr->getFrameReader(0)->load();

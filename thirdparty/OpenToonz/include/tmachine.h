@@ -7,25 +7,16 @@
 #define TNZ_MACHINE_CHANNEL_ORDER_BGRM 1
 #elif defined(__sgi)
 #define TNZ_MACHINE_CHANNEL_ORDER_MBGR 1
-#elif defined(LINUX)
+#elif defined(LINUX) || defined(FREEBSD)
 #define TNZ_MACHINE_CHANNEL_ORDER_BGRM 1
 #elif defined(MACOSX)
 #define TNZ_MACHINE_CHANNEL_ORDER_MRGB 1
 #else
-@UNKNOW PLATFORM @
+@UNKNOWN PLATFORM @
 #endif
 
 #if !defined(TNZ_LITTLE_ENDIAN)
 #error "TNZ_LITTLE_ENDIAN not defined!"
-#endif
-
-#ifndef WIN32
-#ifdef MACOSX
-#define _finite isfinite
-#else
-// verificare che su sgi sia isfinite
-#define _finite isfinite
-#endif
 #endif
 
 #endif

@@ -64,7 +64,6 @@ This software can be built using Visual Studio 2019 and Qt 5.15
 
 3. Copy the following files to the same folder as `IwaWarper.exe`
   - `$opentoonz/thirdparty/glut/3.7.6/lib/glut64.dll`
-  - `$opentoonz/thirdparty/libmypaint/dist/64/*.dll` (4 files)
   
 ### Prepare conf.ini (stuff folder location setting)
 

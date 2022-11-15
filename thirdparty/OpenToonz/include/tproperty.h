@@ -68,7 +68,7 @@ public:
   class TypeError {};
   class RangeError {};
 
-  TProperty(std::string name) : m_name(name) {
+  TProperty(std::string name) : m_name(name), m_visible(true) {
     m_qstringName = QString::fromStdString(name);
   }
 
@@ -93,11 +93,15 @@ public:
   std::string getId() const { return m_id; }
   void setId(std::string id) { m_id = id; }
 
+  bool getVisible() const { return m_visible; }
+  void setVisible(bool state) { m_visible = state; }
+
 private:
   std::string m_name;
   QString m_qstringName;
   std::string m_id;
   std::vector<Listener *> m_listeners;
+  bool m_visible;
 };
 
 //---------------------------------------------------------
@@ -112,7 +116,8 @@ public:
       : TProperty(name)
       , m_range(minValue, maxValue)
       , m_value(minValue)
-      , m_isMaxRangeLimited(isMaxRangeLimited) {
+      , m_isMaxRangeLimited(isMaxRangeLimited)
+      , m_isLinearSlider(true) {
     setValue(value);
   }
 
@@ -138,10 +143,14 @@ public:
 
   bool isMaxRangeLimited() const { return m_isMaxRangeLimited; }
 
+  void setNonLinearSlider() { m_isLinearSlider = false; }
+  bool isLinearSlider() { return m_isLinearSlider; }
+
 private:
   Range m_range;
   T m_value;
   bool m_isMaxRangeLimited;
+  bool m_isLinearSlider;
 };
 
 //---------------------------------------------------------
@@ -160,7 +169,8 @@ public:
                       double v0, double v1, bool isMaxRangeLimited = true)
       : TProperty(name)
       , m_range(Range(minValue, maxValue))
-      , m_isMaxRangeLimited(isMaxRangeLimited) {
+      , m_isMaxRangeLimited(isMaxRangeLimited)
+      , m_isLinearSlider(true) {
     setValue(Value(v0, v1));
   }
 
@@ -184,10 +194,14 @@ public:
   }
   void accept(Visitor &v) override { v.visit(this); };
 
+  void setNonLinearSlider() { m_isLinearSlider = false; }
+  bool isLinearSlider() { return m_isLinearSlider; }
+
 private:
   Range m_range;
   Value m_value;
   bool m_isMaxRangeLimited;
+  bool m_isLinearSlider;
 };
 
 //---------------------------------------------------------
@@ -201,7 +215,8 @@ public:
                    bool isMaxRangeLimited = true)
       : TProperty(name)
       , m_range(minValue, maxValue)
-      , m_isMaxRangeLimited(isMaxRangeLimited) {
+      , m_isMaxRangeLimited(isMaxRangeLimited)
+      , m_isLinearSlider(true) {
     setValue(Value(v0, v1));
   }
 
@@ -225,10 +240,14 @@ public:
   }
   void accept(Visitor &v) override { v.visit(this); };
 
+  void setNonLinearSlider() { m_isLinearSlider = false; }
+  bool isLinearSlider() { return m_isLinearSlider; }
+
 private:
   Range m_range;
   Value m_value;
   bool m_isMaxRangeLimited;
+  bool m_isLinearSlider;
 };
 
 //---------------------------------------------------------
@@ -376,7 +395,10 @@ public:
 
   void setValue(const std::wstring &value) {
     int idx = indexOf(value);
-    if (idx < 0) throw RangeError();
+    //if (idx < 0) throw RangeError();
+    if (idx < 0)
+      idx = 0;  // Avoid exception if program's item list doesn't contain
+                //  the selected item in scene file
     m_index = idx;
   }
 

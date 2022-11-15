@@ -59,7 +59,6 @@ Visual Studio 2019 と Qt 5.15 でビルドできることを確認していま�
   - 必要な Qt のライブラリなどが `IwaWarper.exe` と同じフォルダに集められます
 3. 下記のファイルを `IwaWarper.exe` と同じフォルダにコピーします
   - `$iwawarper/thirdparty/glut/3.7.6/lib/glut64.dll`
-  - `$iwawarper/thirdparty/libmypaint/dist/64/*.dll` (4 ファイル)
 
 ### conf.ini (Stuffフォルダの場所の設定)
 - `IwaWarper.exe`と同じフォルダに`$iwawarper/doc/conf.ini`をコピーします。このファイルはStuffフォルダまでの相対パスを指定するものです（Stuffフォルダはデフォルトでは`$iwawarper/stuff`にあります）。`IwaWarper.exe`の場所を`$iwawarper/build/Release`以外に移動したり、Stuffフォルダの場所を移動したりした場合は、`conf.ini`の中の`IWSTUFFROOT`の値を変更してください。

@@ -68,7 +68,7 @@ namespace TConsts {
 const double epsilon = 1e-8;
 }
 
-// use macros insted of constexprs, because MSVC2013 does not support
+// use macros instead of constexprs, because MSVC2013 does not support
 // `constexpr`.
 #define M_PI_3 (M_PI / 3)
 #define M_PI_180 (M_PI_4 / 45)
@@ -149,6 +149,12 @@ const unsigned int c_maxuint = (unsigned int)(~0U);
 #define DV_IMPORT_VAR
 #endif
 
+#ifdef _MSC_VER
+#define DV_ALIGNED(val) __declspec(align(val))
+#else
+#define DV_ALIGNED(val) __attribute__((aligned(val)))
+#endif
+
 inline short swapShort(short val) { return ((val >> 8) & 0x00ff) | (val << 8); }
 inline TINT32 swapTINT32(TINT32 val) {
   TINT32 appo, aux, aux1;
@@ -167,8 +173,6 @@ inline USHORT swapUshort(USHORT val) { return val >> 8 | val << 8; }
 inline std::ostream &operator<<(std::ostream &out, const std::string &s) {
   return out << s.c_str();
 }
-
-#define tArrayCount(ARRAY) (sizeof(ARRAY) / sizeof(ARRAY[0]))
 
 const std::string styleNameEasyInputWordsFileName = "stylename_easyinput.ini";
 
