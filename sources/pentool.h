@@ -8,12 +8,15 @@
 #include "iwtool.h"
 
 #include <QUndoCommand>
+#include <QCoreApplication>
 
 class PointDragTool;
 class ShapePair;
 class IwLayer;
 
 class PenTool : public IwTool {
+  Q_DECLARE_TR_FUNCTIONS(PenTool)
+
   ShapePair* m_editingShape;
 
   // 現在アクティブな点。10の位がポイントのID、

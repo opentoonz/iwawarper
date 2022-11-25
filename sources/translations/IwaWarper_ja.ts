@@ -1383,52 +1383,52 @@ What would you like to do?</source>
 <context>
     <name>SettingsDialog</name>
     <message>
-        <location filename="../settingsdialog.cpp" line="27"/>
+        <location filename="../settingsdialog.cpp" line="28"/>
         <source>Settings</source>
         <translation>設定</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.cpp" line="36"/>
+        <location filename="../settingsdialog.cpp" line="37"/>
         <source>Shape Antialias</source>
         <translation>シェイプのアンチエイリアス</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.cpp" line="39"/>
+        <location filename="../settingsdialog.cpp" line="40"/>
         <source>Low</source>
         <translation>低</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.cpp" line="40"/>
+        <location filename="../settingsdialog.cpp" line="41"/>
         <source>Medium</source>
         <translation>中</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.cpp" line="41"/>
+        <location filename="../settingsdialog.cpp" line="42"/>
         <source>High</source>
         <translation>高</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.cpp" line="42"/>
+        <location filename="../settingsdialog.cpp" line="43"/>
         <source>Super High</source>
         <translation>最高</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.cpp" line="54"/>
+        <location filename="../settingsdialog.cpp" line="55"/>
         <source>Bezier Precision:</source>
         <translation>ベジエ曲線の精度：</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.cpp" line="57"/>
+        <location filename="../settingsdialog.cpp" line="58"/>
         <source>Number of subdivision:</source>
         <translation>メッシュ分割の回数</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.cpp" line="60"/>
+        <location filename="../settingsdialog.cpp" line="61"/>
         <source>Maximum face size:</source>
         <translation>最大メッシュサイズ</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.cpp" line="68"/>
+        <location filename="../settingsdialog.cpp" line="69"/>
         <source>Image Shrink:</source>
         <translation>画像テクスチャの粗さ</translation>
     </message>
@@ -1437,7 +1437,7 @@ What would you like to do?</source>
         <translation type="vanished">ワープ品質：</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.cpp" line="63"/>
+        <location filename="../settingsdialog.cpp" line="64"/>
         <source>Alpha Mode:</source>
         <translation>アルファチャンネルの操作：</translation>
     </message>

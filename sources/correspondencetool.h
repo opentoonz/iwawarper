@@ -10,6 +10,7 @@
 #include "shapepair.h"
 
 #include <QUndoCommand>
+#include <QCoreApplication>
 
 class QPointF;
 
@@ -51,6 +52,8 @@ public:
 //--------------------------------------------------------
 
 class CorrespondenceTool : public IwTool {
+  Q_DECLARE_TR_FUNCTIONS(CorrespondenceTool)
+
   IwShapePairSelection *m_selection;
 
   CorrDragTool *m_dragTool;

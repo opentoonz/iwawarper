@@ -9,6 +9,7 @@
 #include "shapepair.h"
 
 #include <QUndoCommand>
+#include <QCoreApplication>
 
 class IwShapePairSelection;
 class PointDragTool;
@@ -16,6 +17,8 @@ class ReshapeToolContextMenu;
 class IwLayer;
 
 class ReshapeTool : public IwTool {
+  Q_DECLARE_TR_FUNCTIONS(ReshapeTool)
+
   IwShapePairSelection* m_selection;
   PointDragTool* m_dragTool;
 

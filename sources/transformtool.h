@@ -10,6 +10,7 @@
 #include "transformdragtool.h"
 
 #include <QUndoCommand>
+#include <QCoreApplication>
 
 class IwShapePairSelection;
 class IwProject;
@@ -21,6 +22,8 @@ struct OneShape;
 
 //--------------------------------------------------------
 class TransformTool : public IwTool {
+  Q_DECLARE_TR_FUNCTIONS(TransformTool)
+
   bool m_ctrlPressed;
 
   IwShapePairSelection* m_shapePairSelection;

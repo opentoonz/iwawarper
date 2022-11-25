@@ -11,6 +11,7 @@
 #include <QPointF>
 #include <QRectF>
 #include <QUndoCommand>
+#include <QCoreApplication>
 
 class IwProject;
 class IwShape;
@@ -19,6 +20,8 @@ class ShapePair;
 class IwLayer;
 
 class CircleTool : public IwTool {
+  Q_DECLARE_TR_FUNCTIONS(CircleTool)
+
   bool m_startDefined;
   QPointF m_startPos;
   QPointF m_endPos;
