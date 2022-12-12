@@ -1139,8 +1139,7 @@ void SceneViewer::mousePressEvent(QMouseEvent* e) {
     m_mouseButton = Qt::MiddleButton;
     return;
   }
-  //左クリックの場合、ツールの機能
-	//右クリックの場合、ツールの機能
+  // use tool functions when left or right click
 	else if(e->button() == Qt::LeftButton || e->button() == Qt::RightButton)
   {
     // カレントツールを取得

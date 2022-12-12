@@ -169,7 +169,7 @@ void ShapeTreeDelegate::paint(QPainter* painter,
     painter->drawRect(option.rect);
 
     if (option.state & QStyle::State_MouseOver) {
-      //ロック時はロックボタンのみ操作可能
+      // only the unlock button is enabled when locked
       if (!layerIsLocked || m_hoverOn == HoverOnLayerLockButton) {
       if (m_hoverOn >= HoverOnLayerVisibleButton &&
           m_hoverOn <= HoverOnLayerLockButton) {

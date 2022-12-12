@@ -1,0 +1,66 @@
+name: Windows Build
+
+on: [push, pull_request]
+
+jobs:
+  Windows:
+    runs-on: windows-2019
+    env:
+      QT_ROOT: ${{github.workspace}}/3rdparty/qt
+      QT_URL: https://github.com/shun-iwasawa/qt5/releases/download/v5.15.2_wintab/Qt5.15.2_wintab.zip
+    steps:
+    - name: checkout with cached LFS
+      uses: nschloe/action-cached-lfs-checkout@v1
+
+    - uses: actions/cache@v3
+      with:
+       path: C:/vcpkg/installed
+       key: ${{ runner.os }}-vcpkg-${{ env.vcpkg_ref }}-${{ github.sha }}
+       restore-keys: ${{ runner.os }}-vcpkg-${{ env.vcpkg_ref }}-
+
+    - name: Cache Qt
+      id: cache-qt
+      uses: actions/cache@v3
+      with:
+        path: ${{env.QT_ROOT}}
+        key: ${{ runner.os }}-QtCache
+
+    - name: Install Qt
+      run: |
+        # fix up paths to be forward slashes consistently
+        QT_ROOT=$(echo $QT_ROOT | sed 's/\\/\//g')
+        mkdir -p $QT_ROOT
+        curl --progress-bar -L -o $QT_ROOT/Qt.zip $QT_URL
+        7z -o$QT_ROOT x $QT_ROOT/Qt.zip -y -bd
+        rm -f $QT_ROOT/Qt.zip
+      shell: bash
+
+    - name: Build
+      run: |
+        mkdir build | Out-Null
+        cd build
+        $env:QT_PATH = '${{ env.QT_ROOT }}/Qt5.15.2_wintab/5.15.2_wintab/msvc2019_64'
+        cmake ../sources -G 'Visual Studio 16 2019' -Ax64 -DQTDIR="$env:QT_PATH"
+        cmake --build . --config Release
+
+    - name: Create Artifact
+      env:
+        VCINSTALLDIR: 'C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC'
+      run: |
+        mkdir artifact | Out-Null
+        cd artifact
+        cp -Recurse ../stuff stuff
+        mkdir IwaWarper | Out-Null
+        cd IwaWarper
+        cp ../../build/Release/* .
+        cp ../../thirdparty/OpenToonz/bin/* .
+        cp ../../thirdparty/glut/3.7.6/lib/glut64.dll .
+        cp ../../.github/workflows/conf.ini .
+        ${{ env.QT_ROOT }}/Qt5.15.2_wintab/5.15.2_wintab/msvc2019_64/bin/windeployqt.exe IwaWarper.exe
+        ${{ env.QT_ROOT }}/Qt5.15.2_wintab/5.15.2_wintab/msvc2019_64/bin/windeployqt.exe image.dll
+        ${{ env.QT_ROOT }}/Qt5.15.2_wintab/5.15.2_wintab/msvc2019_64/bin/windeployqt.exe toonzlib.dll
+
+    - uses: actions/upload-artifact@v3
+      with:
+        name: Opentoonz-${{ runner.os }}-${{ github.sha }}
+        path: artifact
