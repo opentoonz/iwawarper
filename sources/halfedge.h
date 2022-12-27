@@ -30,9 +30,10 @@ public:
       : from_pos(_x, _y, _z), halfedge(nullptr) {
     to_pos = from_pos;
   }
-  HEVertex(QPointF& _pos, double depth) : HEVertex(_pos.x(), _pos.y(), depth) {}
+  HEVertex(const QPointF& _pos, double depth)
+      : HEVertex(_pos.x(), _pos.y(), depth) {}
 
-  HEVertex(QPointF& _from_pos, QPointF& _to_pos, double depth)
+  HEVertex(const QPointF& _from_pos, const QPointF& _to_pos, double depth)
       : from_pos(_from_pos.x(), _from_pos.y(), depth)
       , to_pos(_to_pos.x(), _to_pos.y(), depth) {}
 

@@ -967,7 +967,7 @@ void RenameShapePairUndo::redo() {
 
 //---------------------------------------------------
 DeleteFormPointsUndo::DeleteFormPointsUndo(IwProject* project,
-                                           QList<ShapePair*>& shapes)
+                                           const QList<ShapePair*>& shapes)
     : m_project(project), m_firstFlag(true) {
   // BeforeÉfÅ[É^Çäiî[ÇµÇƒÇ¢Ç≠
   for (int s = 0; s < shapes.size(); s++) {

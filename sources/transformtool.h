@@ -64,14 +64,15 @@ public:
 
   // ハンドルをいっこ描く
   void drawHandle(IwLayer* layer, OneShape shape, TransformHandleId handleId,
-                  QPointF& onePix, QPointF& pos);
+                  const QPointF& onePix, const QPointF& pos);
   // void drawHandle(IwProject* project, IwShape* shape,
   //				TransformHandleId handleId,
   //				QPointF & onePix, QPointF & pos);
 
   // 140110 iwasawa Ctrl押したとき辺ドラッグでサイズ変更のための辺
   void drawEdgeForResize(IwLayer* layer, OneShape shape,
-                         TransformHandleId handleId, QPointF& p1, QPointF& p2);
+                         TransformHandleId handleId, const QPointF& p1,
+                         const QPointF& p2);
 
   // 以下、TransformOptionの内容の操作
   bool IsScaleAroundCenter() { return m_scaleAroundCenter; }
@@ -121,7 +122,7 @@ class ArrowKeyMoveUndo : public QUndoCommand {
   int m_firstFlag;
 
 public:
-  ArrowKeyMoveUndo(QList<OneShape>& shapes,
+  ArrowKeyMoveUndo(const QList<OneShape>& shapes,
                    QList<BezierPointList>& beforePoints,
                    QList<BezierPointList>& afterPoints,
                    QList<bool>& wasKeyFrame, IwProject* project, IwLayer* layer,

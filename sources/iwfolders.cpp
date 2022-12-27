@@ -15,9 +15,12 @@ QString getUserName() {
 QString getStuffPath() {
   static QString IwStuffPath = QString();
   if (IwStuffPath.isEmpty()) {
-    QString confPath = qApp->applicationDirPath() + "\\conf.ini";
+    QString confPath = qApp->applicationDirPath() + "/conf.ini";
     QSettings settings(confPath, QSettings::IniFormat);
     IwStuffPath = settings.value("IWSTUFFROOT", "").toString();
+    // resolve tilde "~"
+    if (IwStuffPath == "~" || IwStuffPath.startsWith("~/"))
+      IwStuffPath.replace(0, 1, QDir::homePath());
     if (QDir::isRelativePath(IwStuffPath))
       IwStuffPath = QDir(IwStuffPath).absolutePath();
   }
@@ -29,7 +32,7 @@ QString getProfilesPath() {
   if (stuffPath.isEmpty()) return QString();
   QDir stuffDir(stuffPath);
   if (!stuffDir.mkpath("profiles")) return QString();
-  return stuffPath + "\\profiles";
+  return stuffPath + "/profiles";
 }
 
 }  // namespace
@@ -42,13 +45,13 @@ QString IwFolders::getMyProfileFolderPath() {
   if (profPath.isEmpty()) return QString();
   QDir profDir(profPath);
   if (!profDir.mkpath(userName)) return QString();
-  return profPath + "\\" + userName;
+  return profPath + "/" + userName;
 }
 
 QString IwFolders::getLicenseFolderPath() {
-  return getStuffPath() + "\\doc\\LICENSE";
+  return getStuffPath() + "/doc/LICENSE";
 }
 
 QString IwFolders::getLocalizationFolderPath() {
-  return getStuffPath() + "\\loc";
+  return getStuffPath() + "/loc";
 }

@@ -42,7 +42,13 @@
 #include <QPointF>
 #include <QVector3D>
 
+#ifdef _WIN32
 #include <GL/GLU.h>
+#endif
+
+#ifdef MACOSX
+#include <GLUT/glut.h>
+#endif
 
 #include <QPainter>
 #include <QMenu>
@@ -1140,8 +1146,7 @@ void SceneViewer::mousePressEvent(QMouseEvent* e) {
     return;
   }
   // use tool functions when left or right click
-	else if(e->button() == Qt::LeftButton || e->button() == Qt::RightButton)
-  {
+  else if (e->button() == Qt::LeftButton || e->button() == Qt::RightButton) {
     // カレントツールを取得
     IwTool* tool = IwApp::instance()->getCurrentTool()->getTool();
     // ツールが取得できなかったらreturn

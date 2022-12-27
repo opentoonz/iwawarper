@@ -190,6 +190,11 @@ elseif(CMAKE_HOST_APPLE)
 else()
     message(ERROR "Unsupported build environment, only MSVC and APPLE are supported")
 endif()
+
+#-----------------------------------------------------------------------------
+# Build Options
+option(WITH_TRANSLATION "Generate translation projects as well" ON)
+
 #-----------------------------------------------------------------------------
 # Third Party & System Libs
 get_filename_component(SDKROOT ../thirdparty/ ABSOLUTE)
@@ -203,9 +208,14 @@ if(BUILD_ENV_MSVC)
         return()
     endif()
 elseif(BUILD_ENV_APPLE)
-    set(QTDIR "C:/Qt/5.15.2/msvc2019_64" CACHE PATH "Qt installation directory")
+    set(QTDIR $ENV{QTDIR} CACHE PATH "Qt installation directory")
+    add_definitions(
+        -DMACOSX
+        -Di386
+        -D__MACOS__
+    )
 endif()
-set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH};${QTDIR};${QTDIR}/lib/cmake/")
+set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH};${QTDIR};${QTDIR}/lib/cmake")
 
 if(BUILD_ENV_APPLE)
     set(CMAKE_OSX_DEPLOYMENT_TARGET 10.10)
@@ -217,6 +227,7 @@ find_package( Qt5 REQUIRED
     Widgets
     LinguistTools
     OpenGL
+    Svg
 )
 
 # ビルドディレクトリを include ディレクトリに追加するオプションを有効にする。
@@ -247,47 +258,71 @@ if(BUILD_ENV_MSVC)
     set(RC_FILE IwaWarper.rc)
 endif()
 
-# generate Qt translations and messages
-set(LANGUAGES ja)
-# 翻訳対象のファイルを設定する。
-SET(TRANSLATION_TARGET_FILES
-    ${HEADERS}
-    ${SOURCES}
-)
-
-set(translation)
-foreach(lang ${LANGUAGES})
-    set(name "${CMAKE_SOURCE_DIR}/translations/IwaWarper_${lang}.ts")
-    list(APPEND translation ${name})
-    set_source_files_properties(${name} PROPERTIES
-        OUTPUT_LOCATION "${CMAKE_SOURCE_DIR}/loc"
+if(WITH_TRANSLATION)
+    # generate Qt translations and messages
+    set(LANGUAGES ja)
+    # 翻訳対象のファイルを設定する。
+    SET(TRANSLATION_TARGET_FILES
+        ${HEADERS}
+        ${SOURCES}
     )
-endforeach()
 
-qt5_create_translation(message ${translation} ${TRANSLATION_TARGET_FILES})
+    set(translation)
+    foreach(lang ${LANGUAGES})
+        set(name "${CMAKE_SOURCE_DIR}/translations/IwaWarper_${lang}.ts")
+        list(APPEND translation ${name})
+        set_source_files_properties(${name} PROPERTIES
+            OUTPUT_LOCATION "${CMAKE_SOURCE_DIR}/loc"
+        )
+    endforeach()
 
-add_custom_target("translation_IwaWarper" DEPENDS ${message})
-set_target_properties("translation_IwaWarper" PROPERTIES
-    EXCLUDE_FROM_DEFAULT_BUILD TRUE
-)
+    qt5_create_translation(message ${translation} ${TRANSLATION_TARGET_FILES})
 
-# ライブラリパスの指定
-link_directories(${SDKROOT}/OpenToonz/lib)
-
-# 生成する実行ファイルを追加する
-if(BUILD_ENV_MSVC)
-    add_executable(${PROJECT_NAME} WIN32 ${HEADERS} ${SOURCES} ${RESOURCES} ${RC_FILE})
-else()
-    add_executable(${PROJECT_NAME} MACOSX_BUNDLE ${HEADERS} ${SOURCES} ${RESOURCES})
+    add_custom_target("translation_IwaWarper" DEPENDS ${message})
+    set_target_properties("translation_IwaWarper" PROPERTIES
+        EXCLUDE_FROM_DEFAULT_BUILD TRUE
+    )
 endif()
 
 include_directories(
     ${SDKROOT}/OpenToonz/include
 )
 
+# ライブラリパスの指定
+if(BUILD_ENV_MSVC)
+    set(GLUT_LIB ${SDKROOT}/glut/3.7.6/lib/glut64.lib)
+    set(GL_LIB opengl32.lib glu32.lib)
+elseif(BUILD_ENV_APPLE)
+    find_library(GLUT_LIB GLUT)
+    find_library(GL_LIB OpenGL)
+endif()
+
+macro(_find_toonz_library OUT_LIB_LIST IN_LIB_LIST)
+    set(OUTLIST "")
+    foreach(arg ${IN_LIB_LIST})
+        if(BUILD_ENV_MSVC)
+            set(TOONZLIBPATH "${SDKROOT}/OpenToonz/lib/${arg}.lib")
+        elseif(BUILD_ENV_APPLE)
+            set(TOONZLIBPATH "${SDKROOT}/OpenToonz/dylib/lib${arg}.dylib")
+        endif()
+        set(OUTLIST ${OUTLIST} ${TOONZLIBPATH})
+    endforeach()
+    set(${OUT_LIB_LIST} ${OUTLIST})
+endmacro()
+_find_toonz_library(TOONZ_LIBS "tnzcore;tnzbase;toonzlib;image;colorfx")
+
+# 生成する実行ファイルを追加する
+if(BUILD_ENV_MSVC)
+    add_executable(${PROJECT_NAME} WIN32 ${HEADERS} ${SOURCES} ${RESOURCES} ${RC_FILE})
+else()
+    set(MACOSX_BUNDLE_ICON_FILE "IwaWarper.icns")
+    set_source_files_properties(IwaWarper.icns PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+    add_executable(${PROJECT_NAME} MACOSX_BUNDLE IwaWarper.icns ${HEADERS} ${SOURCES} ${RESOURCES})
+endif()
+
 # link Qt library. Core and Gui will be linked accordingly
-target_link_libraries(${PROJECT_NAME} Qt5::Widgets Qt5::OpenGL 
-OpenGL32 glu32 tnzcore tnzbase toonzlib image colorfx
+target_link_libraries(${PROJECT_NAME} Qt5::Widgets Qt5::OpenGL Qt5::Svg
+${GL_LIB} ${GLUT_LIB} ${TOONZ_LIBS}
 )
 
 add_definitions(

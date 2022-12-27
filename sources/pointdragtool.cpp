@@ -45,10 +45,10 @@ PointDragTool::PointDragTool() : m_undoEnabled(true) {
 // 並行移動ツール
 //--------------------------------------------------------
 
-TranslatePointDragTool::TranslatePointDragTool(QSet<int>& points,
+TranslatePointDragTool::TranslatePointDragTool(const QSet<int>& points,
                                                QPointF& grabbedPointOrgPos,
-                                               QPointF& onePix, OneShape shape,
-                                               int pointIndex)
+                                               const QPointF& onePix,
+                                               OneShape shape, int pointIndex)
     : m_grabbedPointOrgPos(grabbedPointOrgPos)
     , m_onePixLength(onePix)
     , m_snapHGrid(-1)
@@ -117,7 +117,7 @@ TranslatePointDragTool::TranslatePointDragTool(QSet<int>& points,
 // PenTool用
 TranslatePointDragTool::TranslatePointDragTool(OneShape shape,
                                                QList<int> points,
-                                               QPointF& onePix)
+                                               const QPointF& onePix)
     : m_onePixLength(onePix) {
   m_shapes.push_back(shape);
 
@@ -408,7 +408,7 @@ bool TranslatePointDragTool::setSpecialGridColor(int gId, bool isVertical) {
   return gId == ((isVertical) ? m_snapVGrid : m_snapHGrid);
 }
 
-void TranslatePointDragTool::draw(QPointF& onePixelLength) {
+void TranslatePointDragTool::draw(const QPointF& onePixelLength) {
   if (!m_snapTarget.shapePairP) return;
   IwProject* project = IwApp::instance()->getCurrentProject()->getProject();
   if (!project) return;
@@ -439,7 +439,8 @@ void TranslatePointDragTool::draw(QPointF& onePixelLength) {
 // ハンドル操作ツール
 //--------------------------------------------------------
 
-TranslateHandleDragTool::TranslateHandleDragTool(int name, QPointF& onePix)
+TranslateHandleDragTool::TranslateHandleDragTool(int name,
+                                                 const QPointF& onePix)
     : m_onePixLength(onePix), m_isInitial(false) {
   // 現在のフレームを得る
   int frame = m_project->getViewFrame();
@@ -457,7 +458,7 @@ TranslateHandleDragTool::TranslateHandleDragTool(int name, QPointF& onePix)
 
 TranslateHandleDragTool::TranslateHandleDragTool(OneShape shape, int pointIndex,
                                                  int handleIndex,
-                                                 QPointF& onePix)
+                                                 const QPointF& onePix)
     : m_onePixLength(onePix)
     , m_shape(shape)
     , m_pointIndex(pointIndex)
@@ -474,7 +475,7 @@ TranslateHandleDragTool::TranslateHandleDragTool(OneShape shape, int pointIndex,
 
 // PenTool用
 TranslateHandleDragTool::TranslateHandleDragTool(OneShape shape, int name,
-                                                 QPointF& onePix)
+                                                 const QPointF& onePix)
     : m_onePixLength(onePix), m_shape(shape), m_isInitial(false) {
   m_pointIndex  = (int)(name / 10);
   m_handleIndex = name % 10;  // 2 : firstHandle, 3 : secondHandle
@@ -721,7 +722,7 @@ void TranslateHandleDragTool::calculateHandleSnap(const QPointF pointPos,
 
 //--------------------------------------------------------
 
-void TranslateHandleDragTool::draw(QPointF& onePixelLength) {
+void TranslateHandleDragTool::draw(const QPointF& onePixelLength) {
   if (m_snapCandidates.isEmpty()) return;
   IwProject* project = IwApp::instance()->getCurrentProject()->getProject();
   if (!project) return;

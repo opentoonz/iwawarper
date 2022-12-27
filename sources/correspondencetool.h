@@ -36,7 +36,7 @@ class CorrDragTool {
   int m_snappedCpId;
 
 public:
-  CorrDragTool(OneShape shape, int corrPointId, QPointF &onePix);
+  CorrDragTool(OneShape shape, int corrPointId, const QPointF &onePix);
   void onClick(const QPointF &, const QMouseEvent *);
   void onDrag(const QPointF &, const QMouseEvent *);
   void onRelease(const QPointF &, const QMouseEvent *);

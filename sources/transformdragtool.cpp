@@ -33,7 +33,7 @@ bool isMultiFrameActivated() {
 //--------------------------------------------------------
 
 TransformDragTool::TransformDragTool(OneShape shape, TransformHandleId handleId,
-                                     QList<OneShape>& selectedShapes)
+                                     const QList<OneShape>& selectedShapes)
     : m_grabbingShape(shape), m_handleId(handleId), m_shapes(selectedShapes) {
   m_project = IwApp::instance()->getCurrentProject()->getProject();
   m_layer   = IwApp::instance()->getCurrentLayer()->getLayer();
@@ -180,7 +180,8 @@ void TransformDragTool::onRelease(const QPointF&, const QMouseEvent*) {
 //--------------------------------------------------------
 
 RotateDragTool::RotateDragTool(OneShape shape, TransformHandleId handleId,
-                               QList<OneShape>& selectedShapes, QPointF& onePix)
+                               const QList<OneShape>& selectedShapes,
+                               const QPointF& onePix)
     : TransformDragTool(shape, handleId, selectedShapes)
     , m_onePixLength(onePix) {}
 
@@ -290,7 +291,7 @@ void RotateDragTool::onDrag(const QPointF& pos, const QMouseEvent* e) {
 //--------------------------------------------------------
 
 ShearDragTool::ShearDragTool(OneShape shape, TransformHandleId handleId,
-                             QList<OneShape>& selectedShapes)
+                             const QList<OneShape>& selectedShapes)
     : TransformDragTool(shape, handleId, selectedShapes) {}
 
 //--------------------------------------------------------
@@ -401,7 +402,7 @@ void ShearDragTool::onDrag(const QPointF& pos, const QMouseEvent* e) {
 //--------------------------------------------------------
 
 TrapezoidDragTool::TrapezoidDragTool(OneShape shape, TransformHandleId handleId,
-                                     QList<OneShape>& selectedShapes)
+                                     const QList<OneShape>& selectedShapes)
     : TransformDragTool(shape, handleId, selectedShapes) {}
 
 //--------------------------------------------------------
@@ -528,7 +529,7 @@ QPointF TrapezoidDragTool::map(const QRectF& bBox,
 //--------------------------------------------------------
 
 ScaleDragTool::ScaleDragTool(OneShape shape, TransformHandleId handleId,
-                             QList<OneShape>& selectedShapes)
+                             const QList<OneShape>& selectedShapes)
     : TransformDragTool(shape, handleId, selectedShapes)
     , m_scaleHorizontal(true)
     , m_scaleVertical(true) {
@@ -645,7 +646,7 @@ void ScaleDragTool::onDrag(const QPointF& pos, const QMouseEvent* e) {
 //--------------------------------------------------------
 
 TranslateDragTool::TranslateDragTool(OneShape shape, TransformHandleId handleId,
-                                     QList<OneShape>& selectedShapes)
+                                     const QList<OneShape>& selectedShapes)
     : TransformDragTool(shape, handleId, selectedShapes) {}
 
 //--------------------------------------------------------

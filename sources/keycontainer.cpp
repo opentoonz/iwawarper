@@ -298,7 +298,7 @@ bool KeyContainer<T>::isKey(int frame) {
 //-----------------------------------------------------------------------------
 template <class T>
 int KeyContainer<T>::nextKey(int frame) {
-  QMap<int, T>::iterator afterKey = m_data.upperBound(frame);
+  auto afterKey = m_data.upperBound(frame);
   if (afterKey == m_data.end()) return -1;
   return afterKey.key();
 }
@@ -311,7 +311,7 @@ template <class T>
 int KeyContainer<T>::belongingKey(int frame) {
   if (m_data.isEmpty()) return -1;
   if (isKey(frame)) return frame;
-  QMap<int, T>::iterator afterKey = m_data.upperBound(frame);
+  auto afterKey = m_data.upperBound(frame);
   if (afterKey == m_data.end()) return m_data.lastKey();
   if (afterKey == m_data.begin()) return -1;
   return (afterKey - 1).key();
@@ -333,6 +333,7 @@ void KeyContainer<T>::removeKeyData(int frame) {
 // キーフレームの場合はその値。
 // キーフレームではない場合は補間して返す。
 //-----------------------------------------------------------------------------
+template <>
 BezierPointList KeyContainer<BezierPointList>::getData(int frame, int,
                                                        double smoothness) {
   // キーフレームが無い場合(ありえないハズ)
@@ -409,6 +410,7 @@ BezierPointList KeyContainer<BezierPointList>::getData(int frame, int,
   }
 }
 
+template <>
 CorrPointList KeyContainer<CorrPointList>::getData(int frame, int maxValue,
                                                    double) {
   // キーフレームが無い場合(ありえないハズ)
@@ -477,6 +479,7 @@ double marume(double val) { return (abs(val) < 0.00001) ? 0.0 : val; }
 //-----------------------------------------------------------------------------
 // セーブ/ロード(特殊化する)
 //-----------------------------------------------------------------------------
+template <>
 void KeyContainer<BezierPointList>::saveData(QXmlStreamWriter &writer) {
   QMap<int, BezierPointList>::const_iterator i = m_data.constBegin();
   while (i != m_data.constEnd()) {
@@ -506,6 +509,7 @@ void KeyContainer<BezierPointList>::saveData(QXmlStreamWriter &writer) {
     ++i;
   }
 }
+template <>
 void KeyContainer<BezierPointList>::loadData(QXmlStreamReader &reader) {
   while (reader.readNextStartElement()) {
     if (reader.name() == "FormKey") {
@@ -548,6 +552,7 @@ void KeyContainer<BezierPointList>::loadData(QXmlStreamReader &reader) {
   }
 }
 //-----------------------------------------------------------------------------
+template <>
 void KeyContainer<CorrPointList>::saveData(QXmlStreamWriter &writer) {
   QMap<int, CorrPointList>::const_iterator i = m_data.constBegin();
   while (i != m_data.constEnd()) {
@@ -574,6 +579,8 @@ void KeyContainer<CorrPointList>::saveData(QXmlStreamWriter &writer) {
     ++i;
   }
 }
+
+template <>
 void KeyContainer<CorrPointList>::loadData(QXmlStreamReader &reader) {
   while (reader.readNextStartElement()) {
     if (reader.name() == "CorrKey") {

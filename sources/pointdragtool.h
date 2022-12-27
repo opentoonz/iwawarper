@@ -38,7 +38,7 @@ public:
   virtual bool setSpecialShapeColor(OneShape) { return false; }
   virtual bool setSpecialGridColor(int, bool) { return false; }
 
-  virtual void draw(QPointF &onePixelLength) {}
+  virtual void draw(const QPointF &onePixelLength) {}
 };
 
 //--------------------------------------------------------
@@ -70,11 +70,11 @@ class TranslatePointDragTool : public PointDragTool {
   bool m_handleSnapped;
 
 public:
-  TranslatePointDragTool(QSet<int> &, QPointF &grabbedPointOrgPos,
-                         QPointF &onePix, OneShape shape, int pointIndex);
+  TranslatePointDragTool(const QSet<int> &, QPointF &grabbedPointOrgPos,
+                         const QPointF &onePix, OneShape shape, int pointIndex);
 
   // PenTool—p
-  TranslatePointDragTool(OneShape, QList<int>, QPointF &onePix);
+  TranslatePointDragTool(OneShape, QList<int>, const QPointF &onePix);
 
   void onClick(const QPointF &, const QMouseEvent *);
   void onDrag(const QPointF &, const QMouseEvent *);
@@ -85,7 +85,7 @@ public:
   bool setSpecialShapeColor(OneShape) override;
   bool setSpecialGridColor(int, bool) override;
 
-  void draw(QPointF &onePixelLength) override;
+  void draw(const QPointF &onePixelLength) override;
 };
 
 //--------------------------------------------------------
@@ -117,12 +117,12 @@ class TranslateHandleDragTool : public PointDragTool {
   bool m_isInitial;
 
 public:
-  TranslateHandleDragTool(int, QPointF &);
+  TranslateHandleDragTool(int, const QPointF &);
 
   // PenTool—p
-  TranslateHandleDragTool(OneShape, int, QPointF &);
+  TranslateHandleDragTool(OneShape, int, const QPointF &);
   TranslateHandleDragTool(OneShape shape, int pointIndex, int handleIndex,
-                          QPointF &onePix);
+                          const QPointF &onePix);
 
   void onClick(const QPointF &, const QMouseEvent *);
   void onDrag(const QPointF &, const QMouseEvent *);
@@ -134,7 +134,7 @@ public:
   void setIsInitial() { m_isInitial = true; }
 
   void calculateHandleSnap(const QPointF, QPointF &);
-  void draw(QPointF &onePixelLength) override;
+  void draw(const QPointF &onePixelLength) override;
 };
 
 //--------------------------------------------------------

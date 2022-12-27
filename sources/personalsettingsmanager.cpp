@@ -49,7 +49,8 @@ QString PersonalSettingsManager::getSettingsPath() {
 // ’l‚ðŠi”[‚·‚é
 void PersonalSettingsManager::setValue(SettingsId mainGroupId,
                                        SettingsId subGroupId,
-                                       SettingsId valueId, QVariant& value) {
+                                       SettingsId valueId,
+                                       const QVariant& value) {
   QSettings settings(getSettingsPath(), QSettings::IniFormat);
   if (mainGroupId != "") settings.beginGroup(mainGroupId);
   if (subGroupId != "") settings.beginGroup(subGroupId);
@@ -60,13 +61,14 @@ void PersonalSettingsManager::setValue(SettingsId mainGroupId,
 //-----------------------------------------------------------------------------
 
 void PersonalSettingsManager::setValue(SettingsId groupId, SettingsId valueId,
-                                       QVariant& value) {
+                                       const QVariant& value) {
   setValue(groupId, "", valueId, value);
 }
 
 //-----------------------------------------------------------------------------
 
-void PersonalSettingsManager::setValue(SettingsId valueId, QVariant& value) {
+void PersonalSettingsManager::setValue(SettingsId valueId,
+                                       const QVariant& value) {
   setValue("", "", valueId, value);
 }
 

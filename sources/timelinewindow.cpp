@@ -54,7 +54,7 @@
 //----------------------------------------------
 
 namespace {
-int posToRow(QPoint& pos) { return pos.y() / RowHeight; }
+int posToRow(const QPoint& pos) { return pos.y() / RowHeight; }
 int rowToVPos(int vpos) { return vpos * RowHeight; }
 //----------------------------------------------
 // はずれている場合は-1を返す
@@ -96,10 +96,10 @@ int layerIndexToRow(int index) {
 }
 
 //----------------------------------------------
-int posToFrame(QPoint& pos, int frameWidth) {
+int posToFrame(const QPoint& pos, int frameWidth) {
   return (pos.x() < 0) ? -1 : pos.x() / frameWidth;
 }
-double posToFrameD(QPoint& pos, int frameWidth) {
+double posToFrameD(const QPoint& pos, int frameWidth) {
   return (pos.x() < 0) ? -1.0 : (double)pos.x() / (double)frameWidth;
 }
 // int frameToHPos(int frame) { return frame * RowHeight; }
@@ -290,8 +290,7 @@ ItemListHead::ItemListHead(QWidget* parent) : QWidget(parent) {
   // プロパティの設定
   // 表示モード
   QStringList views;
-  views << tr("Small")
-        << tr("Large");
+  views << tr("Small") << tr("Large");
   m_viewSizeCombo->addItems(views);
 
   m_onionRangeCombo->setToolTip(tr("Relative Onion Skin Frame Range"));
@@ -361,7 +360,8 @@ ItemRenameField::ItemRenameField(QWidget* parent)
   setContextMenuPolicy(Qt::PreventContextMenu);
 }
 //----------------------------------------------
-void ItemRenameField::showField(IwLayer* layer, ShapePair* shape, QPoint& pos) {
+void ItemRenameField::showField(IwLayer* layer, ShapePair* shape,
+                                const QPoint& pos) {
   // どっちかに入力する
   if (!layer && !shape) return;
   m_layer     = layer;

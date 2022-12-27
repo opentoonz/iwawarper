@@ -63,7 +63,7 @@ protected:
   QPointF getCenterPos(OneShape shape = 0, int frame = -1);
 
 public:
-  TransformDragTool(OneShape, TransformHandleId, QList<OneShape> &);
+  TransformDragTool(OneShape, TransformHandleId, const QList<OneShape> &);
   virtual void onClick(const QPointF &, const QMouseEvent *) = 0;
   virtual void onDrag(const QPointF &, const QMouseEvent *)  = 0;
   virtual void onRelease(const QPointF &, const QMouseEvent *);
@@ -84,8 +84,8 @@ class RotateDragTool : public TransformDragTool {
   QPointF m_onePixLength;
 
 public:
-  RotateDragTool(OneShape, TransformHandleId, QList<OneShape> &,
-                 QPointF &onePix);
+  RotateDragTool(OneShape, TransformHandleId, const QList<OneShape> &,
+                 const QPointF &onePix);
   void onClick(const QPointF &, const QMouseEvent *);
   void onDrag(const QPointF &, const QMouseEvent *);
 };
@@ -101,7 +101,7 @@ class ShearDragTool : public TransformDragTool {
   bool m_isInv;
 
 public:
-  ShearDragTool(OneShape shape, TransformHandleId, QList<OneShape> &);
+  ShearDragTool(OneShape shape, TransformHandleId, const QList<OneShape> &);
   void onClick(const QPointF &, const QMouseEvent *);
   void onDrag(const QPointF &, const QMouseEvent *);
 };
@@ -115,7 +115,7 @@ class TrapezoidDragTool : public TransformDragTool {
   QList<QMap<int, QRectF>> m_initialBox;
 
 public:
-  TrapezoidDragTool(OneShape shape, TransformHandleId, QList<OneShape> &);
+  TrapezoidDragTool(OneShape shape, TransformHandleId, const QList<OneShape> &);
 
   void onClick(const QPointF &, const QMouseEvent *);
   void onDrag(const QPointF &, const QMouseEvent *);
@@ -140,7 +140,7 @@ class ScaleDragTool : public TransformDragTool {
   bool m_scaleVertical;
 
 public:
-  ScaleDragTool(OneShape shape, TransformHandleId, QList<OneShape> &);
+  ScaleDragTool(OneShape shape, TransformHandleId, const QList<OneShape> &);
   void onClick(const QPointF &, const QMouseEvent *);
   void onDrag(const QPointF &, const QMouseEvent *);
 };
@@ -151,7 +151,7 @@ public:
 
 class TranslateDragTool : public TransformDragTool {
 public:
-  TranslateDragTool(OneShape shape, TransformHandleId, QList<OneShape> &);
+  TranslateDragTool(OneShape shape, TransformHandleId, const QList<OneShape> &);
   void onClick(const QPointF &, const QMouseEvent *);
   void onDrag(const QPointF &, const QMouseEvent *);
 };

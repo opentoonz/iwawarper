@@ -57,16 +57,16 @@ public:
   //  PenToolでも使いたいので、static化する
   static void drawControlPoint(
       OneShape shape, BezierPointList& pointList, int cpIndex, bool drawHandles,
-      QPointF& onePix,
+      const QPointF& onePix,
       int specialShapeIndex =
           0,  // PenToolで使う。Projectに属していないシェイプに使う
       bool fillPoint = false);
   // static void drawControlPoint(IwShape* shape,
   //							BezierPointList&
-  // pointList, 							int cpIndex,
-  // bool
-  // drawHandles, 							QPointF &
-  // onePix, int specialShapeIndex =
+  // pointList, 							int
+  // cpIndex, bool
+  // drawHandles, 							QPointF
+  // & onePix, int specialShapeIndex =
   // 0);//PenToolで使う。Projectに属していないシェイプに使う
 
   // ハンドル用の円を描く
@@ -108,20 +108,20 @@ class AddControlPointUndo : public QUndoCommand {
   int m_firstFlag;
 
 public:
-  AddControlPointUndo(QMap<int, BezierPointList>& beforeFormDataFrom,
-                      QMap<int, CorrPointList>& beforeCorrDataFrom,
-                      QMap<int, BezierPointList>& beforeFormDataTo,
-                      QMap<int, CorrPointList>& beforeCorrDataTo,
+  AddControlPointUndo(const QMap<int, BezierPointList>& beforeFormDataFrom,
+                      const QMap<int, CorrPointList>& beforeCorrDataFrom,
+                      const QMap<int, BezierPointList>& beforeFormDataTo,
+                      const QMap<int, CorrPointList>& beforeCorrDataTo,
                       OneShape shape, IwProject* project, IwLayer* layer);
   // AddControlPointUndo(	QMap<int, BezierPointList> & beforeFormData,
   //						QMap<int, CorrPointList> &
   // beforeCorrData, 						IwShape* shape,
   // IwProject* project);
 
-  void setAfterData(QMap<int, BezierPointList>& afterFormDataFrom,
-                    QMap<int, CorrPointList>& afterCorrDataFrom,
-                    QMap<int, BezierPointList>& afterFormDataTo,
-                    QMap<int, CorrPointList>& afterCorrDataTo);
+  void setAfterData(const QMap<int, BezierPointList>& afterFormDataFrom,
+                    const QMap<int, CorrPointList>& afterCorrDataFrom,
+                    const QMap<int, BezierPointList>& afterFormDataTo,
+                    const QMap<int, CorrPointList>& afterCorrDataTo);
   void undo();
   void redo();
 };

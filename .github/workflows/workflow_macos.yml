@@ -1,0 +1,77 @@
+name: MacOS Build
+
+on: [push, pull_request]
+
+jobs:
+  macOS:
+    runs-on: macos-latest
+    steps:
+    - name: checkout with cached LFS
+      uses: nschloe/action-cached-lfs-checkout@v1
+
+    - name: Remove symlinks
+      run: |
+        # remove existing symlinks before installing python@3.10 and 3.11
+        rm /usr/local/bin/2to3
+        rm /usr/local/bin/idle3
+        rm /usr/local/bin/pydoc3
+        rm /usr/local/bin/python3
+        rm /usr/local/bin/python3-config
+        rm /usr/local/bin/2to3-3.11
+        rm /usr/local/bin/idle3.11
+        rm /usr/local/bin/pydoc3.11
+        rm /usr/local/bin/python3.11
+        rm /usr/local/bin/python3.11-config
+
+    - name: Install libraries
+      run: |
+        brew update
+        brew install qt@5 ninja ccache
+        
+    - uses: actions/cache@v3
+      with:
+        path: /Users/runner/.ccache
+        key: ${{ runner.os }}-${{ github.sha }}
+        restore-keys: ${{ runner.os }}-
+
+    - name: Build
+      run: |
+        mkdir build
+        cd build
+        cmake ../sources -G Ninja -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DQTDIR='/usr/local/opt/qt@5' -DWITH_TRANSLATION=OFF
+        ninja -w dupbuild=warn
+    
+    - name: Introduce Libraries and Stuff
+      run: |
+        cd build
+        cp -pr ../stuff IwaWarper.app/stuff
+        cp ../.github/workflows/conf.ini IwaWarper.app/Contents/MacOS
+        cp ../thirdparty/OpenToonz/dylib/* IwaWarper.app/Contents/MacOS
+        /usr/local/opt/qt@5/bin/macdeployqt IwaWarper.app -verbose=1 -always-overwrite  -executable=IwaWarper.app/Contents/MacOS/libimage.dylib -executable=IwaWarper.app/Contents/MacOS/libtoonzlib.dylib
+    
+    - name: Modify Library Paths
+      run: |
+        cd build/IwaWarper.app/Contents/Frameworks
+        for TARGETLIB in `ls ./ | grep dylib`
+        do
+          echo $TARGETLIB
+          for FROMPATH in `otool -L "$TARGETLIB" | grep ".dylib" | grep -v "$TARGETLIB" | grep -v "@executable_path/../Frameworks" | sed -e"s/ (.*$//"`
+          do
+            echo "  $FROMPATH"
+            LIBNAME=`basename $FROMPATH`
+            if [[ -e ./$LIBNAME ]]; then
+              echo "updating library path of $LIBNAME in $TARGETLIB"
+              install_name_tool -change "$FROMPATH" "@executable_path/../Frameworks/$LIBNAME" $TARGETLIB
+            fi
+          done
+        done
+
+    - name: Create Artifact
+      run: |
+        cd build
+        /usr/local/opt/qt@5/bin/macdeployqt IwaWarper.app -dmg -verbose=1
+    
+    - uses: actions/upload-artifact@v3
+      with:
+        name: IwaWarper-${{ runner.os }}-${{ github.sha }}
+        path: build/IwaWarper.dmg

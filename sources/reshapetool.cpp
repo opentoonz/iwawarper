@@ -429,7 +429,7 @@ int ReshapeTool::getCursorId(const QMouseEvent* e) {
 
 void ReshapeTool::drawControlPoint(OneShape shape, BezierPointList& pointList,
                                    int cpIndex, bool drawHandles,
-                                   QPointF& onePix, int specialShapeIndex,
+                                   const QPointF& onePix, int specialShapeIndex,
                                    bool fillPoint) {
   IwProject* project = IwApp::instance()->getCurrentProject()->getProject();
 
@@ -705,10 +705,10 @@ OneShape ReshapeTool::getClickedShapeAndIndex(int& pointIndex, int& handleId,
 // 以下、Undoコマンドを登録
 //---------------------------------------------------
 AddControlPointUndo::AddControlPointUndo(
-    QMap<int, BezierPointList>& beforeFormDataFrom,
-    QMap<int, CorrPointList>& beforeCorrDataFrom,
-    QMap<int, BezierPointList>& beforeFormDataTo,
-    QMap<int, CorrPointList>& beforeCorrDataTo, OneShape shape,
+    const QMap<int, BezierPointList>& beforeFormDataFrom,
+    const QMap<int, CorrPointList>& beforeCorrDataFrom,
+    const QMap<int, BezierPointList>& beforeFormDataTo,
+    const QMap<int, CorrPointList>& beforeCorrDataTo, OneShape shape,
     IwProject* project, IwLayer* layer)
     : m_project(project), m_shape(shape), m_layer(layer), m_firstFlag(true) {
   m_beforeFormData[0] = beforeFormDataFrom;
@@ -718,10 +718,10 @@ AddControlPointUndo::AddControlPointUndo(
 }
 
 void AddControlPointUndo::setAfterData(
-    QMap<int, BezierPointList>& afterFormDataFrom,
-    QMap<int, CorrPointList>& afterCorrDataFrom,
-    QMap<int, BezierPointList>& afterFormDataTo,
-    QMap<int, CorrPointList>& afterCorrDataTo) {
+    const QMap<int, BezierPointList>& afterFormDataFrom,
+    const QMap<int, CorrPointList>& afterCorrDataFrom,
+    const QMap<int, BezierPointList>& afterFormDataTo,
+    const QMap<int, CorrPointList>& afterCorrDataTo) {
   m_afterFormData[0] = afterFormDataFrom;
   m_afterFormData[1] = afterFormDataTo;
   m_afterCorrData[0] = afterCorrDataFrom;
