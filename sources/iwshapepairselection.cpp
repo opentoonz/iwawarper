@@ -328,7 +328,7 @@ void IwShapePairSelection::copyShapes() {
 
   // sort shapes in stacking order
   std::sort(shapePairs.begin(), shapePairs.end(),
-            [&](auto const& s1, auto const& s2) {
+            [&](ShapePair* s1, ShapePair* s2) {
               int lay1, sha1, lay2, sha2;
               bool ret1 = project->getShapeIndex(s1, lay1, sha1);
               bool ret2 = project->getShapeIndex(s2, lay2, sha2);

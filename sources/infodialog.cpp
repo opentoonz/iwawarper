@@ -90,7 +90,8 @@ void InfoDialog::hideEvent(QHideEvent*) {
              this, SLOT(onSelectionChanged()));
 }
 
-void InfoDialog::createItem(FormatItem id, QString& name, QGridLayout* layout) {
+void InfoDialog::createItem(FormatItem id, const QString& name,
+                            QGridLayout* layout) {
   QLabel* itemLabel = new QLabel(this);
   int row           = layout->rowCount();
 
@@ -218,7 +219,7 @@ void InfoDialog::updateFields(QString& path) {
   update();
 }
 
-void InfoDialog::setVal(FormatItem id, QString& str) {
+void InfoDialog::setVal(FormatItem id, const QString& str) {
   m_items.value(id)->setText(str);
 }
 
@@ -245,4 +246,4 @@ QString InfoDialog::getTypeString(QString& ext) {
     return "Raster Image";
 }
 
-OpenPopupCommandHandler<InfoDialog> openOutputOptions(MI_FileInfo);
+OpenPopupCommandHandler<InfoDialog> openFileInfo(MI_FileInfo);

@@ -59,7 +59,7 @@ private:
 
 public:
   IwLayer();
-  IwLayer(QString& name, LayerVisibility visibleInViewer, bool isExpanded,
+  IwLayer(const QString& name, LayerVisibility visibleInViewer, bool isExpanded,
           bool isVisibleInRender, bool isLocked, int brightness, int contrast);
   // IwLayer(const IwLayer&) {};
   IwLayer* clone();
@@ -79,7 +79,7 @@ public:
 
   // ディレクトリパスを入力。
   // まだリストに無い場合は追加してインデックスを返す。
-  int getFolderPathIndex(QString& folderPath);
+  int getFolderPathIndex(const QString& folderPath);
 
   QString getName() { return m_name; }
   void setName(QString& name) { m_name = name; }
@@ -156,7 +156,7 @@ public:
   // このレイヤに引数のシェイプペアが属していたらtrue
   bool contains(ShapePair*);
   // シェイプからインデックスを返す 無ければ-1
-  int getIndexFromShapePair(ShapePair*);
+  int getIndexFromShapePair(ShapePair*) const;
   // シェイプを入れ替える
   void swapShapes(int index1, int index2) {
     if (index1 < 0 || index1 >= m_shapepairs.size() || index2 < 0 ||

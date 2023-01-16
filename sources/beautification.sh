@@ -1,3 +1,3 @@
 #!/bin/sh
-git diff master --name-only | egrep \\.\(c\|cpp\|h\|hpp\)$ | xargs clang-format -style=file -i
+git diff main --name-only --relative | egrep \\.\(c\|cpp\|h\|hpp\)$ | xargs clang-format -style=file -i
 

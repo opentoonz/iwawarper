@@ -130,7 +130,7 @@ class IwRenderInstance : public QObject, public QRunnable {
 
   // シェイプの親子グループごとに計算する
   TRaster64P warpLayer(IwLayer* layer, QList<ShapePair*>& shapes,
-                       bool isPreview, QPoint& origin = QPoint());
+                       bool isPreview, QPoint& origin);
 
   //---------------
 

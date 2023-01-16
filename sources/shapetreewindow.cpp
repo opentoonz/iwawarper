@@ -44,7 +44,7 @@ const QColor toBgColor(50, 60, 110);
 const QColor selectedColor(128, 128, 250, 100);
 const QColor hoverColor(220, 220, 128, 75);
 
-}
+}  // namespace
 
 //=============================================================================
 // ShapeTagAction
@@ -171,171 +171,174 @@ void ShapeTreeDelegate::paint(QPainter* painter,
     if (option.state & QStyle::State_MouseOver) {
       // only the unlock button is enabled when locked
       if (!layerIsLocked || m_hoverOn == HoverOnLayerLockButton) {
-      if (m_hoverOn >= HoverOnLayerVisibleButton &&
-          m_hoverOn <= HoverOnLayerLockButton) {
-        int offset = (m_hoverOn - HoverOnLayerVisibleButton) * 18;
-        QRect hoverRect(option.rect.left() + offset, option.rect.top(), 18, 18);
-        painter->fillRect(hoverRect, hoverColor);
-      } else
+        if (m_hoverOn >= HoverOnLayerVisibleButton &&
+            m_hoverOn <= HoverOnLayerLockButton) {
+          int offset = (m_hoverOn - HoverOnLayerVisibleButton) * 18;
+          QRect hoverRect(option.rect.left() + offset, option.rect.top(), 18,
+                          18);
+          painter->fillRect(hoverRect, hoverColor);
+        } else
+          painter->fillRect(option.rect, hoverColor);
+      }
+    }
+
+    // 表示／非表示ボタン
+    IwLayer::LayerVisibility visibleInViewer = layer->isVisibleInViewer();
+    painter->drawPixmap(option.rect.left() + 2, option.rect.top() + 2, 14, 14,
+                        (visibleInViewer == IwLayer::Invisible)
+                            ? QPixmap(":Resources/visible_off.svg")
+                            : ((visibleInViewer == IwLayer::HalfVisible)
+                                   ? QPixmap(":Resources/visible_half.svg")
+                                   : QPixmap(":Resources/visible_on.svg")));
+    if (layerIsLocked) {
+      painter->fillRect(QRect(option.rect.left(), option.rect.top(), 18, 18),
+                        QColor(80, 80, 80, 128));
+    }
+
+    bool isVisibleInRender = layer->isVisibleInRender();
+    painter->drawPixmap(
+        option.rect.left() + 18 + 2, option.rect.top() + 2, 14, 14,
+        (isVisibleInRender) ? QPixmap(":Resources/render_on.svg")
+                            : QPixmap(":Resources/render_off.svg"));
+    if (layerIsLocked) {
+      painter->fillRect(
+          QRect(option.rect.left() + 18, option.rect.top(), 18, 18),
+          QColor(80, 80, 80, 128));
+    }
+
+    painter->drawPixmap(option.rect.left() + 36, option.rect.top(), 18, 18,
+                        (layerIsLocked) ? QPixmap(":Resources/lock_on.svg")
+                                        : QPixmap(":Resources/lock.svg"));
+
+    QRect textRect = option.rect;
+    textRect.setLeft(textRect.left() + 56);
+
+    bool isCurrent = IwApp::instance()->getCurrentLayer()->getLayer() == layer;
+    painter->setPen((isCurrent)       ? Qt::yellow
+                    : (layerIsLocked) ? Qt::lightGray
+                                      : Qt::white);
+    painter->drawText(textRect, layer->getName());
+    return;
+  }
+
+  QColor bgColor;
+  switch (index.column()) {
+  case 0:
+    bgColor =
+        shape.shapePairP->isParent() ? parentShapeBgColor : childShapeBgColor;
+    break;
+  case 1:
+    bgColor = fromBgColor;
+    break;
+  case 2:
+    bgColor = toBgColor;
+    break;
+  default:
+    break;
+  }
+
+  painter->setPen(Qt::black);
+  painter->setBrush(bgColor);
+  painter->drawRect(option.rect);
+  if (layerIsLocked) {
+    painter->fillRect(option.rect,
+                      QBrush(QColor(128, 128, 128, 128), Qt::BDiagPattern));
+  }
+
+  if (option.state & QStyle::State_Selected) {
+    painter->fillRect(option.rect, selectedColor);
+    if (index.column() != 0) {
+      if (m_hoverOn == HoverOnLockButton_SelectedShapes) {
+        QRect lockRect(option.rect.left(), option.rect.top(), 18, 18);
+        painter->fillRect(lockRect, hoverColor);
+      } else if (m_hoverOn == HoverOnPinButton_SelectedShapes) {
+        QRect pinRect(option.rect.left() + 18, option.rect.top(), 18, 18);
+        painter->fillRect(pinRect, hoverColor);
+      }
+    } else {  // drawing column
+      if (m_hoverOn == HoverOnVisibleButton_SelectedShapes) {
+        QRect visibleRect(option.rect.left() + 18, option.rect.top(), 18, 18);
+        painter->fillRect(visibleRect, hoverColor);
+      }
+    }
+  }
+  if (option.state & QStyle::State_MouseOver) {
+    if (index.column() != 0) {
+      if (m_hoverOn == HoverOnLockButton) {
+        QRect lockRect(option.rect.left(), option.rect.top(), 18, 18);
+        painter->fillRect(lockRect, hoverColor);
+      } else if (m_hoverOn == HoverOnPinButton) {
+        QRect pinRect(option.rect.left() + 18, option.rect.top(), 18, 18);
+        painter->fillRect(pinRect, hoverColor);
+      } else if (m_hoverOn != HoverOnLockButton_SelectedShapes &&
+                 m_hoverOn != HoverOnPinButton_SelectedShapes && !layerIsLocked)
+        painter->fillRect(option.rect, hoverColor);
+    } else {  // drawing column
+      if (m_hoverOn == HoverOnVisibleButton) {
+        QRect visibleRect(option.rect.left() + 18, option.rect.top(), 18, 18);
+        painter->fillRect(visibleRect, hoverColor);
+      } else if (m_hoverOn != HoverOnVisibleButton_SelectedShapes &&
+                 !layerIsLocked)
         painter->fillRect(option.rect, hoverColor);
     }
   }
 
-  // 表示／非表示ボタン
-  IwLayer::LayerVisibility visibleInViewer = layer->isVisibleInViewer();
-  painter->drawPixmap(option.rect.left() + 2, option.rect.top() + 2, 14, 14,
-                      (visibleInViewer == IwLayer::Invisible)
-                          ? QPixmap(":Resources/visible_off.svg")
-                          : ((visibleInViewer == IwLayer::HalfVisible)
-                                 ? QPixmap(":Resources/visible_half.svg")
-                                 : QPixmap(":Resources/visible_on.svg")));
-  if (layerIsLocked) {
-    painter->fillRect(QRect(option.rect.left(), option.rect.top(), 18, 18),
-                      QColor(80, 80, 80, 128));
+  // シェイプ名の前に閉曲線／開曲線のアイコンを入れる
+  if (index.column() == 0) {
+    bool isClosed = shape.shapePairP->isClosed();
+    painter->drawPixmap(option.rect.left(), option.rect.top(), 18, 18,
+                        isClosed ? QPixmap(":Resources/shape_close.svg")
+                                 : QPixmap(":Resources/shape_open.svg"));
+
+    bool isVisible = shape.shapePairP->isVisible();
+    painter->drawPixmap(option.rect.left() + 18 + 2, option.rect.top() + 2, 14,
+                        14,
+                        isVisible ? QPixmap(":Resources/visible_on.svg")
+                                  : QPixmap(":Resources/visible_off.svg"));
+
+    QRect textRect = option.rect;
+    textRect.setLeft(textRect.left() + 38);
+
+    painter->setPen(Qt::white);
+    painter->drawText(textRect, shape.shapePairP->getName());
+    return;
   }
 
-  bool isVisibleInRender = layer->isVisibleInRender();
-  painter->drawPixmap(
-      option.rect.left() + 18 + 2, option.rect.top() + 2, 14, 14,
-      (isVisibleInRender) ? QPixmap(":Resources/render_on.svg")
-                          : QPixmap(":Resources/render_off.svg"));
-  if (layerIsLocked) {
-    painter->fillRect(QRect(option.rect.left() + 18, option.rect.top(), 18, 18),
-                      QColor(80, 80, 80, 128));
+  bool isLocked = shape.shapePairP->isLocked(shape.fromTo);
+  if (isLocked) {
+    painter->fillRect(option.rect,
+                      QBrush(QColor(128, 128, 128, 128), Qt::FDiagPattern));
   }
 
-  painter->drawPixmap(option.rect.left() + 36, option.rect.top(), 18, 18,
-                      (layerIsLocked) ? QPixmap(":Resources/lock_on.svg")
-                                      : QPixmap(":Resources/lock.svg"));
-
-  QRect textRect = option.rect;
-  textRect.setLeft(textRect.left() + 56);
-
-  bool isCurrent = IwApp::instance()->getCurrentLayer()->getLayer() == layer;
-  painter->setPen((isCurrent)       ? Qt::yellow
-                  : (layerIsLocked) ? Qt::lightGray
-                                    : Qt::white);
-  painter->drawText(textRect, layer->getName());
-  return;
-}
-
-QColor bgColor;
-switch (index.column()) {
-case 0:
-  bgColor =
-      shape.shapePairP->isParent() ? parentShapeBgColor : childShapeBgColor;
-  break;
-case 1:
-  bgColor = fromBgColor;
-  break;
-case 2:
-  bgColor = toBgColor;
-  break;
-default:
-  break;
-}
-
-painter->setPen(Qt::black);
-painter->setBrush(bgColor);
-painter->drawRect(option.rect);
-if (layerIsLocked) {
-  painter->fillRect(option.rect,
-                    QBrush(QColor(128, 128, 128, 128), Qt::BDiagPattern));
-}
-
-if (option.state & QStyle::State_Selected) {
-  painter->fillRect(option.rect, selectedColor);
-  if (index.column() != 0) {
-    if (m_hoverOn == HoverOnLockButton_SelectedShapes) {
-      QRect lockRect(option.rect.left(), option.rect.top(), 18, 18);
-      painter->fillRect(lockRect, hoverColor);
-    } else if (m_hoverOn == HoverOnPinButton_SelectedShapes) {
-      QRect pinRect(option.rect.left() + 18, option.rect.top(), 18, 18);
-      painter->fillRect(pinRect, hoverColor);
-    }
-  } else {  // drawing column
-    if (m_hoverOn == HoverOnVisibleButton_SelectedShapes) {
-      QRect visibleRect(option.rect.left() + 18, option.rect.top(), 18, 18);
-      painter->fillRect(visibleRect, hoverColor);
-    }
-  }
-}
-if (option.state & QStyle::State_MouseOver) {
-  if (index.column() != 0) {
-    if (m_hoverOn == HoverOnLockButton) {
-      QRect lockRect(option.rect.left(), option.rect.top(), 18, 18);
-      painter->fillRect(lockRect, hoverColor);
-    } else if (m_hoverOn == HoverOnPinButton) {
-      QRect pinRect(option.rect.left() + 18, option.rect.top(), 18, 18);
-      painter->fillRect(pinRect, hoverColor);
-    } else if (m_hoverOn != HoverOnLockButton_SelectedShapes &&
-               m_hoverOn != HoverOnPinButton_SelectedShapes && !layerIsLocked)
-      painter->fillRect(option.rect, hoverColor);
-  } else {  // drawing column
-    if (m_hoverOn == HoverOnVisibleButton) {
-      QRect visibleRect(option.rect.left() + 18, option.rect.top(), 18, 18);
-      painter->fillRect(visibleRect, hoverColor);
-    } else if (m_hoverOn != HoverOnVisibleButton_SelectedShapes &&
-               !layerIsLocked)
-      painter->fillRect(option.rect, hoverColor);
-  }
-}
-
-// シェイプ名の前に閉曲線／開曲線のアイコンを入れる
-if (index.column() == 0) {
-  bool isClosed = shape.shapePairP->isClosed();
   painter->drawPixmap(option.rect.left(), option.rect.top(), 18, 18,
-                      isClosed ? QPixmap(":Resources/shape_close.svg")
-                               : QPixmap(":Resources/shape_open.svg"));
+                      isLocked ? QPixmap(":Resources/lock_on.svg")
+                               : QPixmap(":Resources/lock.svg"));
 
-  bool isVisible = shape.shapePairP->isVisible();
-  painter->drawPixmap(option.rect.left() + 18 + 2, option.rect.top() + 2, 14,
-                      14,
-                      isVisible ? QPixmap(":Resources/visible_on.svg")
-                                : QPixmap(":Resources/visible_off.svg"));
+  bool isPinned = shape.shapePairP->isPinned(shape.fromTo);
 
-  QRect textRect = option.rect;
-  textRect.setLeft(textRect.left() + 38);
+  painter->drawPixmap(option.rect.left() + 18, option.rect.top(), 18, 18,
+                      isPinned ? QPixmap(":Resources/pin_on.svg")
+                               : QPixmap(":Resources/pin.svg"));
 
-  painter->setPen(Qt::white);
-  painter->drawText(textRect, shape.shapePairP->getName());
-  return;
-}
+  // シェイプタグの描画
+  int shapeTagCount = shape.shapePairP->shapeTagCount(shape.fromTo);
+  if (shapeTagCount == 0) return;
 
-bool isLocked = shape.shapePairP->isLocked(shape.fromTo);
-if (isLocked) {
-  painter->fillRect(option.rect,
-                    QBrush(QColor(128, 128, 128, 128), Qt::FDiagPattern));
-}
+  ShapeTagSettings* shapeTags =
+      IwApp::instance()->getCurrentProject()->getProject()->getShapeTags();
+  QRect tagAreaRect = option.rect;
+  tagAreaRect.setLeft(tagAreaRect.left() + 36);
+  int posOffset =
+      std::min(12, (int)std::ceil((double)(tagAreaRect.width() - 12) /
+                                  (double)shapeTagCount));
 
-painter->drawPixmap(option.rect.left(), option.rect.top(), 18, 18,
-                    isLocked ? QPixmap(":Resources/lock_on.svg")
-                             : QPixmap(":Resources/lock.svg"));
+  QRect tagIconRect(tagAreaRect.left(), tagAreaRect.top() + 3, 12, 12);
 
-bool isPinned = shape.shapePairP->isPinned(shape.fromTo);
-
-painter->drawPixmap(option.rect.left() + 18, option.rect.top(), 18, 18,
-                    isPinned ? QPixmap(":Resources/pin_on.svg")
-                             : QPixmap(":Resources/pin.svg"));
-
-// シェイプタグの描画
-int shapeTagCount = shape.shapePairP->shapeTagCount(shape.fromTo);
-if (shapeTagCount == 0) return;
-
-ShapeTagSettings* shapeTags =
-    IwApp::instance()->getCurrentProject()->getProject()->getShapeTags();
-QRect tagAreaRect = option.rect;
-tagAreaRect.setLeft(tagAreaRect.left() + 36);
-int posOffset = std::min(12, (int)std::ceil((double)(tagAreaRect.width() - 12) /
-                                            (double)shapeTagCount));
-
-QRect tagIconRect(tagAreaRect.left(), tagAreaRect.top() + 3, 12, 12);
-
-for (auto tagId : shape.shapePairP->getShapeTags(shape.fromTo)) {
-  QIcon icon = shapeTags->getTagFromId(tagId).icon;
-  painter->drawPixmap(tagIconRect, icon.pixmap(12, 12));
-  tagIconRect.translate(posOffset, 0);
-}
+  for (auto tagId : shape.shapePairP->getShapeTags(shape.fromTo)) {
+    QIcon icon = shapeTags->getTagFromId(tagId).icon;
+    painter->drawPixmap(tagIconRect, icon.pixmap(12, 12));
+    tagIconRect.translate(posOffset, 0);
+  }
 }
 
 #define IGNORERETURN                                                           \
@@ -610,7 +613,7 @@ LayerItem* getLayerItem(QTreeWidgetItem* item, QTreeWidgetItem* root) {
   if (layerItem) return layerItem;
   return getLayerItem(item->parent(), root);
 };
-}
+}  // namespace
 
 IwLayer* ShapeTree::layerFromIndex(const QModelIndex& index) const {
   QTreeWidgetItem* item = itemFromIndex(index);
@@ -1077,7 +1080,8 @@ void ShapeTree::dropEvent(QDropEvent* e) {
         std::sort(
             shapeInfo.begin() + pastedIndexFirst,
             shapeInfo.begin() + pastedIndexLast,
-            [&](auto const& s1, auto const& s2) {
+            [&](const QPair<ShapePair*, bool>& s1,
+                const QPair<ShapePair*, bool>& s2) {
               int lay1, sha1, lay2, sha2;
               bool ret1 = project->getShapeIndex(s1.first, lay1, sha1);
               bool ret2 = project->getShapeIndex(s2.first, lay2, sha2);

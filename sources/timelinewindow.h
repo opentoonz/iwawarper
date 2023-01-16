@@ -98,7 +98,7 @@ class ItemRenameField : public QLineEdit {
 
 public:
   ItemRenameField(QWidget *parent);
-  void showField(IwLayer *, ShapePair *, QPoint &);
+  void showField(IwLayer *, ShapePair *, const QPoint &);
 
 public slots:
   void renameItem();

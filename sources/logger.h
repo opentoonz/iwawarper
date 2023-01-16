@@ -4,11 +4,14 @@
 #define LOGGER_H
 
 #include <time.h>
-#include <Windows.h>
 #include <string>
 
 #define ENABLE_LOG
 #undef ENABLE_LOG  // comment this line to enable log
+
+#ifdef ENABLE_LOG
+#include <Windows.h>
+#endif
 
 class Logger {
 public:

@@ -26,9 +26,9 @@ public:
   QString getSettingsPath();
   // ’l‚ðŠi”[‚·‚é
   void setValue(SettingsId mainGroupId, SettingsId subGroupId,
-                SettingsId valueId, QVariant& value);
-  void setValue(SettingsId groupId, SettingsId valueId, QVariant& value);
-  void setValue(SettingsId valueId, QVariant& value);
+                SettingsId valueId, const QVariant& value);
+  void setValue(SettingsId groupId, SettingsId valueId, const QVariant& value);
+  void setValue(SettingsId valueId, const QVariant& value);
   // ’l‚ðŽæ“¾‚·‚é
   QVariant getValue(SettingsId mainGroupId, SettingsId subGroupId,
                     SettingsId valueId);

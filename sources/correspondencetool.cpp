@@ -28,7 +28,8 @@
 //--------------------------------------------------------
 // 対応点ドラッグツール
 //--------------------------------------------------------
-CorrDragTool::CorrDragTool(OneShape shape, int corrPointId, QPointF& onePix)
+CorrDragTool::CorrDragTool(OneShape shape, int corrPointId,
+                           const QPointF& onePix)
     // CorrDragTool::CorrDragTool(IwShape* shape, int corrPointId)
     : m_shape(shape), m_corrPointId(corrPointId), m_onePixLength(onePix) {
   m_project = IwApp::instance()->getCurrentProject()->getProject();

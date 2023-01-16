@@ -43,9 +43,9 @@ class InfoDialog : public IwDialog {
 
   QString m_currentPath;
 
-  void createItem(FormatItem id, QString& name, QGridLayout* layout);
+  void createItem(FormatItem id, const QString& name, QGridLayout* layout);
   void updateFields(QString& path);
-  void setVal(FormatItem id, QString& str);
+  void setVal(FormatItem id, const QString& str);
   QString fileSizeString(qint64 size, int precision = 2);
   QString getTypeString(QString& ext);
 

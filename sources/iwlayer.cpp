@@ -33,7 +33,7 @@
 IwLayer::IwLayer() : IwLayer(QString(""), Full, false, true, false, 0, 0) {}
 
 //---------------------------------------------------
-IwLayer::IwLayer(QString& name, LayerVisibility visibleInViewer,
+IwLayer::IwLayer(const QString& name, LayerVisibility visibleInViewer,
                  bool isExpanded, bool isVisibleInRender, bool isLocked,
                  int brightness, int contrast)
     : m_name(name)
@@ -148,7 +148,7 @@ QString IwLayer::getParentFolderName(int frame) {
 // get the folder path index, register if the path is not yet registered
 // ディレクトリパスを入力。
 // まだリストに無い場合は追加してインデックスを返す。
-int IwLayer::getFolderPathIndex(QString& folderPath) {
+int IwLayer::getFolderPathIndex(const QString& folderPath) {
   // フォルダのリストが空なら追加するだけ
   if (m_paths.isEmpty()) {
     m_paths.append(QDir(folderPath));
@@ -960,7 +960,7 @@ bool IwLayer::contains(ShapePair* shape) {
 //---------------------------------------------------
 // シェイプからインデックスを返す 無ければ-1
 //---------------------------------------------------
-int IwLayer::getIndexFromShapePair(ShapePair* shapePair) {
+int IwLayer::getIndexFromShapePair(ShapePair* shapePair) const {
   return m_shapepairs.indexOf(shapePair);
 }
 

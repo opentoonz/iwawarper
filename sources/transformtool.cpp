@@ -561,8 +561,8 @@ void TransformTool::draw() {
 // ハンドルをいっこ描く
 //--------------------------------------------------------
 void TransformTool::drawHandle(IwLayer* layer, OneShape shape,
-                               TransformHandleId handleId, QPointF& onePix,
-                               QPointF& pos) {
+                               TransformHandleId handleId,
+                               const QPointF& onePix, const QPointF& pos) {
   // 名前を作る
   int handleName = layer->getNameFromShapePair(shape);
   handleName += (int)handleId;
@@ -585,8 +585,8 @@ void TransformTool::drawHandle(IwLayer* layer, OneShape shape,
 // Ctrl押したとき辺ドラッグでサイズ変更のための辺
 //--------------------------------------------------------
 void TransformTool::drawEdgeForResize(IwLayer* layer, OneShape shape,
-                                      TransformHandleId handleId, QPointF& p1,
-                                      QPointF& p2) {
+                                      TransformHandleId handleId,
+                                      const QPointF& p1, const QPointF& p2) {
   int handleName = layer->getNameFromShapePair(shape);
   handleName += (int)handleId;
   glPushName(handleName);
@@ -663,7 +663,7 @@ void TransformTool::arrowKeyMove(QPointF& delta) {
 //--------------------------------------------------------
 // Ctrl+矢印キーで0.25ピクセル分ずつ移動させる のUndo
 //--------------------------------------------------------
-ArrowKeyMoveUndo::ArrowKeyMoveUndo(QList<OneShape>& shapes,
+ArrowKeyMoveUndo::ArrowKeyMoveUndo(const QList<OneShape>& shapes,
                                    QList<BezierPointList>& beforePoints,
                                    QList<BezierPointList>& afterPoints,
                                    QList<bool>& wasKeyFrame, IwProject* project,

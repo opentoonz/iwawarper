@@ -247,7 +247,7 @@ class DeleteFormPointsUndo : public QUndoCommand {
   int m_firstFlag;
 
 public:
-  DeleteFormPointsUndo(IwProject*, QList<ShapePair*>&);
+  DeleteFormPointsUndo(IwProject*, const QList<ShapePair*>&);
   void storeAfterData();
   void undo();
   void redo();

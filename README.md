@@ -12,12 +12,12 @@ Please refer to the OpenToonz site at <https://opentoonz.github.io/e/index.html>
 
 ## Installation
 
-Please download a zipped binary of IwaWarper from <https://opentoonz.github.io/e/index.html>.
+Please download a zipped binary of IwaWarper from <https://opentoonz.github.io/e/download/iwawarper.html>.
 
 ## How to Build Locally
 
 - [Windows](./doc/how_to_build_win.md)
-
+- [MacOS X](./doc/how_to_build_macosx.md)
 
 ## Community
 

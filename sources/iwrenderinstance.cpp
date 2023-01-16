@@ -64,7 +64,7 @@ bool isDecimal(double val) { return val == std::floor(val); }
 //---------------------------------------------------
 // 座標から色を返す。範囲外の場合は透明色を返す
 //---------------------------------------------------
-inline TPixel64 getPixelVal(TRaster64P ras, QPoint& index) {
+inline TPixel64 getPixelVal(TRaster64P ras, const QPoint& index) {
   if (index.x() < 0 || index.x() >= ras->getLx() || index.y() < 0 ||
       index.y() >= ras->getLy())
     return TPixel64::Transparent;
@@ -78,7 +78,7 @@ inline TPixel64 getPixelVal(TRaster64P ras, QPoint& index) {
 // uv座標を元に、ピクセル値をリニア補間で得る。
 //---------------------------------------------------
 TPixel64 getInterpolatedPixelVal(TRaster64P srcRas, QPointF& uv) {
-  auto lerp = [&](TPixel64& pix1, TPixel64& pix2, double ratio) {
+  auto lerp = [&](const TPixel64& pix1, const TPixel64& pix2, double ratio) {
     return TPixel64(pix1.r * (1.0 - ratio) + pix2.r * ratio,
                     pix1.g * (1.0 - ratio) + pix2.g * ratio,
                     pix1.b * (1.0 - ratio) + pix2.b * ratio,
@@ -233,8 +233,9 @@ void IwRenderInstance::doPreview() {
       else {
         // 親シェイプがターゲットになっていない場合、全ての子シェイプもレンダリングしない
         if (shape->isRenderTarget(targetShapeTag)) {
+          QPoint dummyOrigin;
           // レイヤの画像をワープする
-          warpLayer(layer, tmpShapes, true);
+          warpLayer(layer, tmpShapes, true, dummyOrigin);
         }
         // リストをリセット
         tmpShapes.clear();
@@ -773,15 +774,15 @@ void ResampleResults_Worker::run() {
         }
       }
       if (m_antialias) {
-        retpix->r = unsigned short(rr / subAmount2);
-        retpix->g = unsigned short(gg / subAmount2);
-        retpix->b = unsigned short(bb / subAmount2);
-        retpix->m = unsigned short(mm / subAmount2);
+        retpix->r = (unsigned short)(rr / subAmount2);
+        retpix->g = (unsigned short)(gg / subAmount2);
+        retpix->b = (unsigned short)(bb / subAmount2);
+        retpix->m = (unsigned short)(mm / subAmount2);
       } else {  // アンチ無しの場合
         if (mm) {
-          retpix->r = unsigned short(rr * (unsigned long long)USHRT_MAX / mm);
-          retpix->g = unsigned short(gg * (unsigned long long)USHRT_MAX / mm);
-          retpix->b = unsigned short(bb * (unsigned long long)USHRT_MAX / mm);
+          retpix->r = (unsigned short)(rr * (unsigned long long)USHRT_MAX / mm);
+          retpix->g = (unsigned short)(gg * (unsigned long long)USHRT_MAX / mm);
+          retpix->b = (unsigned short)(bb * (unsigned long long)USHRT_MAX / mm);
           retpix->m = USHRT_MAX;
         } else {
           retpix->r = 0;
@@ -803,8 +804,8 @@ TRaster64P IwRenderInstance::HEmapTrianglesToRaster_Multi(
     const QPolygonF& parentShapePolygon) {
   QSize workAreaSize = m_project->getWorkAreaSize();
   // 計算範囲
-  QRectF shapeBBox =
-      shape->getBBox(m_frame, 1);  // TO のバウンディングボックス（IwaWarper座標系）
+  QRectF shapeBBox = shape->getBBox(
+      m_frame, 1);  // TO のバウンディングボックス（IwaWarper座標系）
   shapeBBox          = QRectF(shapeBBox.left() * (double)workAreaSize.width(),
                               shapeBBox.top() * (double)workAreaSize.height(),
                               shapeBBox.width() * (double)workAreaSize.width(),

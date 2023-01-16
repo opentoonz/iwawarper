@@ -18,7 +18,8 @@ bool isAlmostSame(double val1, double val2) {
   return std::abs(val1 - val2) < 0.001f;
 }
 
-bool judgeIntersected(QPointF& pA, QPointF& pB, QPointF& pC, QPointF& pD) {
+bool judgeIntersected(const QPointF& pA, const QPointF& pB, const QPointF& pC,
+                      const QPointF& pD) {
   double ta = (pC.x() - pD.x()) * (pA.y() - pC.y()) +
               (pC.y() - pD.y()) * (pC.x() - pA.x());
   double tb = (pC.x() - pD.x()) * (pB.y() - pC.y()) +
@@ -33,7 +34,7 @@ bool judgeIntersected(QPointF& pA, QPointF& pB, QPointF& pC, QPointF& pD) {
   // ’[“_‚ðŠÜ‚Þê‡
 }
 
-double determinant(Matrix3x3d& m) {
+double determinant(const Matrix3x3d& m) {
   return m(0, 0) * m(1, 1) * m(2, 2) + m(0, 1) * m(1, 2) * m(2, 0) +
          m(0, 2) * m(1, 0) * m(2, 1) - m(0, 2) * m(1, 1) * m(2, 0) -
          m(0, 1) * m(1, 0) * m(2, 2) - m(0, 0) * m(1, 2) * m(2, 1);
