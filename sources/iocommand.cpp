@@ -176,8 +176,6 @@ void IoCmd::insertImagesToSequence(int layerIndex) {
   int f = layer->getFrameLength();
   // int f = 0;
 
-  int initialInsertFrame = f;
-
   // 現在のシークエンスにフォルダパスを追加し、インデックスを得る
   QDir dir(pathList.at(0));
   dir.cdUp();
@@ -196,15 +194,13 @@ void IoCmd::insertImagesToSequence(int layerIndex) {
     QString fileName =
         QString::fromStdWString(fp.withoutParentDir().getWideString());
 
-    // ムービーファイルの場合 // とりあえずコメアウ
+    // ムービーファイルの場
     if (ext == "tlv" || ext == "pli" || ext == "mov" || ext == "avi") {
       TLevelReaderP lr(fp);
       TLevelP level = lr->loadInfo();
 
       int fromFrame = level->begin()->first.getNumber();
       int toFrame   = level->getTable()->rbegin()->first.getNumber();
-
-      int frameCount = level->getFrameCount();
 
       LoadFrameRangeDialog* dialog = new LoadFrameRangeDialog(
           IwApp::instance()->getMainWindow(), fileName, fromFrame, toFrame);
@@ -312,8 +308,6 @@ void IoCmd::doReplaceImages(IwLayer* layer, int from, int to) {
       TLevelReaderP lr(fp);
       TLevelP level = lr->loadInfo();
 
-      int frameCount = level->getFrameCount();
-
       int fromFrame = level->begin()->first.getNumber();
       int toFrame   = level->getTable()->rbegin()->first.getNumber();
 
@@ -411,11 +405,11 @@ TImageP IoCmd::loadImage(QString path) {
     // multiFileLevelEnabledをOFFにすること
     TLevelReaderP lr(fp);
     TImageReaderP ir(fp);
-    //lr->disableMultiFileLevel();
+    // lr->disableMultiFileLevel();
 
     TImageP img;
 
-    //TImageReaderP ir = lr->getFrameReader(0);
+    // TImageReaderP ir = lr->getFrameReader(0);
     ir->enable16BitRead(true);
     img = ir->load();
     // img = lr->getFrameReader(0)->load();

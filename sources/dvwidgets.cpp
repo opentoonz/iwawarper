@@ -22,7 +22,7 @@ PropertyComboBox::PropertyComboBox(QWidget *parent, TEnumProperty *prop)
 
 //-----------------------------------------------------------------------------
 
-void PropertyComboBox::onCurrentIndexChanged(const QString &text) {
+void PropertyComboBox::onCurrentIndexChanged(const QString & /*text*/) {
   TEnumProperty *prop = dynamic_cast<TEnumProperty *>(m_property);
   if (prop && prop->getValue() != itemText(currentIndex()).toStdWString())
     prop->setValue(itemText(currentIndex()).toStdWString());
@@ -53,7 +53,7 @@ PropertyCheckBox::PropertyCheckBox(const QString &text, QWidget *parent,
 
 //-----------------------------------------------------------------------------
 
-void PropertyCheckBox::onStateChanged(int state) {
+void PropertyCheckBox::onStateChanged(int /*state*/) {
   TBoolProperty *prop = dynamic_cast<TBoolProperty *>(m_property);
   if (prop && prop->getValue() != isChecked()) prop->setValue(isChecked());
 }

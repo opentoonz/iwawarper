@@ -1377,7 +1377,7 @@ void ShapeTagEditDialog::updateTagList() {
   currentItem->setSelected(true);
 }
 
-void ShapeTagEditDialog::showEvent(QShowEvent* event) { updateTagList(); }
+void ShapeTagEditDialog::showEvent(QShowEvent* /*event*/) { updateTagList(); }
 
 void ShapeTagEditDialog::onSelectedItemChanged() {
   IwProject* prj = IwApp::instance()->getCurrentProject()->getProject();

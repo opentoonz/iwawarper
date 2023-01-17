@@ -52,7 +52,7 @@ public:
 
   ~SceneViewer();
 
-  QSize sizeHint() const { return QSize(630, 440); }
+  QSize sizeHint() const final override { return QSize(630, 440); }
 
   // クリック位置の描画アイテムのインデックスを返す
   int pick(const QPoint &);
@@ -74,9 +74,9 @@ public:
   }
 
 protected:
-  void initializeGL();
-  void resizeGL(int width, int height);
-  void paintGL();
+  void initializeGL() final override;
+  void resizeGL(int width, int height) final override;
+  void paintGL() final override;
 
   // ロードされた画像を表示する
   void drawImage();
@@ -89,22 +89,22 @@ protected:
   void drawShapes();
 
   // 中ドラッグでパンする
-  void mouseMoveEvent(QMouseEvent *e);
+  void mouseMoveEvent(QMouseEvent *e) final override;
   // 中クリックでパンモードにする
-  void mousePressEvent(QMouseEvent *e);
+  void mousePressEvent(QMouseEvent *e) final override;
   // パンモードをクリアする
-  void mouseReleaseEvent(QMouseEvent *e);
+  void mouseReleaseEvent(QMouseEvent *e) final override;
   // パンモードをクリアする
-  void leaveEvent(QEvent *e);
+  void leaveEvent(QEvent *e) final override;
 
   // 修飾キーをクリアする
-  void enterEvent(QEvent *);
+  void enterEvent(QEvent *) final override;
 
   // 修飾キーを押すとカーソルを変える
-  void keyPressEvent(QKeyEvent *e);
-  void keyReleaseEvent(QKeyEvent *e);
+  void keyPressEvent(QKeyEvent *e) final override;
+  void keyReleaseEvent(QKeyEvent *e) final override;
 
-  void wheelEvent(QWheelEvent *) override;
+  void wheelEvent(QWheelEvent *) final override;
 
   void renderText(double x, double y, const QString &str,
                   const QFont &font = QFont());

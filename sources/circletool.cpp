@@ -45,8 +45,6 @@ bool CircleTool::leftButtonDown(const QPointF& pos, const QMouseEvent* e) {
     // 選択シェイプのどこかをクリックしていたらTrasformToolを実行する
     IwProject* project = IwApp::instance()->getCurrentProject()->getProject();
     if (!project) return false;
-    IwLayer* layer = IwApp::instance()->getCurrentLayer()->getLayer();
-    if (!layer) return false;
 
     int name = m_viewer->pick(e->pos());
 
@@ -138,7 +136,6 @@ void CircleTool::draw() {
   glTranslated(rect.center().x(), rect.center().y(), 0.0);
   glScaled(rect.width() / 2.0, rect.height() / 2.0, 1.0);
 
-  IwProject* project = IwApp::instance()->getCurrentProject()->getProject();
   // ベジエの分割数を求める
   // 1周4セグメントなので、1ステップ当たりπ／(2*bezierPrec)
   int bezierPrec = Preferences::instance()->getBezierActivePrecision();

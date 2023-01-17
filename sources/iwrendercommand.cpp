@@ -40,14 +40,12 @@ void IwRenderCommand::onPreview() {
   IwProject* project = IwApp::instance()->getCurrentProject()->getProject();
   if (!project || project->getProjectFrameLength() == 0) return;
 
-  ViewSettings* settings = project->getViewSettings();
-
   int currentFrame = project->getViewFrame();
   if (currentFrame < 0 || currentFrame >= project->getProjectFrameLength())
     currentFrame = 0;
 
   int prevFrom, prevTo;
-  bool prevRangeSpecified = project->getPreviewRange(prevFrom, prevTo);
+  project->getPreviewRange(prevFrom, prevTo);
 
   // 現在のフレームからタスクを積んでいく
   QList<int> cuedFrames;

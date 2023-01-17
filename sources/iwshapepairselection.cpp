@@ -456,15 +456,15 @@ void IwShapePairSelection::deleteShapes() {
       }
     }
 
-    QMapIterator<ShapePair*, QList<int>> i(deletingPointsMap);
+    QMapIterator<ShapePair*, QList<int>> j(deletingPointsMap);
     bool canDelete = true;
-    while (i.hasNext()) {
-      i.next();
-      if (i.key()->isClosed() &&
-          (i.key()->getBezierPointAmount() - i.value().size()) < 3)
+    while (j.hasNext()) {
+      j.next();
+      if (j.key()->isClosed() &&
+          (j.key()->getBezierPointAmount() - j.value().size()) < 3)
         canDelete = false;
-      else if (!i.key()->isClosed() &&
-               (i.key()->getBezierPointAmount() - i.value().size()) < 2)
+      else if (!j.key()->isClosed() &&
+               (j.key()->getBezierPointAmount() - j.value().size()) < 2)
         canDelete = false;
 
       if (!canDelete) break;

@@ -128,9 +128,9 @@ void doShapeRender() {
         progressPopup.onFrameFinished();
         continue;
       }
-      ViewSettings* settings = project->getViewSettings();
-      if (settings->hasTexture(path))
-        outputSize = settings->getTextureId(path).size;
+      ViewSettings* vs = project->getViewSettings();
+      if (vs->hasTexture(path))
+        outputSize = vs->getTextureId(path).size;
       else {
         TImageP img;
         // キャッシュされていたら、それを返す
@@ -170,8 +170,6 @@ void doShapeRender() {
       fromToVisible[fromTo] =
           project->getViewSettings()->isFromToVisible(fromTo);
     //----
-
-    int projectLength = project->getProjectFrameLength();
 
     // 各レイヤについて
     for (int lay = project->getLayerCount() - 1; lay >= 0; lay--) {

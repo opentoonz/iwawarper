@@ -29,6 +29,7 @@ protected:
 
 public:
   PointDragTool();
+  virtual ~PointDragTool(){};
   virtual void onClick(const QPointF &, const QMouseEvent *) = 0;
   virtual void onDrag(const QPointF &, const QMouseEvent *)  = 0;
 
@@ -38,7 +39,7 @@ public:
   virtual bool setSpecialShapeColor(OneShape) { return false; }
   virtual bool setSpecialGridColor(int, bool) { return false; }
 
-  virtual void draw(const QPointF &onePixelLength) {}
+  virtual void draw(const QPointF & /*onePixelLength*/) {}
 };
 
 //--------------------------------------------------------
@@ -76,9 +77,9 @@ public:
   // PenTool用
   TranslatePointDragTool(OneShape, QList<int>, const QPointF &onePix);
 
-  void onClick(const QPointF &, const QMouseEvent *);
-  void onDrag(const QPointF &, const QMouseEvent *);
-  bool onRelease(const QPointF &, const QMouseEvent *);
+  void onClick(const QPointF &, const QMouseEvent *) final override;
+  void onDrag(const QPointF &, const QMouseEvent *) final override;
+  bool onRelease(const QPointF &, const QMouseEvent *) final override;
 
   int calculateSnap(QPointF &);
 
@@ -124,9 +125,9 @@ public:
   TranslateHandleDragTool(OneShape shape, int pointIndex, int handleIndex,
                           const QPointF &onePix);
 
-  void onClick(const QPointF &, const QMouseEvent *);
-  void onDrag(const QPointF &, const QMouseEvent *);
-  bool onRelease(const QPointF &, const QMouseEvent *);
+  void onClick(const QPointF &, const QMouseEvent *) final override;
+  void onDrag(const QPointF &, const QMouseEvent *) final override;
+  bool onRelease(const QPointF &, const QMouseEvent *) final override;
 
   // PenTool用。ポイントを増やしたと同時に伸ばすハンドルは、
   // Ctrlを押して伸ばしているかのようにふるまう。

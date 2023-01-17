@@ -109,7 +109,7 @@ void ShapeOptionsDialog::hideEvent(QHideEvent *) {
 
 //---------------------------------------------------
 
-void ShapeOptionsDialog::onSelectionSwitched(IwSelection *oldSelection,
+void ShapeOptionsDialog::onSelectionSwitched(IwSelection * /*oldSelection*/,
                                              IwSelection *newSelection) {
   // std::cout<<"ShapeOptionsDialog::onSelectionSwitched"<<std::endl;
   onSelectionChanged(newSelection);

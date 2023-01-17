@@ -100,7 +100,6 @@ void Ruler::drawVertical(QPainter& p) {
   if (workAreaSize.isEmpty()) return;
 
   int w = width();
-  int h = height();
 
   Guides& guides = getGuides();
 
@@ -159,7 +158,6 @@ void Ruler::drawHorizontal(QPainter& p) {
   // ワークエリアサイズが空ならreturn
   if (workAreaSize.isEmpty()) return;
 
-  int w = width();
   int h = height();
 
   Guides& guides = getGuides();
@@ -337,7 +335,7 @@ void Ruler::mouseMoveEvent(QMouseEvent* e) {
 
 //-----------------------------------------------------------------------------
 
-void Ruler::mouseReleaseEvent(QMouseEvent* e) {
+void Ruler::mouseReleaseEvent(QMouseEvent* /*e*/) {
   if (!m_moving) return;
   if (m_hiding) {
     assert(!getGuides().empty());
@@ -349,7 +347,7 @@ void Ruler::mouseReleaseEvent(QMouseEvent* e) {
 }
 //-----------------------------------------------------------------------------
 
-void Ruler::leaveEvent(QEvent* event) {
+void Ruler::leaveEvent(QEvent* /*event*/) {
   m_highlightId = -1;
   update();
 }

@@ -224,7 +224,7 @@ bool FreeHandTool::leftButtonUp(const QPointF&, const QMouseEvent*) {
 
 //--------------------------------------------------------
 bool FreeHandTool::rightButtonDown(const QPointF&, const QMouseEvent*,
-                                   bool& canOpenMenu, QMenu& menu) {
+                                   bool& canOpenMenu, QMenu& /*menu*/) {
   // シェイプの完成
   canOpenMenu = finishShape();
 
@@ -856,7 +856,7 @@ void FreeHandTool::reparameterize(
 
 //--------------------------------------------------------
 
-int FreeHandTool::getCursorId(const QMouseEvent* e) {
+int FreeHandTool::getCursorId(const QMouseEvent* /*e*/) {
   IwLayer* layer = IwApp::instance()->getCurrentLayer()->getLayer();
   if (!layer || layer->isLocked()) {
     IwApp::instance()->showMessageOnStatusBar(

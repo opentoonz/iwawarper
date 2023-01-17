@@ -222,8 +222,8 @@ bool PenTool::leftButtonUp(const QPointF& pos, const QMouseEvent* e) {
 
 //--------------------------------------------------------
 
-bool PenTool::rightButtonDown(const QPointF& pos, const QMouseEvent* e,
-                              bool& canOpenMenu, QMenu& menu) {
+bool PenTool::rightButtonDown(const QPointF& /*pos*/, const QMouseEvent* /*e*/,
+                              bool& canOpenMenu, QMenu& /*menu*/) {
   // シェイプの完成 うまくいったら、
   // 右クリックメニューは出さないので canOpenMenu = false を返す
   canOpenMenu = finishShape();

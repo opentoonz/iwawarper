@@ -44,9 +44,6 @@ bool SquareTool::leftButtonDown(const QPointF& pos, const QMouseEvent* e) {
     // 選択シェイプのどこかをクリックしていたらTrasformToolを実行する
     IwProject* project = IwApp::instance()->getCurrentProject()->getProject();
     if (!project) return false;
-    IwLayer* layer = IwApp::instance()->getCurrentLayer()->getLayer();
-    if (!layer) return false;
-
     int name = m_viewer->pick(e->pos());
 
     OneShape shape = layer->getShapePairFromName(name);

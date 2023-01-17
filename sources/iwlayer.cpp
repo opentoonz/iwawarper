@@ -594,7 +594,7 @@ void IwLayer::drawTimeLine(QPainter& p, int vpos, int width, int fromFrame,
       continue;
     }
 
-    bool sameAsPrevious = sameAsNextCount > 0;
+    sameAsPrevious = sameAsNextCount > 0;
     sameAsNextCount--;
     // 同じファイル名が連続している数を再計算
     if (sameAsNextCount < 0) {
@@ -834,8 +834,9 @@ void IwLayer::onRightClick(int row, QMenu& menu) {
           // 下を探す
           int belowIndex = -1;  // ひとつ下の表示シェイプのインデックス
           for (int bsp = sp + 1; bsp < m_shapepairs.size(); bsp++) {
-            ShapePair* shapePair = m_shapepairs.at(bsp);
-            if (!shapePair || !shapePair->isAtLeastOneShapeExpanded()) continue;
+            ShapePair* belowShapePair = m_shapepairs.at(bsp);
+            if (!belowShapePair || !belowShapePair->isAtLeastOneShapeExpanded())
+              continue;
             belowIndex = bsp;
             break;
           }

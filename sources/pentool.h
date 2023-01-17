@@ -37,18 +37,18 @@ public:
   PenTool();
   ~PenTool();
 
-  bool leftButtonDown(const QPointF&, const QMouseEvent*);
-  bool leftButtonDrag(const QPointF&, const QMouseEvent*);
-  bool leftButtonUp(const QPointF&, const QMouseEvent*);
+  bool leftButtonDown(const QPointF&, const QMouseEvent*) final override;
+  bool leftButtonDrag(const QPointF&, const QMouseEvent*) final override;
+  bool leftButtonUp(const QPointF&, const QMouseEvent*) final override;
   bool rightButtonDown(const QPointF&, const QMouseEvent*, bool& canOpenMenu,
-                       QMenu& menu);
+                       QMenu& menu) final override;
 
   // ツール解除のとき、描画中のシェイプがあったら確定する
-  void onDeactivate();
+  void onDeactivate() final override;
 
-  void draw();
+  void draw() final override;
 
-  int getCursorId(const QMouseEvent* e);
+  int getCursorId(const QMouseEvent* e) final override;
 
   // ポイントがアクティブかどうかを返す
   bool isPointActive(int index) {

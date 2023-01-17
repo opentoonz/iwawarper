@@ -656,7 +656,9 @@ void ItemListPanel::mouseDoubleClickEvent(QMouseEvent* e) {
 
 //----------------------------------------------
 
-void ItemListPanel::mouseReleaseEvent(QMouseEvent* e) { m_isPanning = false; }
+void ItemListPanel::mouseReleaseEvent(QMouseEvent* /*e*/) {
+  m_isPanning = false;
+}
 
 //----------------------------------------------
 
@@ -859,7 +861,7 @@ void TimeLineHead::paintEvent(QPaintEvent* e) {
 
 //----------------------------------------------
 
-void TimeLineHead::resizeEvent(QResizeEvent* e) { computeSize(); }
+void TimeLineHead::resizeEvent(QResizeEvent* /*e*/) { computeSize(); }
 
 //----------------------------------------------
 
@@ -1362,7 +1364,7 @@ void TimeLinePanel::mousePressEvent(QMouseEvent* e) {
 //----------------------------------
 // 前回のクリック位置情報をクリアする
 //----------------------------------
-void TimeLinePanel::mouseReleaseEvent(QMouseEvent* e) {
+void TimeLinePanel::mouseReleaseEvent(QMouseEvent* /*e*/) {
   m_clickedFrameIndex = -1;
   m_isFrameClicked    = false;
   m_isPanning         = false;
@@ -1377,7 +1379,7 @@ void TimeLinePanel::mouseReleaseEvent(QMouseEvent* e) {
     InterpHandleDragTool::instance()->onRelease();
 }
 
-void TimeLinePanel::leaveEvent(QEvent* e) {
+void TimeLinePanel::leaveEvent(QEvent* /*e*/) {
   m_clickedFrameIndex = -1;
   m_isFrameClicked    = false;
   m_isPanning         = false;

@@ -48,13 +48,14 @@ PointDragTool::PointDragTool() : m_undoEnabled(true) {
 TranslatePointDragTool::TranslatePointDragTool(const QSet<int>& points,
                                                QPointF& grabbedPointOrgPos,
                                                const QPointF& onePix,
-                                               OneShape shape, int pointIndex)
+                                               OneShape clickedShape,
+                                               int clickedPointIndex)
     : m_grabbedPointOrgPos(grabbedPointOrgPos)
     , m_onePixLength(onePix)
     , m_snapHGrid(-1)
     , m_snapVGrid(-1)
-    , m_shape(shape)
-    , m_pointIndex(pointIndex)
+    , m_shape(clickedShape)
+    , m_pointIndex(clickedPointIndex)
     , m_handleSnapped(false) {
   // 関わるシェイプをリストに格納する
   QSet<int>::const_iterator i = points.constBegin();
@@ -142,7 +143,8 @@ TranslatePointDragTool::TranslatePointDragTool(OneShape shape,
 
 //--------------------------------------------------------
 
-void TranslatePointDragTool::onClick(const QPointF& pos, const QMouseEvent* e) {
+void TranslatePointDragTool::onClick(const QPointF& pos,
+                                     const QMouseEvent* /*e*/) {
   m_startPos = pos;
 }
 
@@ -237,7 +239,7 @@ int TranslatePointDragTool::calculateSnap(QPointF& pos) {
   // 次に、ガイドへのスナップを処理する
   IwProject::Guides hGuide = m_project->getHGuides();
   double minDist           = thres_dist.x();
-  double snappedPos;
+  double snappedPos        = 0.;
   for (int gId = 0; gId < hGuide.size(); gId++) {
     double g    = hGuide[gId];
     double dist = std::abs(pos.x() - g);
@@ -267,8 +269,6 @@ int TranslatePointDragTool::calculateSnap(QPointF& pos) {
 //--------------------------------------------------------
 
 void TranslatePointDragTool::onDrag(const QPointF& pos, const QMouseEvent* e) {
-  // 現在のフレームを得る
-  int frame       = m_project->getViewFrame();
   m_handleSnapped = false;
 
   // 移動ベクトルを得る
@@ -607,7 +607,7 @@ void TranslateHandleDragTool::onDrag(const QPointF& pos, const QMouseEvent* e) {
 //--------------------------------------------------------
 
 bool TranslateHandleDragTool::onRelease(const QPointF& pos,
-                                        const QMouseEvent* e) {
+                                        const QMouseEvent* /*e*/) {
   if (pos == m_startPos) return false;
 
   // PenToolの場合return

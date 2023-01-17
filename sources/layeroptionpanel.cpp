@@ -91,7 +91,7 @@ LayerOptionPanel::LayerOptionPanel(QWidget* parent)
           SLOT(onContrastChanged(bool)));
 }
 
-void LayerOptionPanel::showEvent(QShowEvent* event) {
+void LayerOptionPanel::showEvent(QShowEvent* /*event*/) {
   connect(IwApp::instance()->getCurrentLayer(), SIGNAL(layerSwitched()), this,
           SLOT(onLayerSwitched()));
   onLayerSwitched();
@@ -100,7 +100,7 @@ void LayerOptionPanel::showEvent(QShowEvent* event) {
   onProjectChanged();
 }
 
-void LayerOptionPanel::hideEvent(QHideEvent* event) {
+void LayerOptionPanel::hideEvent(QHideEvent* /*event*/) {
   disconnect(IwApp::instance()->getCurrentLayer(), SIGNAL(layerSwitched()),
              this, SLOT(onLayerSwitched()));
   disconnect(IwApp::instance()->getCurrentProject(), SIGNAL(projectChanged()),

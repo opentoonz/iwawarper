@@ -64,6 +64,7 @@ protected:
 
 public:
   TransformDragTool(OneShape, TransformHandleId, const QList<OneShape> &);
+  virtual ~TransformDragTool() {}
   virtual void onClick(const QPointF &, const QMouseEvent *) = 0;
   virtual void onDrag(const QPointF &, const QMouseEvent *)  = 0;
   virtual void onRelease(const QPointF &, const QMouseEvent *);
@@ -86,8 +87,8 @@ class RotateDragTool : public TransformDragTool {
 public:
   RotateDragTool(OneShape, TransformHandleId, const QList<OneShape> &,
                  const QPointF &onePix);
-  void onClick(const QPointF &, const QMouseEvent *);
-  void onDrag(const QPointF &, const QMouseEvent *);
+  void onClick(const QPointF &, const QMouseEvent *) final override;
+  void onDrag(const QPointF &, const QMouseEvent *) final override;
 };
 
 //--------------------------------------------------------
@@ -102,8 +103,8 @@ class ShearDragTool : public TransformDragTool {
 
 public:
   ShearDragTool(OneShape shape, TransformHandleId, const QList<OneShape> &);
-  void onClick(const QPointF &, const QMouseEvent *);
-  void onDrag(const QPointF &, const QMouseEvent *);
+  void onClick(const QPointF &, const QMouseEvent *) final override;
+  void onDrag(const QPointF &, const QMouseEvent *) final override;
 };
 
 //--------------------------------------------------------
@@ -117,8 +118,8 @@ class TrapezoidDragTool : public TransformDragTool {
 public:
   TrapezoidDragTool(OneShape shape, TransformHandleId, const QList<OneShape> &);
 
-  void onClick(const QPointF &, const QMouseEvent *);
-  void onDrag(const QPointF &, const QMouseEvent *);
+  void onClick(const QPointF &, const QMouseEvent *) final override;
+  void onDrag(const QPointF &, const QMouseEvent *) final override;
 
   // ４つの変移ベクトルの線形補間を足すことで移動させる
   QPointF map(const QRectF &bBox, const QPointF &bottomRightVec,
@@ -141,8 +142,8 @@ class ScaleDragTool : public TransformDragTool {
 
 public:
   ScaleDragTool(OneShape shape, TransformHandleId, const QList<OneShape> &);
-  void onClick(const QPointF &, const QMouseEvent *);
-  void onDrag(const QPointF &, const QMouseEvent *);
+  void onClick(const QPointF &, const QMouseEvent *) final override;
+  void onDrag(const QPointF &, const QMouseEvent *) final override;
 };
 
 //--------------------------------------------------------
@@ -152,8 +153,8 @@ public:
 class TranslateDragTool : public TransformDragTool {
 public:
   TranslateDragTool(OneShape shape, TransformHandleId, const QList<OneShape> &);
-  void onClick(const QPointF &, const QMouseEvent *);
-  void onDrag(const QPointF &, const QMouseEvent *);
+  void onClick(const QPointF &, const QMouseEvent *) final override;
+  void onDrag(const QPointF &, const QMouseEvent *) final override;
 };
 
 //---------------------------------------------------

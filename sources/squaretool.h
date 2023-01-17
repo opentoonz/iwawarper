@@ -29,13 +29,13 @@ class SquareTool : public IwTool {
 public:
   SquareTool();
 
-  bool leftButtonDown(const QPointF&, const QMouseEvent*);
-  bool leftButtonDrag(const QPointF&, const QMouseEvent*);
-  bool leftButtonUp(const QPointF&, const QMouseEvent*);
-  void leftButtonDoubleClick(const QPointF&, const QMouseEvent*);
-  void draw();
+  bool leftButtonDown(const QPointF&, const QMouseEvent*) final override;
+  bool leftButtonDrag(const QPointF&, const QMouseEvent*) final override;
+  bool leftButtonUp(const QPointF&, const QMouseEvent*) final override;
+  void leftButtonDoubleClick(const QPointF&, const QMouseEvent*) final override;
+  void draw() final override;
 
-  int getCursorId(const QMouseEvent*) override;
+  int getCursorId(const QMouseEvent*) final override;
 };
 
 //---------------------------------------------------

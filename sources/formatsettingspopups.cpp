@@ -181,8 +181,7 @@ FormatSettingsPopup *createFormatSettingPopup(QWidget *parent, string format,
 
 void openFormatSettingsPopup(QWidget *parent, string format,
                              TPropertyGroup *props, const TFilePath &levelPath,
-                             QWidget *saveInFileFld  // 110521 ’Ç‰Á iwasawa
-) {
+                             QWidget * /*saveInFileFld*/) {
   std::map<string, QDialog *>::const_iterator it = FormatPopupsMap.find(format);
 
   if (it == FormatPopupsMap.end()) {

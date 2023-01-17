@@ -42,10 +42,6 @@
 #include <QPointF>
 #include <QVector3D>
 
-#ifdef _WIN32
-#include <GL/GLU.h>
-#endif
-
 #ifdef MACOSX
 #include <GLUT/glut.h>
 #endif
@@ -104,6 +100,25 @@ bool isPoint(const int& id1, const int& id2) {
   if ((id1 % 100) == 0) return false;
   if ((id2 % 100) == 0) return true;
   return (id1 % 100) < (id2 % 100);
+}
+
+void my_gluPickMatrix(GLfloat x, GLfloat y, GLfloat width, GLfloat height,
+                      GLint viewport[4]) {
+  float sx, sy;
+  float tx, ty;
+  GLfloat mp[4][4] = {{0.f}};
+
+  sx = viewport[2] / width;
+  sy = viewport[3] / height;
+  tx = (viewport[2] + 2.0f * (viewport[0] - x)) / width;
+  ty = (viewport[3] + 2.0f * (viewport[1] - y)) / height;
+
+  mp[0][0] = sx;
+  mp[0][3] = tx;
+  mp[1][1] = sy;
+  mp[1][3] = ty;
+
+  glMultMatrixf((GLfloat*)&mp);
 }
 
 };  // namespace
@@ -1223,7 +1238,7 @@ void SceneViewer::mouseReleaseEvent(QMouseEvent* e) {
 //----------------------------------
 // パンモードをクリアする
 //----------------------------------
-void SceneViewer::leaveEvent(QEvent* e) {
+void SceneViewer::leaveEvent(QEvent* /*e*/) {
   // パンモードをOFF
   m_isPanning = false;
 }
@@ -1369,7 +1384,8 @@ QList<int> SceneViewer::pickAll(const QPoint& pos) {
     glPushMatrix();
     glLoadIdentity();
     // ピック領域の指定。この範囲に描画を制限する
-    gluPickMatrix(pos.x(), height() - pos.y(), pickRange, pickRange, viewport);
+    my_gluPickMatrix(pos.x(), height() - pos.y(), pickRange, pickRange,
+                     viewport);
     glMultMatrixd(mat);
 
     glMatrixMode(GL_MODELVIEW);
@@ -1393,8 +1409,6 @@ QList<int> SceneViewer::pickAll(const QPoint& pos) {
     bool pointPicked = false;
     for (int i = 0; i < hitCount; ++i) {
       GLuint nameCount = *p++;
-      GLuint zmin      = *p++;
-      GLuint zmax      = *p++;
       if (nameCount > 0) {
         GLuint name = *p;
         if (name % 10000 > 0) pointPicked = true;

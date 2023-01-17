@@ -45,7 +45,7 @@ public:
   virtual bool isEmpty() const = 0;
   virtual void selectNone()    = 0;
 
-  virtual bool addMenuActions(QMenu *menu) { return false; }
+  virtual bool addMenuActions(QMenu * /*menu*/) { return false; }
   void addMenuAction(QMenu *menu, CommandId cmdId);
 
 protected slots:

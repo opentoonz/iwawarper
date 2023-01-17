@@ -212,7 +212,7 @@ bool ReshapeToolContextMenu::canCenter() {
 //------------------------------------------
 // ƒƒjƒ…[‚ğŠJ‚­
 //------------------------------------------
-void ReshapeToolContextMenu::openMenu(const QMouseEvent* e, OneShape shape,
+void ReshapeToolContextMenu::openMenu(const QMouseEvent* /*e*/, OneShape shape,
                                       int pointIndex, int handleId,
                                       QMenu& menu) {
   m_shape      = shape;

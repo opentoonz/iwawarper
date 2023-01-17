@@ -40,13 +40,12 @@ void KeyDragTool::onClick(int frame) {
   m_isFormKeySelected = selection->isFormKeySelected();
   m_selectedFrames.clear();
   for (int i = 0; i < selection->selectionCount(); i++) {
-    int frame = selection->getFrame(i);
-    if (m_isFormKeySelected &&
-        m_shape.shapePairP->isFormKey(frame, m_shape.fromTo))
-      m_selectedFrames.append(frame);
+    int f = selection->getFrame(i);
+    if (m_isFormKeySelected && m_shape.shapePairP->isFormKey(f, m_shape.fromTo))
+      m_selectedFrames.append(f);
     else if (!m_isFormKeySelected &&
-             m_shape.shapePairP->isCorrKey(frame, m_shape.fromTo))
-      m_selectedFrames.append(frame);
+             m_shape.shapePairP->isCorrKey(f, m_shape.fromTo))
+      m_selectedFrames.append(f);
   }
 
   if (!m_selectedFrames.isEmpty()) {
