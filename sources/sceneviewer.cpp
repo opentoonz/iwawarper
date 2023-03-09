@@ -42,6 +42,9 @@
 #include <QPointF>
 #include <QVector3D>
 
+#ifdef _WIN32
+#include <GL/GLU.h>
+#endif
 #ifdef MACOSX
 #include <GLUT/glut.h>
 #endif
@@ -1384,8 +1387,14 @@ QList<int> SceneViewer::pickAll(const QPoint& pos) {
     glPushMatrix();
     glLoadIdentity();
     // ピック領域の指定。この範囲に描画を制限する
+#ifdef _WIN32
+    gluPickMatrix(pos.x(), height() - pos.y(), pickRange, pickRange, viewport);
+#endif
+#ifdef MACOSX
     my_gluPickMatrix(pos.x(), height() - pos.y(), pickRange, pickRange,
                      viewport);
+#endif
+
     glMultMatrixd(mat);
 
     glMatrixMode(GL_MODELVIEW);
@@ -1409,6 +1418,8 @@ QList<int> SceneViewer::pickAll(const QPoint& pos) {
     bool pointPicked = false;
     for (int i = 0; i < hitCount; ++i) {
       GLuint nameCount = *p++;
+      GLuint zmin      = *p++;
+      GLuint zmax      = *p++;
       if (nameCount > 0) {
         GLuint name = *p;
         if (name % 10000 > 0) pointPicked = true;
