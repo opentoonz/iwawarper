@@ -353,7 +353,8 @@ TRasterP IwRenderInstance::getLayerRaster(IwLayer* layer) {
 // あまり短いベクトルはまとめながら格納していく
 //---------------------------------------------------
 
-void IwRenderInstance::getCorrVectors(IwLayer* layer, QList<ShapePair*>& shapes,
+void IwRenderInstance::getCorrVectors(IwLayer* /*layer*/,
+                                      QList<ShapePair*>& shapes,
                                       QList<CorrVector>& corrVectors,
                                       QVector<QPointF>& parentShapeVerticesFrom,
                                       QVector<QPointF>& parentShapeVerticesTo) {
@@ -500,8 +501,7 @@ void IwRenderInstance::HEcreateTriangleMesh(
   superBL->constrained = true;
 
   //    B2) 線分制約にかかわる頂点piを図形に追加
-  HEVertex* preAddedVert = nullptr;
-  int i                  = 0;
+  int i = 0;
   for (CorrVector& corrVec : corrVectors) {
     // 別のストロークの端点同士が一致している場合、点を使いまわす
     HEVertex* start = model.findVertex(corrVec.from_p[0], corrVec.to_p[0]);
@@ -568,10 +568,10 @@ void MapTrianglesToRaster_Worker::run() {
 
     if (!face->isVisible) continue;
     // 三角形パッチの頂点を格納しつつ、Y座標の範囲を取得
-    double ymin = 10000;
-    double ymax = -10000;
-    double xmin = 10000;
-    double xmax = -10000;
+    double to_ymin = 10000;
+    double to_ymax = -10000;
+    double to_xmin = 10000;
+    double to_xmax = -10000;
     QPointF sp[3], wp[3];
     QPointF spMin, spMax;  // srcのバウンディングボックス
     Halfedge* he = face->halfedge;
@@ -581,10 +581,10 @@ void MapTrianglesToRaster_Worker::run() {
       sp[p] = v->from_pos.toPointF() + m_sampleOffset;
       wp[p] = v->to_pos.toPointF() - m_outputOffset;
       // 範囲を更新
-      if (wp[p].y() < ymin) ymin = wp[p].y();
-      if (wp[p].y() > ymax) ymax = wp[p].y();
-      if (wp[p].x() < xmin) xmin = wp[p].x();
-      if (wp[p].x() > xmax) xmax = wp[p].x();
+      if (wp[p].y() < to_ymin) to_ymin = wp[p].y();
+      if (wp[p].y() > to_ymax) to_ymax = wp[p].y();
+      if (wp[p].x() < to_xmin) to_xmin = wp[p].x();
+      if (wp[p].x() > to_xmax) to_xmax = wp[p].x();
       spMin.setX(std::min(spMin.x(), sp[p].x()));
       spMin.setY(std::min(spMin.y(), sp[p].y()));
       spMax.setX(std::max(spMax.x(), sp[p].x()));
@@ -603,14 +603,14 @@ void MapTrianglesToRaster_Worker::run() {
     // << ", " << ymin << ")" << std::endl; std::cout << "wrp max = (" << xmax
     // << ", " << ymax << ")" << std::endl << std::endl;
 
-    int yminIndex = tfloor(ymin);
-    int ymaxIndex = tceil(ymax);
+    int yminIndex = tfloor(to_ymin);
+    int ymaxIndex = tceil(to_ymax);
     // outRasのサイズでクランプ
     if (yminIndex * m_subAmount >= m_outRas->getLy() ||
         ymaxIndex * m_subAmount < 0)
       continue;
-    if (tfloor(xmin) * m_subAmount >= m_outRas->getLx() ||
-        tceil(xmax) * m_subAmount < 0)
+    if (tfloor(to_xmin) * m_subAmount >= m_outRas->getLx() ||
+        tceil(to_xmax) * m_subAmount < 0)
       continue;
     if (spMax.x() < 0 || spMin.x() >= m_srcRas->getLx() || spMax.y() < 0 ||
         spMin.y() >= m_srcRas->getLy())
@@ -952,9 +952,9 @@ void IwRenderInstance::saveImage(TRaster64P ras) {
 
 // 各フレーム、各シェイプのかたまり毎に
 // 頂点座標とUV座標をキャッシュする
-void IwRenderInstance::HEcacheTriangles(HEModel& model, ShapePair* shape,
-                                        const TDimension& srcDim,
-                                        const QPolygonF& parentShapePolygon) {
+void IwRenderInstance::HEcacheTriangles(
+    HEModel& model, ShapePair* shape, const TDimension& srcDim,
+    const QPolygonF& /*parentShapePolygon*/) {
   QSize workAreaSize = m_project->getWorkAreaSize();
   // サンプル点のためのオフセット
   QPointF sampleOffset(0.5 * (double)(srcDim.lx - workAreaSize.width()),

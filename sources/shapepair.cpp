@@ -113,7 +113,8 @@ void makeBezierPoints(double* vertexP, QPointF p0, QPointF p1, QPointF p2,
 
 // ベジエのバウンディングボックスを計算する
 QRectF getBezierBBox(QPointF p0, QPointF p1, QPointF p2, QPointF p3) {
-  double left, right, top, bottom;
+  QPointF topLeft, bottomRight;
+  // double left, right, top, bottom;
   for (int xy = 0; xy < 2; xy++) {
     double v0, v1, v2, v3;
     // X方向
@@ -171,15 +172,15 @@ QRectF getBezierBBox(QPointF p0, QPointF p1, QPointF p2, QPointF p3) {
     }
 
     if (xy == 0) {
-      left  = minPos;
-      right = maxPos;
+      topLeft.setX(minPos);
+      bottomRight.setX(maxPos);
     } else {
-      top    = minPos;
-      bottom = maxPos;
+      topLeft.setY(minPos);
+      bottomRight.setY(maxPos);
     }
   }
 
-  return QRectF(QPointF(left, top), QPointF(right, bottom));
+  return QRectF(topLeft, bottomRight);
 }
 
 // 最近傍距離とその t の値を得る(範囲つき)
@@ -467,7 +468,7 @@ void ShapePair::setCorrInterpolation(int frame, int fromTo, double interp) {
 //-----------------------------------------------------------------------------
 // 表示用の頂点数を求める。線が閉じているか空いているかで異なる
 //-----------------------------------------------------------------------------
-int ShapePair::getVertexAmount(IwProject* project) {
+int ShapePair::getVertexAmount(IwProject* /*project*/) {
   // ベジエの分割数を求める
   int bezierPrec = Preferences::instance()->getBezierActivePrecision();
 
@@ -675,7 +676,7 @@ int ShapePair::addControlPoint(const QPointF& pos, int frame, int fromTo) {
     // 形状データの各キーフレームについて
     QMap<int, BezierPointList>::const_iterator i = formData.constBegin();
     while (i != formData.constEnd()) {
-      int frame              = i.key();
+      int kf                 = i.key();
       BezierPointList bPList = i.value();
 
       // 前後の点を得る
@@ -716,7 +717,7 @@ int ShapePair::addControlPoint(const QPointF& pos, int frame, int fromTo) {
       bPList.insert(nearestSegmentIndex + 1, newPoint);
 
       // キーフレーム情報を更新
-      m_formKeys[ft].setKeyData(frame, bPList);
+      m_formKeys[ft].setKeyData(kf, bPList);
 
       ++i;
     }
@@ -726,7 +727,7 @@ int ShapePair::addControlPoint(const QPointF& pos, int frame, int fromTo) {
     // 対応点データの各キーフレームについて
     QMap<int, CorrPointList>::const_iterator c = corrData.constBegin();
     while (c != corrData.constEnd()) {
-      int frame = c.key();
+      int kf = c.key();
 
       // 各Corrデータの更新
       CorrPointList cPList = c.value();
@@ -755,7 +756,7 @@ int ShapePair::addControlPoint(const QPointF& pos, int frame, int fromTo) {
       }
 
       // キーフレーム情報を更新
-      m_corrKeys[ft].setKeyData(frame, cPList);
+      m_corrKeys[ft].setKeyData(kf, cPList);
 
       ++c;
     }
@@ -779,8 +780,8 @@ bool ShapePair::addCorrPoint(const QPointF& pos, int frame, int fromTo) {
   double nearestBezierPos = getNearestBezierPos(pos, frame, fromTo);
 
   // どこの対応点の間に挿入されるか調べる
-  int neighbourIndex;
-  double minDiff = 100.0;
+  int neighbourIndex = 0;
+  double minDiff     = 100.0;
   for (int c = 0; c < m_corrPointAmount; c++) {
     double tmpDiff = nearestBezierPos - orgCorrs.at(c);
     if (abs(minDiff) > abs(tmpDiff)) {
@@ -813,7 +814,7 @@ bool ShapePair::addCorrPoint(const QPointF& pos, int frame, int fromTo) {
   // 前後の点の間隔が0.1未満の場合、アラートを出してreturn
   if (afterBPos - beforeBPos < 0.1) {
     QMessageBox::warning(
-        0, "IwaMorph",
+        0, "IwaWarper",
         "Cannot add a correspondence point too close to existing ones.",
         QMessageBox::Ok, QMessageBox::Ok);
     return false;
@@ -885,8 +886,8 @@ double ShapePair::getNearestBezierPos(const QPointF& pos, int frame, int fromTo,
   // ポイントリストを得る
   BezierPointList pointList = getBezierPointList(frame, fromTo);
 
-  int nearestSegmentIndex;
-  double nearestRatio;
+  int nearestSegmentIndex = 0;
+  double nearestRatio     = 0.;
 
   double tmpDist = 10000.0;
 
@@ -902,11 +903,11 @@ double ShapePair::getNearestBezierPos(const QPointF& pos, int frame, int fromTo,
 
       // 最近傍距離とその t の値を得る
       double t;
-      double dist = getNearestPos(startPoint.pos, startPoint.secondHandle,
-                                  endPoint.firstHandle, endPoint.pos, pos, t);
+      double pDist = getNearestPos(startPoint.pos, startPoint.secondHandle,
+                                   endPoint.firstHandle, endPoint.pos, pos, t);
       // これまでで一番近かったら、値を更新
-      if (dist < tmpDist) {
-        tmpDist             = dist;
+      if (pDist < tmpDist) {
+        tmpDist             = pDist;
         nearestSegmentIndex = p;
         nearestRatio        = t;
       }
@@ -922,11 +923,11 @@ double ShapePair::getNearestBezierPos(const QPointF& pos, int frame, int fromTo,
 
       // 最近傍距離とその t の値を得る
       double t;
-      double dist = getNearestPos(startPoint.pos, startPoint.secondHandle,
-                                  endPoint.firstHandle, endPoint.pos, pos, t);
+      double pDist = getNearestPos(startPoint.pos, startPoint.secondHandle,
+                                   endPoint.firstHandle, endPoint.pos, pos, t);
       // これまでで一番近かったら、値を更新
-      if (dist < tmpDist) {
-        tmpDist             = dist;
+      if (pDist < tmpDist) {
+        tmpDist             = pDist;
         nearestSegmentIndex = p;
         nearestRatio        = t;
       }
@@ -954,7 +955,7 @@ double ShapePair::getNearestBezierPos(const QPointF& pos, int frame, int fromTo,
   BezierPointList pointList = getBezierPointList(frame, fromTo);
 
   int nearestSegmentIndex;
-  double nearestRatio;
+  double nearestRatio = 0.;
 
   double tmpDist = 10000.0;
 
@@ -1005,6 +1006,7 @@ double ShapePair::getNearestBezierPos(const QPointF& pos, int frame, int fromTo,
       nearestSegmentIndex = beforeIndex;
       nearestRatio        = t;
     } else {
+      nearestSegmentIndex = beforeIndex;
       // 各ポイントについて
       for (int p = beforeIndex; p <= afterIndex; p++) {
         // ベジエの４つのコントロールポイントを得る
@@ -1562,7 +1564,7 @@ void ShapePair::drawTimeLineHead(QPainter& p, int& vpos, int width,
     fcRowRect.translate(0, rowHeight);
     fcRowRect.setLeft(LockPos);
     fcRowRect.setBottom(fcRowRect.bottom() + rowHeight);
-    QColor rowColor = (fromTo == 0) ? QColor(100, 60, 50) : QColor(50, 60, 110);
+    rowColor = (fromTo == 0) ? QColor(100, 60, 50) : QColor(50, 60, 110);
     p.setPen(Qt::black);
     p.setBrush(rowColor);
     p.drawRect(fcRowRect);
@@ -1607,7 +1609,7 @@ void ShapePair::drawTimeLineHead(QPainter& p, int& vpos, int width,
       rowRect.translate(0, rowHeight);
 
       if (formCorr == 1) {
-        QColor rowColor = QColor(69, 68, 48);
+        rowColor = QColor(69, 68, 48);
 
         p.setPen(Qt::black);
         p.setBrush(rowColor);
@@ -1653,9 +1655,9 @@ void ShapePair::drawTimeLineHead(QPainter& p, int& vpos, int width,
   }
 }
 
-void ShapePair::drawTimeLine(QPainter& p, int& vpos, int width, int fromFrame,
-                             int toFrame, int frameWidth, int rowHeight,
-                             int& currentRow, int mouseOverRow,
+void ShapePair::drawTimeLine(QPainter& p, int& vpos, int /*width*/,
+                             int fromFrame, int toFrame, int frameWidth,
+                             int rowHeight, int& currentRow, int mouseOverRow,
                              double mouseOverFrameD, bool layerIsLocked,
                              bool layerIsVisibleInRender) {
   bool isHighlightRow = (mouseOverRow == currentRow) && !layerIsLocked;
@@ -1718,8 +1720,8 @@ void ShapePair::drawTimeLine(QPainter& p, int& vpos, int width, int fromFrame,
       continue;
 
     bool isSelected = false;
-    int selFromTo;
-    bool isForm;
+    int selFromTo   = 0;
+    bool isForm     = true;
     if (IwApp::instance()->getCurrentSelection()->getSelection() ==
         IwTimeLineKeySelection::instance()) {
       OneShape selectedShape = IwTimeLineKeySelection::instance()->getShape();
@@ -1751,7 +1753,7 @@ void ShapePair::drawTimeLine(QPainter& p, int& vpos, int width, int fromFrame,
       if (isSelected && selFromTo == fromTo && (formCorr == 0) == isForm)
         rowSelected = true;
 
-      QColor rowColor    = (formCorr == 1) ? QColor(69, 68, 48)
+      rowColor           = (formCorr == 1) ? QColor(69, 68, 48)
                            : (fromTo == 0) ? QColor(100, 60, 50)
                                            : QColor(50, 60, 110);
       QRect tmpFrameRect = frameRect.translated(fromFrame * frameWidth, 0);
@@ -1870,7 +1872,7 @@ void ShapePair::drawTimeLine(QPainter& p, int& vpos, int width, int fromFrame,
 // タイムラインクリック時
 //--------------------------------------------------------
 bool ShapePair::onTimeLineClick(int rowInShape, double frameD, bool ctrlPressed,
-                                bool shiftPressed, Qt::MouseButton button) {
+                                bool shiftPressed, Qt::MouseButton /*button*/) {
   // 最初の行はシェイプの行で、これはとりあえずムシ
   if (rowInShape == 0) return false;
   bool fromShapeIsShown =
@@ -1894,7 +1896,7 @@ bool ShapePair::onTimeLineClick(int rowInShape, double frameD, bool ctrlPressed,
   if (keys.count() >= 2 && !keys.contains(frame) && keys.first() < frame &&
       frame < keys.last()) {
     // キーを探す
-    int prevKey;
+    int prevKey = 0;
     for (auto key : keys) {
       if (key > frame) {
         if (key == prevKey + 1) break;

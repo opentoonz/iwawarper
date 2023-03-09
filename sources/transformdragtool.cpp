@@ -116,6 +116,8 @@ QPointF TransformDragTool::getOppositeHandlePos(OneShape shape, int frame) {
   case Handle_BottomEdge:
     return QPointF(box.center().x(), box.top());
     break;
+  default:
+    break;
   }
   // 保険
   return box.center();
@@ -187,7 +189,7 @@ RotateDragTool::RotateDragTool(OneShape shape, TransformHandleId handleId,
 
 //--------------------------------------------------------
 
-void RotateDragTool::onClick(const QPointF& pos, const QMouseEvent* e) {
+void RotateDragTool::onClick(const QPointF& pos, const QMouseEvent* /*e*/) {
   // 最初の角度を得る
   if (m_tool->IsRotateAroundCenter())
     m_anchorPos = getCenterPos();
@@ -464,6 +466,8 @@ void TrapezoidDragTool::onDrag(const QPointF& pos, const QMouseEvent* e) {
     if (isShiftPressed)
       topLeftVec = QPointF(bottomLeftVec.x(), -bottomLeftVec.y());
     break;
+  default:
+    break;
   }
 
   // 各シェイプの各ポイントについて、４つの変移ベクトルの線形補間を足すことで移動させる
@@ -543,7 +547,7 @@ ScaleDragTool::ScaleDragTool(OneShape shape, TransformHandleId handleId,
 
 //--------------------------------------------------------
 
-void ScaleDragTool::onClick(const QPointF& pos, const QMouseEvent* e) {
+void ScaleDragTool::onClick(const QPointF& pos, const QMouseEvent* /*e*/) {
   m_startPos = pos;
   // 拡大縮小の基準位置
   if (m_tool->IsScaleAroundCenter())

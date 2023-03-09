@@ -66,10 +66,11 @@ public:
   CorrespondenceTool();
   ~CorrespondenceTool();
 
-  bool leftButtonDown(const QPointF &, const QMouseEvent *) override;
-  bool leftButtonDrag(const QPointF &, const QMouseEvent *) override;
-  bool leftButtonUp(const QPointF &, const QMouseEvent *) override;
-  void leftButtonDoubleClick(const QPointF &, const QMouseEvent *);
+  bool leftButtonDown(const QPointF &, const QMouseEvent *) final override;
+  bool leftButtonDrag(const QPointF &, const QMouseEvent *) final override;
+  bool leftButtonUp(const QPointF &, const QMouseEvent *) final override;
+  void leftButtonDoubleClick(const QPointF &,
+                             const QMouseEvent *) final override;
 
   // 対応点と分割された対応シェイプ、シェイプ同士の連結を表示する
   void draw() override;

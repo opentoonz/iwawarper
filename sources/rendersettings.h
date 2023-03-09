@@ -46,4 +46,4 @@ public:
   void loadData(QXmlStreamReader& reader);
 };
 
-#endif RENDERSETTINGS_H
+#endif  // RENDERSETTINGS_H

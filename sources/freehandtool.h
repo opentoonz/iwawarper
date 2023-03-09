@@ -76,16 +76,16 @@ public:
   FreeHandTool();
   ~FreeHandTool();
 
-  bool leftButtonDown(const QPointF&, const QMouseEvent*);
-  bool leftButtonDrag(const QPointF&, const QMouseEvent*);
-  bool leftButtonUp(const QPointF&, const QMouseEvent*);
+  bool leftButtonDown(const QPointF&, const QMouseEvent*) final override;
+  bool leftButtonDrag(const QPointF&, const QMouseEvent*) final override;
+  bool leftButtonUp(const QPointF&, const QMouseEvent*) final override;
 
   bool rightButtonDown(const QPointF&, const QMouseEvent*, bool& canOpenMenu,
-                       QMenu& menu);
+                       QMenu& menu) final override;
 
-  void draw();
+  void draw() final override;
 
-  void onDeactivate();
+  void onDeactivate() final override;
 
   //(ダイアログから呼ばれる) 精度が変わったらシェイプを変更する
   void onPrecisionChanged(int prec);

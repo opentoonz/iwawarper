@@ -238,7 +238,7 @@ void ReshapeTool::leftButtonDoubleClick(const QPointF&, const QMouseEvent*) {}
 // 右クリックメニュー
 //--------------------------------------------------------
 bool ReshapeTool::rightButtonDown(const QPointF&, const QMouseEvent* e,
-                                  bool& canOpenMenu, QMenu& menu) {
+                                  bool& /*canOpenMenu*/, QMenu& menu) {
   // クリック位置から、操作対象となるシェイプ／ハンドルを得る
   int pointIndex, handleId;
   OneShape shape = getClickedShapeAndIndex(pointIndex, handleId, e);
@@ -253,7 +253,7 @@ bool ReshapeTool::rightButtonDown(const QPointF&, const QMouseEvent* e,
 //--------------------------------------------------------
 // 矢印キーで1ピクセル分ずつ移動。+Shiftで10、+Ctrlで1/10
 //--------------------------------------------------------
-bool ReshapeTool::keyDown(int key, bool ctrl, bool shift, bool alt) {
+bool ReshapeTool::keyDown(int key, bool ctrl, bool shift, bool /*alt*/) {
   // 選択シェイプが無ければ無効
   if (m_selection->isEmpty()) return false;
 
@@ -431,8 +431,6 @@ void ReshapeTool::drawControlPoint(OneShape shape, BezierPointList& pointList,
                                    int cpIndex, bool drawHandles,
                                    const QPointF& onePix, int specialShapeIndex,
                                    bool fillPoint) {
-  IwProject* project = IwApp::instance()->getCurrentProject()->getProject();
-
   IwLayer* layer = IwApp::instance()->getCurrentLayer()->getLayer();
   if (!layer) return;
   BezierPoint bPoint = pointList.at(cpIndex);

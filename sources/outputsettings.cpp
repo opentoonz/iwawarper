@@ -204,7 +204,7 @@ void OutputSettings::loadData(QXmlStreamReader &reader) {
         if (reader.name() == "FormatProperties") {
           QString saverStr = reader.attributes().value("saver").toString();
           // ˆê“xŒÄ‚Ño‚·‚±‚Æ‚Åì‚ç‚ê‚é
-          TPropertyGroup *pg = getFileFormatProperties(saverStr);
+          getFileFormatProperties(saverStr);
           m_formatProperties[saverStr]->loadData(reader);
         } else
           reader.skipCurrentElement();

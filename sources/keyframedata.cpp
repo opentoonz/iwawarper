@@ -165,12 +165,12 @@ void KeyFrameData::getKeyFrameData(OneShape& shape, QList<int>& selectedFrames,
           int keyAmount     = 0;
           int firstKeyFrame = -1;
           // ② Dst範囲にそのシェイプの全てのキーが入っている
-          for (int d = 0; d < dstFrames.size(); d++) {
+          for (auto dstFrame : dstFrames) {
             // キー数をカウント
-            if (shape.shapePairP->isFormKey(dstFrames.at(d), shape.fromTo)) {
+            if (shape.shapePairP->isFormKey(dstFrame, shape.fromTo)) {
               keyAmount++;
               // 最初のフレームを保持
-              if (firstKeyFrame < 0) firstKeyFrame = dstFrames.at(d);
+              if (firstKeyFrame < 0) firstKeyFrame = dstFrame;
             }
           }
           // 総数が一致したら、これはイカン！FormKeyの最初のフレームをペースト不可にして残す
@@ -206,12 +206,12 @@ void KeyFrameData::getKeyFrameData(OneShape& shape, QList<int>& selectedFrames,
           int keyAmount     = 0;
           int firstKeyFrame = -1;
           // ② Dst範囲にそのシェイプの全てのキーが入っている
-          for (int d = 0; d < dstFrames.size(); d++) {
+          for (auto dstFrame : dstFrames) {
             // キー数をカウント
-            if (shape.shapePairP->isCorrKey(dstFrames.at(d), shape.fromTo)) {
+            if (shape.shapePairP->isCorrKey(dstFrame, shape.fromTo)) {
               keyAmount++;
               // 最初のフレームを保持
-              if (firstKeyFrame < 0) firstKeyFrame = dstFrames.at(d);
+              if (firstKeyFrame < 0) firstKeyFrame = dstFrame;
             }
           }
           // 総数が一致したら、これはイカン！FormKeyの最初のフレームをペースト不可にして残す

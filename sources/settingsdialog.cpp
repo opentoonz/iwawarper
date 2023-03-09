@@ -135,7 +135,7 @@ void SettingsDialog::onProjectSwitched() {
 //------------------------------------
 // Preference
 //------------------------------------
-void SettingsDialog::onBezierPrecisionComboChanged(int index) {
+void SettingsDialog::onBezierPrecisionComboChanged(int /*index*/) {
   IwProject* project = IwApp::instance()->getCurrentProject()->getProject();
   if (!project) return;
   Preferences::BezierActivePrecision prec =

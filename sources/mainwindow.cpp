@@ -58,7 +58,7 @@ const QString getAppStr() {
 
 class Separator : public QFrame {
 public:
-  Separator(QWidget *parent) { setMinimumSize(1, 15); }
+  Separator(QWidget * /*parent*/) { setMinimumSize(1, 15); }
 
   void paintEvent(QPaintEvent *) {
     QPainter p(this);

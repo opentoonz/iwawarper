@@ -36,22 +36,22 @@ public:
   ReshapeTool();
   ~ReshapeTool();
 
-  bool leftButtonDown(const QPointF&, const QMouseEvent*);
-  bool leftButtonDrag(const QPointF&, const QMouseEvent*);
-  bool leftButtonUp(const QPointF&, const QMouseEvent*);
-  void leftButtonDoubleClick(const QPointF&, const QMouseEvent*);
+  bool leftButtonDown(const QPointF&, const QMouseEvent*) final override;
+  bool leftButtonDrag(const QPointF&, const QMouseEvent*) final override;
+  bool leftButtonUp(const QPointF&, const QMouseEvent*) final override;
+  void leftButtonDoubleClick(const QPointF&, const QMouseEvent*) final override;
 
   // 右クリックメニュー
   bool rightButtonDown(const QPointF&, const QMouseEvent*, bool& canOpenMenu,
-                       QMenu& menu);
+                       QMenu& menu) final override;
   // bool rightButtonDown(const QPointF &, const QMouseEvent*);
 
-  bool keyDown(int key, bool ctrl, bool shift, bool alt);
+  bool keyDown(int key, bool ctrl, bool shift, bool alt) final override;
 
   // アクティブなシェイプにコントロールポイントを描く
   // 選択ポイントは色を変え、ハンドルも描く
-  void draw();
-  int getCursorId(const QMouseEvent*);
+  void draw() final override;
+  int getCursorId(const QMouseEvent*) final override;
 
   // コントロールポイントを描画する。ハンドルも付けるかどうかも引数で決める
   //  PenToolでも使いたいので、static化する

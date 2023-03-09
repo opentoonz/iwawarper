@@ -50,7 +50,7 @@ public:
   virtual void leftButtonDoubleClick(const QPointF &, const QMouseEvent *) {}
 
   virtual bool rightButtonDown(const QPointF &, const QMouseEvent *,
-                               bool &canOpenMenu, QMenu &menu) {
+                               bool & /*canOpenMenu*/, QMenu & /*menu*/) {
     return false;
   }
 
@@ -58,7 +58,8 @@ public:
 
   // 何かショートカットキーが押されたときの解決。
   //  Toolでショートカットを処理した場合はtrueが返る
-  virtual bool keyDown(int key, bool ctrl, bool shift, bool alt) {
+  virtual bool keyDown(int /*key*/, bool /*ctrl*/, bool /*shift*/,
+                       bool /*alt*/) {
     return false;
   }
 
@@ -83,7 +84,9 @@ public:
   void drawJoinLine(ShapePair *);
 
   virtual bool setSpecialShapeColor(OneShape) { return false; }
-  virtual bool setSpecialGridColor(int gId, bool isVertical) { return false; }
+  virtual bool setSpecialGridColor(int /*gId*/, bool /*isVertical*/) {
+    return false;
+  }
 };
 
 #endif

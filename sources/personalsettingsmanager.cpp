@@ -4,7 +4,7 @@
 //------------------------------
 #include "personalsettingsmanager.h"
 
-#include "Iwfolders.h"
+#include "iwfolders.h"
 #include <QProcess>
 #include <QString>
 #include <QSettings>
@@ -52,8 +52,9 @@ void PersonalSettingsManager::setValue(SettingsId mainGroupId,
                                        SettingsId valueId,
                                        const QVariant& value) {
   QSettings settings(getSettingsPath(), QSettings::IniFormat);
-  if (mainGroupId != "") settings.beginGroup(mainGroupId);
-  if (subGroupId != "") settings.beginGroup(subGroupId);
+  if (mainGroupId != NULL && strlen(mainGroupId))
+    settings.beginGroup(mainGroupId);
+  if (subGroupId != NULL && strlen(subGroupId)) settings.beginGroup(subGroupId);
 
   settings.setValue(valueId, value);
 }
@@ -79,8 +80,9 @@ QVariant PersonalSettingsManager::getValue(SettingsId mainGroupId,
                                            SettingsId subGroupId,
                                            SettingsId valueId) {
   QSettings settings(getSettingsPath(), QSettings::IniFormat);
-  if (mainGroupId != "") settings.beginGroup(mainGroupId);
-  if (subGroupId != "") settings.beginGroup(subGroupId);
+  if (mainGroupId != NULL && strlen(mainGroupId))
+    settings.beginGroup(mainGroupId);
+  if (subGroupId != NULL && strlen(subGroupId)) settings.beginGroup(subGroupId);
 
   return settings.value(valueId);
 }

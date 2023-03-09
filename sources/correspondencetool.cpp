@@ -169,7 +169,7 @@ void CorrDragTool::doSnap(double& bezierPos, int frame, double rangeBefore,
 }
 
 //--------------------------------------------------------
-void CorrDragTool::onRelease(const QPointF& pos, const QMouseEvent*) {
+void CorrDragTool::onRelease(const QPointF& /*pos*/, const QMouseEvent*) {
   // Œ»Ý‚ÌƒtƒŒ[ƒ€‚ð“¾‚é
   int frame = m_project->getViewFrame();
   CorrPointList afterCorrs =

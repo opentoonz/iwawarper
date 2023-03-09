@@ -16,9 +16,9 @@
 class Logger {
 public:
 #ifdef ENABLE_LOG
-  static void Initialize(const std::string& fileName) {
-    Logger::fileName = fileName;
-    file             = fopen(fileName.data(), "w");
+  static void Initialize(const std::string& _fileName) {
+    Logger::fileName = _fileName;
+    file             = fopen(_fileName.data(), "w");
     if (!file) exit(0);
   }
   static void Write(const std::string& log) {
@@ -33,8 +33,8 @@ public:
     fflush(file);
   }
 #else
-  static void Initialize(const std::string& fileName) {}
-  static void Write(const std::string& log) {}
+  static void Initialize(const std::string& /*_fileName*/) {}
+  static void Write(const std::string& /*log*/) {}
 #endif
 
 protected:
