@@ -291,7 +291,7 @@ include_directories(
 # ライブラリパスの指定
 if(BUILD_ENV_MSVC)
     set(GLUT_LIB ${SDKROOT}/glut/3.7.6/lib/glut64.lib)
-    set(GL_LIB opengl32.lib glu32.lib)
+    set(GL_LIB opengl32.lib)
 elseif(BUILD_ENV_APPLE)
     find_library(GLUT_LIB GLUT)
     find_library(GL_LIB OpenGL)
