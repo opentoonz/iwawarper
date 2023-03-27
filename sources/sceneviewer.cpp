@@ -42,9 +42,6 @@
 #include <QPointF>
 #include <QVector3D>
 
-#ifdef _WIN32
-#include <GL/GLU.h>
-#endif
 #ifdef MACOSX
 #include <GLUT/glut.h>
 #endif
@@ -52,6 +49,7 @@
 #include <QPainter>
 #include <QMenu>
 #include <QOpenGLTexture>
+#include <QScreen>
 
 #include "logger.h"
 #include "outputsettings.h"
@@ -105,23 +103,15 @@ bool isPoint(const int& id1, const int& id2) {
   return (id1 % 100) < (id2 % 100);
 }
 
-void my_gluPickMatrix(GLfloat x, GLfloat y, GLfloat width, GLfloat height,
+void my_gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
                       GLint viewport[4]) {
-  float sx, sy;
-  float tx, ty;
-  GLfloat mp[4][4] = {{0.f}};
+  if (deltax <= 0 || deltay <= 0) {
+    return;
+  }
 
-  sx = viewport[2] / width;
-  sy = viewport[3] / height;
-  tx = (viewport[2] + 2.0f * (viewport[0] - x)) / width;
-  ty = (viewport[3] + 2.0f * (viewport[1] - y)) / height;
-
-  mp[0][0] = sx;
-  mp[0][3] = tx;
-  mp[1][1] = sy;
-  mp[1][3] = ty;
-
-  glMultMatrixf((GLfloat*)&mp);
+  glTranslatef((viewport[2] - 2 * (x - viewport[0])) / deltax,
+               (viewport[3] - 2 * (y - viewport[1])) / deltay, 0);
+  glScalef(viewport[2] / deltax, viewport[3] / deltay, 1.0);
 }
 
 };  // namespace
@@ -1377,6 +1367,8 @@ QList<int> SceneViewer::pickAll(const QPoint& pos) {
 
   QList<int> pickRanges = {5, 10, 20};
 
+  int devPixRatio = screen()->devicePixelRatio();
+
   for (auto pickRange : pickRanges) {
     glSelectBuffer(512, selectBuffer);
     // アプリケーションをセレクションモードに指定する
@@ -1387,13 +1379,9 @@ QList<int> SceneViewer::pickAll(const QPoint& pos) {
     glPushMatrix();
     glLoadIdentity();
     // ピック領域の指定。この範囲に描画を制限する
-#ifdef _WIN32
-    gluPickMatrix(pos.x(), height() - pos.y(), pickRange, pickRange, viewport);
-#endif
-#ifdef MACOSX
-    my_gluPickMatrix(pos.x(), height() - pos.y(), pickRange, pickRange,
+    my_gluPickMatrix(pos.x() * devPixRatio, (height() - pos.y()) * devPixRatio,
+                     pickRange * devPixRatio, pickRange * devPixRatio,
                      viewport);
-#endif
 
     glMultMatrixd(mat);
 
