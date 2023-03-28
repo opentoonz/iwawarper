@@ -25,7 +25,7 @@ int main(int argc, char* argv[]) {
   Logger::Initialize("Log.txt");
   QApplication a(argc, argv);
   a.setApplicationName("IwaWarper");
-  a.setApplicationVersion("1.0");
+  a.setApplicationVersion("1.0.1");
 
   QDir::setCurrent(qApp->applicationDirPath());
 
