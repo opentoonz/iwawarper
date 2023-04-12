@@ -289,7 +289,7 @@ bool IwProject::contains(ShapePair* shape) {
 //---------------------------------------------------
 // シェイプが何番目のレイヤーの何番目に入っているか返す
 //---------------------------------------------------
-bool IwProject::getShapeIndex(ShapePair* shape, int& layerIndex,
+bool IwProject::getShapeIndex(const ShapePair* shape, int& layerIndex,
                               int& shapeIndex) {
   for (int lay = 0; lay < getLayerCount(); lay++) {
     IwLayer* layer = getLayer(lay);

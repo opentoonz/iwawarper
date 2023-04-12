@@ -961,8 +961,8 @@ bool IwLayer::contains(ShapePair* shape) {
 //---------------------------------------------------
 // シェイプからインデックスを返す 無ければ-1
 //---------------------------------------------------
-int IwLayer::getIndexFromShapePair(ShapePair* shapePair) const {
-  return m_shapepairs.indexOf(shapePair);
+int IwLayer::getIndexFromShapePair(const ShapePair* shapePair) const {
+  return m_shapepairs.indexOf((ShapePair*)shapePair);
 }
 
 //---------------------------------------------------
