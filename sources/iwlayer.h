@@ -156,7 +156,7 @@ public:
   // このレイヤに引数のシェイプペアが属していたらtrue
   bool contains(ShapePair*);
   // シェイプからインデックスを返す 無ければ-1
-  int getIndexFromShapePair(ShapePair*) const;
+  int getIndexFromShapePair(const ShapePair*) const;
   // シェイプを入れ替える
   void swapShapes(int index1, int index2) {
     if (index1 < 0 || index1 >= m_shapepairs.size() || index2 < 0 ||

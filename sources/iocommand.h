@@ -36,7 +36,7 @@ void importProject();
 
 bool saveProjectIfNeeded(const QString commandName);
 
-bool exportShapes(const QSet<ShapePair*>);
+bool exportShapes(const QList<ShapePair*>);
 }  // namespace IoCmd
 
 // TLV‚Ìƒ[ƒh‚ÉŠJ‚­

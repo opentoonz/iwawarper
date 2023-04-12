@@ -573,8 +573,23 @@ void IwShapePairSelection::exportShapes() {
                          tr("No shapes are selected."));
     return;
   }
-  QSet<ShapePair*> shapePairs;
-  for (auto shape : m_shapes) shapePairs.insert(shape.shapePairP);
+  IwProject* project = IwApp::instance()->getCurrentProject()->getProject();
+  if (!project) return;
+  QList<ShapePair*> shapePairs;
+  for (auto shape : m_shapes) {
+    if (!shapePairs.contains(shape.shapePairP))
+      shapePairs.append(shape.shapePairP);
+  }
+
+  // d‚Ë‡‚É•À‚×‚é
+  std::sort(shapePairs.begin(), shapePairs.end(),
+            [&](ShapePair* s1, ShapePair* s2) {
+              int layerId1, shapeId1, layerId2, shapeId2;
+              project->getShapeIndex(s1, layerId1, shapeId1);
+              project->getShapeIndex(s2, layerId2, shapeId2);
+              if (layerId1 != layerId2) return layerId1 < layerId2;
+              return shapeId1 < shapeId2;
+            });
 
   if (IoCmd::exportShapes(shapePairs))
     QMessageBox::information(

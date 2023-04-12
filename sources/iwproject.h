@@ -167,7 +167,7 @@ public:
   // レイヤのどれかにシェイプが入っていればtrue
   bool contains(ShapePair*);
   // シェイプが何番目のレイヤーの何番目に入っているか返す
-  bool getShapeIndex(ShapePair*, int& layerIndex, int& shapeIndex);
+  bool getShapeIndex(const ShapePair*, int& layerIndex, int& shapeIndex);
   // シェイプからレイヤを返す
   IwLayer* getLayerFromShapePair(ShapePair*);
   // 簡単のため追加。親シェイプを返す

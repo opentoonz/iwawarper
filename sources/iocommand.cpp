@@ -735,7 +735,7 @@ bool IoCmd::saveProjectIfNeeded(const QString commandName) {
 
 //----------------------------------------------------------
 
-bool IoCmd::exportShapes(const QSet<ShapePair*> shapePairs) {
+bool IoCmd::exportShapes(const QList<ShapePair*> shapePairs) {
   IwProject* prj = IwApp::instance()->getCurrentProject()->getProject();
   if (!prj) return false;
 
@@ -780,13 +780,11 @@ bool IoCmd::exportShapes(const QSet<ShapePair*> shapePairs) {
   writer.writeComment("ShapePairs");
   writer.writeStartElement("ShapePairs");
 
-  QSet<ShapePair*>::const_iterator sIt = shapePairs.constBegin();
-  while (sIt != shapePairs.constEnd()) {
-    if (!*sIt) continue;
+  for (auto shape : shapePairs) {
+    if (!shape) continue;
     writer.writeStartElement("ShapePair");
-    (*sIt)->saveData(writer);
+    shape->saveData(writer);
     writer.writeEndElement();
-    ++sIt;
   }
   writer.writeEndElement();
 
