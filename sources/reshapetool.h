@@ -32,6 +32,11 @@ class ReshapeTool : public IwTool {
   OneShape getClickedShapeAndIndex(int& pointIndex, int& handleId,
                                    const QMouseEvent* e);
 
+  // show handles for transforming active points
+  bool m_transformHandles;
+  bool m_ctrlPressed;
+  QRectF m_handleRect;
+
 public:
   ReshapeTool();
   ~ReshapeTool();
@@ -79,6 +84,9 @@ public:
 
   bool setSpecialShapeColor(OneShape) override;
   bool setSpecialGridColor(int gId, bool isVertical) override;
+
+  bool isTransformHandlesEnabled() { return m_transformHandles; }
+  void enableTransformHandles(bool on) { m_transformHandles = on; }
 
 protected:
   // Ctrl+矢印キーで0.25ピクセル分ずつ移動させる
