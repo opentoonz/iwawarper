@@ -6,6 +6,7 @@
 #define POINTDRAGTOOL_H
 
 #include "shapepair.h"
+#include "transformtool.h"
 
 #include <QPointF>
 #include <QList>
@@ -139,4 +140,157 @@ public:
 };
 
 //--------------------------------------------------------
+
+//--------------------------------------------------------
+
+class ActivePointsDragTool : public PointDragTool {
+protected:
+  IwProject *m_project;
+  IwLayer *m_layer;
+  QPointF m_startPos;
+
+  QList<QList<int>>
+      m_pointsInShapes;  // 選択ポイントを、各シェイプごとのリストに振り分けて格納
+
+  QList<OneShape> m_shapes;
+
+  // 元の形状
+  QList<BezierPointList> m_orgPoints;
+  // そのシェイプがキーフレームだったかどうか
+  QList<bool> m_wasKeyFrame;
+
+  TransformHandleId m_handleId;
+  QRectF m_handleRect;
+
+  // つかんだハンドルの反対側のハンドル位置を返す
+  QPointF getOppositeHandlePos();
+
+  // シェイプの中心位置を返す
+  QPointF getCenterPos() { return m_handleRect.center(); }
+
+public:
+  ActivePointsDragTool(TransformHandleId, const QSet<int> &, const QRectF &);
+  virtual ~ActivePointsDragTool() {}
+  virtual void onClick(const QPointF &, const QMouseEvent *) = 0;
+  virtual void onDrag(const QPointF &, const QMouseEvent *)  = 0;
+  virtual bool onRelease(const QPointF &, const QMouseEvent *);
+};
+
+//--------------------------------------------------------
+// ハンドルCtrlクリック   → 回転モード (＋Shiftで45度ずつ)
+//--------------------------------------------------------
+
+class ActivePointsRotateDragTool : public ActivePointsDragTool {
+  // 回転の基準位置
+  QPointF m_centerPos;
+  double m_initialAngle;
+
+  QPointF m_onePixLength;
+
+public:
+  ActivePointsRotateDragTool(TransformHandleId, const QSet<int> &,
+                             const QRectF &, const QPointF &onePix);
+  void onClick(const QPointF &, const QMouseEvent *) final override;
+  void onDrag(const QPointF &, const QMouseEvent *) final override;
+};
+
+//--------------------------------------------------------
+// 縦横ハンドルAltクリック　  → Shear変形モード（＋Shiftで平行に変形）
+//--------------------------------------------------------
+
+class ActivePointsShearDragTool : public ActivePointsDragTool {
+  // シアー変形の基準位置
+  QPointF m_anchorPos;
+  bool m_isVertical;
+  bool m_isInv;
+
+public:
+  ActivePointsShearDragTool(TransformHandleId, const QSet<int> &,
+                            const QRectF &);
+  void onClick(const QPointF &, const QMouseEvent *) final override;
+  void onDrag(const QPointF &, const QMouseEvent *) final override;
+};
+
+//--------------------------------------------------------
+// 斜めハンドルAltクリック　  → 台形変形モード（＋Shiftで対称変形）
+//--------------------------------------------------------
+
+class ActivePointsTrapezoidDragTool : public ActivePointsDragTool {
+  // 台形変形の基準となるバウンディングボックス
+  QRectF m_initialBox;
+
+public:
+  ActivePointsTrapezoidDragTool(TransformHandleId, const QSet<int> &,
+                                const QRectF &);
+
+  void onClick(const QPointF &, const QMouseEvent *) final override;
+  void onDrag(const QPointF &, const QMouseEvent *) final override;
+
+  // ４つの変移ベクトルの線形補間を足すことで移動させる
+  QPointF map(const QRectF &bBox, const QPointF &bottomRightVec,
+              const QPointF &topRightVec, const QPointF &topLeftVec,
+              const QPointF &bottomLeftVec, QPointF &targetPoint);
+};
+
+//--------------------------------------------------------
+// ハンドル普通のクリック → 拡大／縮小モード（＋Shiftで縦横比固定）
+//--------------------------------------------------------
+
+class ActivePointsScaleDragTool : public ActivePointsDragTool {
+  // 拡大縮小の基準位置
+  QPointF m_centerPos;
+
+  bool m_scaleHorizontal;
+  bool m_scaleVertical;
+
+public:
+  ActivePointsScaleDragTool(TransformHandleId, const QSet<int> &,
+                            const QRectF &);
+  void onClick(const QPointF &, const QMouseEvent *) final override;
+  void onDrag(const QPointF &, const QMouseEvent *) final override;
+};
+
+//--------------------------------------------------------
+// シェイプのハンドル以外をクリック  → 移動モード（＋Shiftで平行移動）
+//--------------------------------------------------------
+
+class ActivePointsTranslateDragTool : public ActivePointsDragTool {
+public:
+  ActivePointsTranslateDragTool(TransformHandleId, const QSet<int> &,
+                                const QRectF &);
+  void onClick(const QPointF &, const QMouseEvent *) final override;
+  void onDrag(const QPointF &, const QMouseEvent *) final override;
+};
+
+//---------------------------------------------------
+// 以下、Undoコマンド
+//---------------------------------------------------
+class ActivePointsDragToolUndo : public QUndoCommand {
+  IwProject *m_project;
+
+  QList<OneShape> m_shapes;
+
+  // シェイプごとの元の形状のリスト
+  QList<BezierPointList> m_beforePoints;
+  // シェイプごとの操作後の形状のリスト
+  QList<BezierPointList> m_afterPoints;
+  // そのシェイプがキーフレームだったかどうか
+  QList<bool> m_wasKeyFrame;
+
+  int m_frame;
+
+  // redoをされないようにするフラグ
+  bool m_firstFlag;
+
+public:
+  ActivePointsDragToolUndo(QList<OneShape> &shapes,
+                           QList<BezierPointList> &beforePoints,
+                           QList<BezierPointList> &afterPoints,
+                           QList<bool> &wasKeyFrame, IwProject *project,
+                           int frame);
+  ~ActivePointsDragToolUndo();
+  void undo();
+  void redo();
+};
+
 #endif

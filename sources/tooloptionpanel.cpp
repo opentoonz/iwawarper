@@ -8,6 +8,7 @@
 #include <QStackedWidget>
 #include <QVBoxLayout>
 #include <QLabel>
+#include <QCheckBox>
 
 #include "iwapp.h"
 #include "iwprojecthandle.h"
@@ -21,6 +22,7 @@
 #include "freehanddialog.h"
 
 #include "myslider.h"
+#include "reshapetool.h"
 
 //------------------------------------------
 // ReshapeTool "Lock Points"コマンドの距離の閾値のスライダ
@@ -30,6 +32,13 @@ ReshapeToolOptionPanel::ReshapeToolOptionPanel(QWidget* parent)
     : QWidget(parent) {
   // オブジェクトの宣言
   m_lockThresholdSlider = new MyIntSlider(1, 500, this);
+  m_transformHandlesCB  = new QCheckBox(tr("Transform Active Points"), this);
+
+  //--- 初期値状態の設定
+  ReshapeTool* tool = dynamic_cast<ReshapeTool*>(IwTool::getTool("T_Reshape"));
+  if (tool) {
+    m_transformHandlesCB->setChecked(tool->isTransformHandlesEnabled());
+  }
 
   // レイアウト
   QVBoxLayout* mainLay = new QVBoxLayout();
@@ -38,6 +47,7 @@ ReshapeToolOptionPanel::ReshapeToolOptionPanel(QWidget* parent)
   {
     mainLay->addWidget(new QLabel(tr("Lock threshold:")), 0);
     mainLay->addWidget(m_lockThresholdSlider, 0);
+    mainLay->addWidget(m_transformHandlesCB, 0, Qt::AlignLeft);
     mainLay->addStretch(1);
   }
   setLayout(mainLay);
@@ -49,6 +59,8 @@ ReshapeToolOptionPanel::ReshapeToolOptionPanel(QWidget* parent)
   // スライダがいじられたらパラメータに反映
   connect(m_lockThresholdSlider, SIGNAL(valueChanged(bool)), this,
           SLOT(onLockThresholdSliderChanged()));
+  connect(m_transformHandlesCB, SIGNAL(clicked(bool)), this,
+          SLOT(onTransformHandlesCBClicked(bool)));
 
   onProjectSwitched();
 }
@@ -67,6 +79,12 @@ void ReshapeToolOptionPanel::onLockThresholdSliderChanged() {
   if (!project) return;
   Preferences::instance()->setLockThreshold(m_lockThresholdSlider->value());
 
+  IwApp::instance()->getCurrentProject()->notifyViewSettingsChanged();
+}
+
+void ReshapeToolOptionPanel::onTransformHandlesCBClicked(bool on) {
+  ReshapeTool* tool = dynamic_cast<ReshapeTool*>(IwTool::getTool("T_Reshape"));
+  if (tool) tool->enableTransformHandles(on);
   IwApp::instance()->getCurrentProject()->notifyViewSettingsChanged();
 }
 

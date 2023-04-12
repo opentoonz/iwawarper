@@ -24,11 +24,41 @@
 #include "iwlayer.h"
 #include "iwlayerhandle.h"
 
+namespace {
+
+void drawEdgeForResize(TransformHandleId handleId, const QPointF& p1,
+                       const QPointF& p2) {
+  glPushName((int)handleId);
+  glBegin(GL_LINE_STRIP);
+  glVertex3d(p1.x(), p1.y(), 0.0);
+  glVertex3d(p2.x(), p2.y(), 0.0);
+  glEnd();
+  glPopName();
+}
+void drawHandle(TransformHandleId handleId, const QPointF& onePix,
+                const QPointF& pos) {
+  glPushMatrix();
+  glPushName((int)handleId);
+  glTranslated(pos.x(), pos.y(), 0.0);
+  glScaled(onePix.x(), onePix.y(), 1.0);
+  glBegin(GL_LINE_LOOP);
+  glVertex3d(2.0, -2.0, 0.0);
+  glVertex3d(2.0, 2.0, 0.0);
+  glVertex3d(-2.0, 2.0, 0.0);
+  glVertex3d(-2.0, -2.0, 0.0);
+  glEnd();
+  glPopName();
+  glPopMatrix();
+}
+
+}  // namespace
+
 ReshapeTool::ReshapeTool()
     : IwTool("T_Reshape")
     , m_selection(IwShapePairSelection::instance())
     , m_dragTool(0)
-    , m_isRubberBanding(false) {}
+    , m_isRubberBanding(false)
+    , m_transformHandles(false) {}
 
 //--------------------------------------------------------
 
@@ -105,6 +135,40 @@ bool ReshapeTool::leftButtonDown(const QPointF& pos, const QMouseEvent* e) {
       IwApp::instance()->getCurrentSelection()->notifySelectionChanged();
       return true;
     }
+  } else if (m_transformHandles && handleId > 0) {
+    TransformHandleId tHandleId = (TransformHandleId)handleId;
+    if (e->modifiers() & Qt::ControlModifier) {
+      if (tHandleId == Handle_RightEdge || tHandleId == Handle_TopEdge ||
+          tHandleId == Handle_LeftEdge || tHandleId == Handle_BottomEdge) {
+        m_dragTool = new ActivePointsRotateDragTool(
+            tHandleId, m_selection->getActivePointSet(), m_handleRect,
+            m_viewer->getOnePixelLength());
+      } else {
+        m_dragTool = new ActivePointsScaleDragTool(
+            tHandleId, m_selection->getActivePointSet(), m_handleRect);
+      }
+    } else {
+      if (tHandleId == Handle_RightEdge || tHandleId == Handle_TopEdge ||
+          tHandleId == Handle_LeftEdge || tHandleId == Handle_BottomEdge)
+        m_dragTool = new ActivePointsTranslateDragTool(
+            tHandleId, m_selection->getActivePointSet(), m_handleRect);
+      // Altクリック　  → Shear変形モード（＋）
+      else if (e->modifiers() & Qt::AltModifier) {
+        if (tHandleId == Handle_Right || tHandleId == Handle_Top ||
+            tHandleId == Handle_Left || tHandleId == Handle_Bottom)
+          m_dragTool = new ActivePointsShearDragTool(
+              tHandleId, m_selection->getActivePointSet(), m_handleRect);
+        else
+          m_dragTool = new ActivePointsTrapezoidDragTool(
+              tHandleId, m_selection->getActivePointSet(), m_handleRect);
+      }
+      // 普通のクリック → 拡大／縮小モード
+      else
+        m_dragTool = new ActivePointsScaleDragTool(
+            tHandleId, m_selection->getActivePointSet(), m_handleRect);
+    }
+    m_dragTool->onClick(pos, e);
+    return true;
   }
   // 何も無いところをクリックした場合
   else {
@@ -319,6 +383,15 @@ void ReshapeTool::draw() {
 
   QList<OneShape> shapes = m_selection->getShapes();
 
+  QPointF topLeft(10000, 10000);
+  QPointF bottomRight(-1000, -1000);
+  auto updateBBox = [&](const QPointF& pos) {
+    topLeft =
+        QPointF(std::min(pos.x(), topLeft.x()), std::min(pos.y(), topLeft.y()));
+    bottomRight = QPointF(std::max(pos.x(), bottomRight.x()),
+                          std::max(pos.y(), bottomRight.y()));
+  };
+
   // 各アクティブなシェイプについて
   for (int s = 0; s < shapes.size(); s++) {
     OneShape shape = shapes.at(s);
@@ -334,6 +407,15 @@ void ReshapeTool::draw() {
         glColor3dv(cpSelected);
         ReshapeTool::drawControlPoint(shape, bPList, p, true,
                                       m_viewer->getOnePixelLength());
+
+        // get bounding box for transform handle
+        if (m_transformHandles) {
+          BezierPoint bp = bPList.at(p);
+          updateBBox(bp.firstHandle);
+          updateBBox(bp.pos);
+          updateBBox(bp.secondHandle);
+        }
+
       }
       // 選択されていない場合
       else {
@@ -350,6 +432,40 @@ void ReshapeTool::draw() {
   }
 
   if (m_dragTool) m_dragTool->draw(m_viewer->getOnePixelLength());
+
+  if (m_transformHandles) {
+    QRectF handleRect(topLeft, bottomRight);
+    if (!handleRect.isEmpty()) {
+      QPointF onePix = m_viewer->getOnePixelLength();
+      handleRect.adjust(-onePix.x(), -onePix.y(), onePix.x(), onePix.y());
+      glColor3dv(cpSelected);
+      glEnable(GL_LINE_STIPPLE);
+      glLineStipple(3, 0xAAAA);
+      drawEdgeForResize(Handle_RightEdge, handleRect.bottomRight(),
+                        handleRect.topRight());
+      drawEdgeForResize(Handle_TopEdge, handleRect.topRight(),
+                        handleRect.topLeft());
+      drawEdgeForResize(Handle_LeftEdge, handleRect.topLeft(),
+                        handleRect.bottomLeft());
+      drawEdgeForResize(Handle_BottomEdge, handleRect.bottomLeft(),
+                        handleRect.bottomRight());
+      glDisable(GL_LINE_STIPPLE);
+      // ハンドルを描く
+      drawHandle(Handle_BottomRight, onePix, handleRect.bottomRight());
+      drawHandle(Handle_Right, onePix,
+                 QPointF(handleRect.right(), handleRect.center().y()));
+      drawHandle(Handle_TopRight, onePix, handleRect.topRight());
+      drawHandle(Handle_Top, onePix,
+                 QPointF(handleRect.center().x(), handleRect.top()));
+      drawHandle(Handle_TopLeft, onePix, handleRect.topLeft());
+      drawHandle(Handle_Left, onePix,
+                 QPointF(handleRect.left(), handleRect.center().y()));
+      drawHandle(Handle_BottomLeft, onePix, handleRect.bottomLeft());
+      drawHandle(Handle_Bottom, onePix,
+                 QPointF(handleRect.center().x(), handleRect.bottom()));
+      m_handleRect = handleRect;
+    }
+  }
 
   // 次に、ラバーバンドを描画
   if (isRubberBandValid()) {
@@ -390,11 +506,15 @@ int ReshapeTool::getCursorId(const QMouseEvent* e) {
     return ToolCursor::ForbiddenCursor;
   }
 
-  int name = m_viewer->pick(e->pos());
+  // クリック位置から、操作対象となるシェイプ／ハンドルを得る
+  int pointIndex, handleId;
+  OneShape shape = getClickedShapeAndIndex(pointIndex, handleId, e);
+  // int name = m_viewer->pick(e->pos());
+
+  m_ctrlPressed = (e->modifiers() & Qt::ControlModifier);
 
   // ハンドルがクリックされたかチェックする（nameの下一桁）
-  int handleId = name % 10;
-  if (handleId) {
+  if (shape.shapePairP && handleId >= 1) {
     if (handleId == 1)  // over point
       IwApp::instance()->showMessageOnStatusBar(
           tr("[Drag points] to move. [+Shift] to move either horizontal or "
@@ -409,17 +529,148 @@ int ReshapeTool::getCursorId(const QMouseEvent* e) {
     return ToolCursor::BlackArrowCursor;
   }
 
-  IwApp::instance()->showMessageOnStatusBar(
+  QString statusStr =
       tr("[Click points / Drag area] to select. [+Shift] to add to the "
          "selection. [Alt + Click shape] to insert a new point. [Arrow keys] "
-         "to move. [+Shift] with large step. [+Ctrl] with small step."));
+         "to move. [+Shift] with large step. [+Ctrl] with small step.");
+
+  if (m_transformHandles) {
+    if (m_ctrlPressed) {
+      switch (handleId) {
+      case Handle_RightEdge:
+      case Handle_TopEdge:
+      case Handle_LeftEdge:
+      case Handle_BottomEdge:
+        statusStr = tr("[Ctrl+Drag] to rotate. [+Shift] every 45 degrees.");
+        break;
+      default:
+        statusStr =
+            tr("[Ctrl+Drag] to scale. [+Shift] with fixing aspect ratio.");
+        break;
+      }
+    } else {
+      switch (handleId) {
+      case Handle_BottomRight:
+      case Handle_TopRight:
+      case Handle_TopLeft:
+      case Handle_BottomLeft:
+        statusStr =
+            tr("[Drag] to scale. [+Shift] with fixing aspect ratio. [Alt+Drag] "
+               "to reshape "
+               "trapezoidally. [+Shift] with symmetrically.");
+        break;
+      case Handle_Right:
+      case Handle_Top:
+      case Handle_Left:
+      case Handle_Bottom:
+        statusStr =
+            tr("[Drag] to scale. [Alt+Drag] to shear. [+Shift] with a parallel "
+               "manner.");
+        break;
+      case Handle_RightEdge:
+      case Handle_TopEdge:
+      case Handle_LeftEdge:
+      case Handle_BottomEdge:
+        statusStr =
+            tr("[Drag] to move. [+Shift] to either vertical or horizontal "
+               "direction. [Ctrl+Drag] to rotate.");
+        break;
+      default:
+        break;
+      }
+    }
+  }
+  IwApp::instance()->showMessageOnStatusBar(statusStr);
 
   // コントロールポイント追加モードの条件
-  OneShape shape = layer->getShapePairFromName(name);
   if (shape.shapePairP && (e->modifiers() & Qt::AltModifier) &&
       m_selection->isSelected(shape))
     return ToolCursor::BlackArrowAddCursor;
 
+  if (!m_transformHandles || handleId == Handle_None)
+    return ToolCursor::ArrowCursor;
+
+  // 押されている修飾キー／ハンドルに合わせ、カーソルIDを返す
+  // 回転モード
+  if (m_ctrlPressed) {
+    switch (handleId) {
+    case Handle_RightEdge:
+    case Handle_TopEdge:
+    case Handle_LeftEdge:
+    case Handle_BottomEdge:
+      return ToolCursor::RotationCursor;
+      break;
+    case Handle_TopRight:
+    case Handle_BottomLeft:
+      return ToolCursor::SizeFDiagCursor;
+      break;
+    case Handle_BottomRight:
+    case Handle_TopLeft:
+      return ToolCursor::SizeBDiagCursor;
+      break;
+    case Handle_Right:
+    case Handle_Left:
+      return ToolCursor::SizeHorCursor;
+      break;
+    case Handle_Top:
+    case Handle_Bottom:
+      return ToolCursor::SizeVerCursor;
+      break;
+    default:
+      return ToolCursor::ArrowCursor;
+      break;
+    }
+  }
+  // Shear変形モード
+  else if (e->modifiers() & Qt::AltModifier) {
+    switch (handleId) {
+    case Handle_BottomRight:
+    case Handle_TopRight:
+    case Handle_TopLeft:
+    case Handle_BottomLeft:
+      return ToolCursor::TrapezoidCursor;
+      break;
+    case Handle_Right:
+    case Handle_Top:
+    case Handle_Left:
+    case Handle_Bottom:
+      return ToolCursor::TrapezoidCursor;
+      break;
+    default:
+      return ToolCursor::ArrowCursor;
+      break;
+    }
+  }
+  // 拡大縮小モード 又は 移動モード
+  else {
+    switch (handleId) {
+    case Handle_RightEdge:
+    case Handle_TopEdge:
+    case Handle_LeftEdge:
+    case Handle_BottomEdge:
+      return ToolCursor::SizeAllCursor;
+      break;
+    case Handle_TopRight:
+    case Handle_BottomLeft:
+      return ToolCursor::SizeFDiagCursor;
+      break;
+    case Handle_BottomRight:
+    case Handle_TopLeft:
+      return ToolCursor::SizeBDiagCursor;
+      break;
+    case Handle_Right:
+    case Handle_Left:
+      return ToolCursor::SizeHorCursor;
+      break;
+    case Handle_Top:
+    case Handle_Bottom:
+      return ToolCursor::SizeVerCursor;
+      break;
+    default:
+      return ToolCursor::ArrowCursor;
+      break;
+    }
+  }
   return ToolCursor::ArrowCursor;
 }
 
@@ -647,11 +898,17 @@ OneShape ReshapeTool::getClickedShapeAndIndex(int& pointIndex, int& handleId,
   };
 
   // つかんだ対象ごとにリストをつくる
-  QList<ClickedPointInfo> cpList, shapeList, handleList;
+  QList<ClickedPointInfo> cpList, shapeList, handleList, transformHandleList;
 
   // つかんだアイテムを仕分けていく
   for (int i = 0; i < nameList.size(); i++) {
-    int name          = nameList.at(i);
+    int name = nameList.at(i);
+
+    if (m_transformHandles && name < 10000) {
+      transformHandleList.append({OneShape(), -1, name % 100});
+      continue;
+    }
+
     OneShape tmpShape = layer->getShapePairFromName(name);
     if (!tmpShape.shapePairP) continue;
 
@@ -668,13 +925,23 @@ OneShape ReshapeTool::getClickedShapeAndIndex(int& pointIndex, int& handleId,
       shapeList.append(clickedInfo);
   }
   // 全てのリストが空ならreturn
-  if (cpList.isEmpty() && shapeList.isEmpty() && handleList.isEmpty()) return 0;
+  if (cpList.isEmpty() && shapeList.isEmpty() && handleList.isEmpty() &&
+      transformHandleList.isEmpty())
+    return 0;
 
   ClickedPointInfo retInfo;  // 最終的に返すクリック情報
+
+  if (!transformHandleList.isEmpty()) {
+    std::sort(transformHandleList.begin(), transformHandleList.end(),
+              [](ClickedPointInfo lhs, ClickedPointInfo rhs) {
+                return lhs.hId < rhs.hId;
+              });
+    retInfo = transformHandleList.first();
+  }
   // 修飾キーによって、ポイント／ハンドルどちらを優先してつかむかを判断する
   //  +Ctrl, +Alt の場合はハンドルを優先
-  if (e->modifiers() & Qt::ControlModifier ||
-      e->modifiers() & Qt::AltModifier) {
+  else if (e->modifiers() & Qt::ControlModifier ||
+           e->modifiers() & Qt::AltModifier) {
     if (!handleList.isEmpty())
       retInfo = handleList.first();
     else if (!cpList.isEmpty())

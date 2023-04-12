@@ -14,6 +14,7 @@ class QStackedWidget;
 class IwTool;
 
 class MyIntSlider;
+class QCheckBox;
 
 //------------------------------------------
 // ReshapeTool "Lock Points"コマンドの距離の閾値のスライダ
@@ -23,12 +24,14 @@ class ReshapeToolOptionPanel : public QWidget {
   Q_OBJECT
 
   MyIntSlider* m_lockThresholdSlider;
+  QCheckBox* m_transformHandlesCB;
 
 public:
   ReshapeToolOptionPanel(QWidget* parent);
 protected slots:
   void onProjectSwitched();
   void onLockThresholdSliderChanged();
+  void onTransformHandlesCBClicked(bool);
 };
 
 //------------------------------------------
