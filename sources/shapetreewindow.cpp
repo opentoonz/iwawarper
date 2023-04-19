@@ -1155,9 +1155,11 @@ void ShapeTree::contextMenuEvent(QContextMenuEvent* e) {
 //----------------------------------------------
 
 ShapeTreeWindow::ShapeTreeWindow(QWidget* parent) : QDockWidget(parent) {
+  setObjectName("ShapeTreeWindow");
   setWindowTitle(tr("Shape Tree"));
-  // The dock widget cannot be closed, moved, or floated.
-  setFeatures(QDockWidget::NoDockWidgetFeatures);
+  // The dock widget cannot be closed
+  setFeatures(QDockWidget::DockWidgetMovable |
+              QDockWidget::DockWidgetFloatable);
   m_selectByTagBtn            = new QPushButton(tr("Select By Tag"), this);
   QPushButton* openTagEditBtn = new QPushButton(tr("Edit Tags"), this);
 

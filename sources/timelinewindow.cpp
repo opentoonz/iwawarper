@@ -1517,8 +1517,10 @@ int TimeLinePanel::xPosToFrameIndexAndBorder(int xPos, bool& isBorder) {
 
 TimeLineWindow::TimeLineWindow(QWidget* parent)
     : QDockWidget(tr("Timeline"), parent) {
-  // The dock widget cannot be closed, moved, or floated.
-  setFeatures(QDockWidget::NoDockWidgetFeatures);
+  setObjectName("TimeLineWindow");
+  // The dock widget cannot be closed
+  setFeatures(QDockWidget::DockWidgetMovable |
+              QDockWidget::DockWidgetFloatable);
   // setTitleBarWidget(new QWidget(this));
   // オブジェクトの宣言
   m_itemListHead            = new ItemListHead(this);
