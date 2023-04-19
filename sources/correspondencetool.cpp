@@ -486,6 +486,9 @@ void CorrespondenceTool::draw() {
       alreadyDrawnLinkList;  // 既に対応線を描いたシェイプを記録しておく
 
   bool isSnapping = (m_dragTool != nullptr) && m_ctrlPressed;
+  // join lines are drawn when from and to shapes are both drawn
+  bool isJoinLinesVisible = project->getViewSettings()->isFromToVisible(0) &&
+                            project->getViewSettings()->isFromToVisible(1);
 
   // 各選択シェイプの輪郭を描く
   for (int s = 0; s < m_selection->getCount(); s++) {
@@ -495,7 +498,8 @@ void CorrespondenceTool::draw() {
     drawCorrLine(shape);
 
     // 対応線の描画
-    if (!alreadyDrawnLinkList.contains(shape.shapePairP) && !isSnapping) {
+    if (isJoinLinesVisible &&
+        !alreadyDrawnLinkList.contains(shape.shapePairP) && !isSnapping) {
       drawJoinLine(shape.shapePairP);
 
       alreadyDrawnLinkList.push_back(shape.shapePairP);
