@@ -93,9 +93,11 @@ void ReshapeToolOptionPanel::onTransformHandlesCBClicked(bool on) {
 
 ToolOptionPanel::ToolOptionPanel(QWidget* parent)
     : QDockWidget(tr("Tool Options"), parent) {
+  setObjectName("ToolOptionPanel");
   setFixedWidth(220);
-  // The dock widget cannot be closed, moved, or floated.
-  setFeatures(QDockWidget::NoDockWidgetFeatures);
+  // The dock widget cannot be closed
+  setFeatures(QDockWidget::DockWidgetMovable |
+              QDockWidget::DockWidgetFloatable);
   // オブジェクトの宣言
   m_stackedPanels = new QStackedWidget(this);
 

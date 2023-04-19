@@ -25,9 +25,11 @@ public:
 };
 
 ToolBoxDock::ToolBoxDock(QWidget* parent) : QDockWidget(parent) {
+  setObjectName("ToolBoxDock");
   setFixedWidth(35);
-  // The dock widget cannot be closed, moved, or floated.
-  setFeatures(QDockWidget::NoDockWidgetFeatures);
+  // The dock widget cannot be closed
+  setFeatures(QDockWidget::DockWidgetMovable |
+              QDockWidget::DockWidgetFloatable);
   ToolBox* toolBox = new ToolBox(this);
   setWidget(toolBox);
 }

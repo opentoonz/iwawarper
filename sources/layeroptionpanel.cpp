@@ -65,8 +65,10 @@ void LayerOptionUndo::redo() {
 
 LayerOptionPanel::LayerOptionPanel(QWidget* parent)
     : QDockWidget(tr("Layer Options"), parent), m_undo(nullptr) {
-  // The dock widget cannot be closed, moved, or floated.
-  setFeatures(QDockWidget::NoDockWidgetFeatures);
+  setObjectName("LayerOptionPanel");
+  // The dock widget cannot be closed
+  setFeatures(QDockWidget::DockWidgetMovable |
+              QDockWidget::DockWidgetFloatable);
   m_brightness = new MyIntSlider(-255, 255, this);
   m_contrast   = new MyIntSlider(-255, 255, this);
 

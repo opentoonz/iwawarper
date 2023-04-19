@@ -687,6 +687,7 @@ MainWindow::MainWindow(QWidget *parent, Qt::WindowFlags flags)
   QString fp = IwFolders::getMyProfileFolderPath() + "/mainwindow.ini";
   QSettings settings(fp, QSettings::IniFormat);
   restoreGeometry(settings.value("MainWindowGeometry").toByteArray());
+  restoreState(settings.value("MainWindowState").toByteArray());
 
   showMessageOnStatusBar(tr("IwaWarper launched."), 10000);
 }
@@ -764,6 +765,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
   QString fp = IwFolders::getMyProfileFolderPath() + "/mainwindow.ini";
   QSettings settings(fp, QSettings::IniFormat);
   settings.setValue("MainWindowGeometry", saveGeometry());
+  settings.setValue("MainWindowState", saveState());
 
   IwImageCache::instance()->clear();
   m_viewer->deleteTextures();
