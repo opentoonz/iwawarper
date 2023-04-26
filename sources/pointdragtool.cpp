@@ -191,15 +191,66 @@ int TranslatePointDragTool::calculateSnap(QPointF& pos) {
       for (int fromTo = 0; fromTo < 2; fromTo++) {
         // ロックされていて非表示ならスキップ
         if (!fromToVisible[fromTo]) continue;
-        // ドラッグ中のシェイプならスキップ
-        if (m_shapes.contains(OneShape(shapePair, fromTo))) continue;
         // バウンディングボックスに入っていなかったらスキップ
         QRectF bBox = shapePair->getBBox(frame, fromTo)
                           .adjusted(-thres_dist.x(), -thres_dist.y(),
                                     thres_dist.x(), thres_dist.y());
         if (!bBox.contains(pos)) continue;
-        double dist;
-        double w = shapePair->getNearestBezierPos(pos, frame, fromTo, dist);
+
+        double dist = 10000.0, w;
+        // ドラッグ中のシェイプの場合、動かないポイントにはスナップできる
+        if (m_shapes.contains(OneShape(shapePair, fromTo))) {
+          QList<int> activePoints =
+              m_pointsInShapes[m_shapes.indexOf(OneShape(shapePair, fromTo))];
+          // シェイプの全てのポイントを選択している場合はスキップ
+          if (shapePair->getBezierPointAmount() == activePoints.count())
+            continue;
+          int tmpRangeBefore = -1;
+          // 各ポイントをループ
+          for (int bp = 0; bp < shapePair->getBezierPointAmount(); bp++) {
+            // 非選択のポイントなら
+            if (!activePoints.contains(bp)) {
+              // 開始ポイントインデックスが-1なら開始ポイントインデックスに指定する
+              if (tmpRangeBefore == -1) tmpRangeBefore = bp;
+            }
+            // 選択ポイントなら
+            else {
+              // 開始ポイントインデックスが指定されていたら、
+              if (tmpRangeBefore >= 0) {
+                // 開始ポイントインデックスから今のインデックス-1までの範囲で近傍点を更新
+                double tmp_dist;
+                double tmp_w = shapePair->getNearestBezierPos(
+                    pos, frame, fromTo, (double)tmpRangeBefore,
+                    (double)(bp - 1), tmp_dist);
+                if (tmp_dist < dist) {
+                  dist = tmp_dist;
+                  w    = tmp_w;
+                }
+                // インデックスを-1に戻す
+                tmpRangeBefore = -1;
+              }
+            }
+          }
+          // 最後のセグメント
+          if (tmpRangeBefore >= 0) {
+            double tmp_dist, tmp_w;
+            if (shapePair->isClosed() && !activePoints.contains(0))
+              tmp_w = shapePair->getNearestBezierPos(
+                  pos, frame, fromTo, (double)tmpRangeBefore, 0.0, tmp_dist);
+            else
+              tmp_w = shapePair->getNearestBezierPos(
+                  pos, frame, fromTo, (double)tmpRangeBefore,
+                  (double)(shapePair->getBezierPointAmount() - 1), tmp_dist);
+            if (tmp_dist < dist) {
+              dist = tmp_dist;
+              w    = tmp_w;
+            }
+          }
+        }
+        // ドラッグ中でない普通のシェイプの場合
+        else
+          w = shapePair->getNearestBezierPos(pos, frame, fromTo, dist);
+
         if (dist < minimumDist) {
           double pointBefore = std::floor(w);
           QPointF posBefore =

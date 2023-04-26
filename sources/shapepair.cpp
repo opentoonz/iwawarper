@@ -963,6 +963,10 @@ double ShapePair::getNearestBezierPos(const QPointF& pos, int frame, int fromTo,
   double beforeRatio = rangeBefore - (double)beforeIndex;
   int afterIndex     = (int)rangeAfter;
   double afterRatio  = rangeAfter - (double)afterIndex;
+  if (!isClosed() && afterIndex == pointList.size() - 1) {
+    afterIndex--;
+    afterRatio = 1.0;
+  }
 
   // 閉じたシェイプ かつ ０をまたいでいる 場合
   if (m_isClosed && (rangeBefore > rangeAfter)) {
