@@ -271,8 +271,27 @@ int TranslatePointDragTool::calculateSnap(QPointF& pos) {
                      std::abs(posAfter.y() - pos.y()) < thres_dist.y()) {
             minimumW = pointAfter;
             ret      = (int)minimumW;
-          } else
-            minimumW = w;
+          }
+          else { // 対応点へのスナップ
+            CorrPointList corrs = shapePair->getCorrPointList(frame, fromTo);
+            double minDiff = 100.0;
+            double nearestCorrPos = 0.;
+            for (auto corrPos : corrs) {
+              double tmpDiff = w - corrPos;
+              if (abs(minDiff) > abs(tmpDiff)) {
+                minDiff = tmpDiff;
+                nearestCorrPos = corrPos;
+              }
+            }
+            QPointF posCorr =
+              shapePair->getBezierPosFromValue(frame, fromTo, nearestCorrPos);
+            if (std::abs(posCorr.x() - pos.x()) < thres_dist.x() &&
+              std::abs(posCorr.y() - pos.y()) < thres_dist.y()) {
+              minimumW = nearestCorrPos;
+            }
+            else // 線上へのスナップ
+              minimumW = w;
+          }
           minimumDist  = dist;
           m_snapTarget = OneShape(shapePair, fromTo);
         }
@@ -477,6 +496,25 @@ void TranslatePointDragTool::draw(const QPointF& onePixelLength) {
     BezierPointList bPList =
         m_snapTarget.shapePairP->getBezierPointList(frame, m_snapTarget.fromTo);
 
+
+    // 対応点の描画
+    glColor3d(1.0, 1.0, 0.0);
+    QList<QPointF> corrPoints =
+      m_snapTarget.shapePairP->getCorrPointPositions(frame, m_snapTarget.fromTo);
+    for (auto corrP : corrPoints) {
+      glPushMatrix();
+      glTranslated(corrP.x(), corrP.y(), 0.0);
+      glScaled(onePixelLength.x(), onePixelLength.y(), 1.0);
+      glBegin(GL_LINE_LOOP);
+      glVertex3d(2.0, -2.0, 0.0);
+      glVertex3d(2.0, 2.0, 0.0);
+      glVertex3d(-2.0, 2.0, 0.0);
+      glVertex3d(-2.0, -2.0, 0.0);
+      glEnd();
+      glPopMatrix();
+    }
+
+    // コントロールポイントの描画
     glColor3d(1.0, 0.0, 1.0);
     for (int p = 0; p < bPList.size(); p++) {
       ReshapeTool::drawControlPoint(m_snapTarget, bPList, p, false,
