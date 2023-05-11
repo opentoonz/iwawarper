@@ -50,8 +50,9 @@ void CorrDragTool::onDrag(const QPointF& pos, const QMouseEvent* e) {
   CorrPointList newCorrs;
 
   // 現在のフレームを得る
-  int frame     = m_project->getViewFrame();
-  m_snappedCpId = -1;
+  int frame         = m_project->getViewFrame();
+  m_snappedCpId     = -1;
+  m_snapTargetShape = OneShape();
 
   // Shiftが押されている場合、他の対応点も全部スライドさせる
   if (e->modifiers() & Qt::ShiftModifier) {
@@ -165,6 +166,82 @@ void CorrDragTool::doSnap(double& bezierPos, int frame, double rangeBefore,
       minimumDist * minimumDist) {
     bezierPos     = snapCandidateBezierPos;
     m_snappedCpId = (int)snapCandidateBezierPos;
+    return;
+  }
+
+  // 次に、他のシェイプとの交点へのスナップを試みる
+  IwLayer* currentLayer = IwApp::instance()->getCurrentLayer()->getLayer();
+  // ロック情報を得る
+  bool fromToVisible[2];
+  for (int fromTo = 0; fromTo < 2; fromTo++)
+    fromToVisible[fromTo] =
+        m_project->getViewSettings()->isFromToVisible(fromTo);
+  OneShape tmpSnapTarget;
+  // 各レイヤについて
+  for (int lay = m_project->getLayerCount() - 1; lay >= 0; lay--) {
+    // レイヤを取得
+    IwLayer* layer = m_project->getLayer(lay);
+    if (!layer) continue;
+
+    bool isCurrent = (layer == currentLayer);
+    // 現在のレイヤが非表示ならcontinue
+    // ただしカレントレイヤの場合は表示する
+    if (!isCurrent && !layer->isVisibleInViewer()) continue;
+
+    for (int sp = 0; sp < layer->getShapePairCount(); sp++) {
+      ShapePair* shapePair = layer->getShapePair(sp);
+      if (!shapePair) continue;
+      if (!shapePair->isVisible()) continue;
+      for (int fromTo = 0; fromTo < 2; fromTo++) {
+        // ロックされていて非表示ならスキップ
+        if (!fromToVisible[fromTo]) continue;
+        // 自分自身のシェイプはスキップ
+        if (m_shape.shapePairP == shapePair && m_shape.fromTo == fromTo)
+          continue;
+        // バウンディングボックスに入っていなかったらスキップ
+        QRectF bBox = shapePair->getBBox(frame, fromTo)
+                          .adjusted(-thres_dist.x(), -thres_dist.y(),
+                                    thres_dist.x(), thres_dist.y());
+        if (!bBox.contains(currentPoint)) continue;
+        double dist;
+        double w =
+            shapePair->getNearestBezierPos(currentPoint, frame, fromTo, dist);
+        if (dist < minimumDist) {
+          minimumDist   = dist;
+          tmpSnapTarget = OneShape(shapePair, fromTo);
+        }
+      }
+    }
+  }
+  if (tmpSnapTarget.shapePairP) {
+    // 近傍点の取得を繰り返して交点を出す
+    double dist;
+    double snappedBezierPos = bezierPos;
+    snapPoint               = currentPoint;
+    int itr                 = 0;
+    while (itr < 10) {
+      double w = tmpSnapTarget.shapePairP->getNearestBezierPos(
+          snapPoint, frame, tmpSnapTarget.fromTo, dist);
+      snapPoint = tmpSnapTarget.shapePairP->getBezierPosFromValue(
+          frame, tmpSnapTarget.fromTo, w);
+      snappedBezierPos = m_shape.shapePairP->getNearestBezierPos(
+          snapPoint, frame, m_shape.fromTo, dist);
+      snapPoint = m_shape.shapePairP->getBezierPosFromValue(
+          frame, m_shape.fromTo, snappedBezierPos);
+
+      // 交点とする
+      if (dist < 0.001) {
+        QPointF distVec = currentPoint - snapPoint;
+        if (distVec.x() * distVec.x() + distVec.y() * distVec.y() <
+            minimumDist * minimumDist) {
+          bezierPos         = snappedBezierPos;
+          m_snapTargetShape = tmpSnapTarget;
+        }
+        return;
+      }
+
+      itr++;
+    }
   }
 }
 
@@ -187,6 +264,28 @@ void CorrDragTool::onRelease(const QPointF& /*pos*/, const QMouseEvent*) {
   IwTriangleCache::instance()->invalidateCache(
       start, end, m_project->getParentShape(m_shape.shapePairP));
 }
+
+//--------------------------------------------------------
+
+void CorrDragTool::draw() {
+  int frame = m_project->getViewFrame();
+  // 自身のシェイプのコントロールポイントにスナップ
+  if (m_snappedCpId >= 0) {
+    glColor3d(1.0, 0.0, 1.0);
+    BezierPointList bPList =
+        m_shape.shapePairP->getBezierPointList(frame, m_shape.fromTo);
+    for (int p = 0; p < bPList.size(); p++) {
+      ReshapeTool::drawControlPoint(m_shape, bPList, p, false, m_onePixLength,
+                                    0, true);
+      if (p == m_snappedCpId)
+        ReshapeTool::drawControlPoint(m_shape, bPList, p, false,
+                                      QPointF(3.0 * m_onePixLength));
+    }
+  }
+  // 他シェイプとの交点にスナップの場合は、setSpecialShapeColorでスナップ対象の色を変える
+  // else if (m_snapTargetShape.shapePairP) {}
+}
+
 //--------------------------------------------------------
 // 対応点移動のUndo
 //--------------------------------------------------------
@@ -508,19 +607,7 @@ void CorrespondenceTool::draw() {
 
   // スナップ操作中はコントロールポイントを描く。対応線は描かない
   if (isSnapping) {
-    OneShape oneShape = m_dragTool->shape();
-    int snappedCpId   = m_dragTool->snappedCpId();
-    glColor3d(1.0, 0.0, 1.0);
-    BezierPointList bPList =
-        oneShape.shapePairP->getBezierPointList(frame, oneShape.fromTo);
-    for (int p = 0; p < bPList.size(); p++) {
-      ReshapeTool::drawControlPoint(oneShape, bPList, p, false,
-                                    m_viewer->getOnePixelLength(), 0, true);
-      if (p == snappedCpId)
-        ReshapeTool::drawControlPoint(
-            oneShape, bPList, p, false,
-            QPointF(3.0 * m_viewer->getOnePixelLength()));
-    }
+    m_dragTool->draw();
   }
 }
 
@@ -608,4 +695,9 @@ void CorrespondenceTool::onDeactivate() {
 
 //--------------------------------------------------------
 
+bool CorrespondenceTool::setSpecialShapeColor(OneShape shape) {
+  return (m_dragTool && m_dragTool->isSnapTargetShape(shape));
+}
+
+//--------------------------------------------------------
 CorrespondenceTool correspondenceTool;

@@ -34,6 +34,7 @@ class CorrDragTool {
   QPointF m_onePixLength;
 
   int m_snappedCpId;
+  OneShape m_snapTargetShape;
 
 public:
   CorrDragTool(OneShape shape, int corrPointId, const QPointF &onePix);
@@ -42,9 +43,13 @@ public:
   void onRelease(const QPointF &, const QMouseEvent *);
   OneShape shape() const { return m_shape; }
   int snappedCpId() const { return m_snappedCpId; }
+  bool isSnapTargetShape(const OneShape shape) {
+    return m_snapTargetShape == shape;
+  }
 
   void doSnap(double &bezierPos, int frame, double rangeBefore = -1.,
               double rangeAfter = -1.);
+  void draw();
 };
 
 //--------------------------------------------------------
@@ -82,6 +87,7 @@ public:
   void onActivate() override;
   // アクティブな対応点をリセットする
   void onDeactivate() override;
+  bool setSpecialShapeColor(OneShape) override;
 };
 
 //---------------------------------------------------

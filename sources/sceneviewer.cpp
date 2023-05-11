@@ -622,7 +622,7 @@ void SceneViewer::drawShapes() {
             (fromTo == 0) ? glColor3d(1.0, 0.0, 0.0) : glColor3d(0.0, 0.0, 1.0);
         }
 
-        // 今のところReshapeToolのSnap対象のシェイプのみ
+        // ReshapeToolおよびCorrToolのSnap対象のシェイプ
         if (tool && tool->setSpecialShapeColor(oneShape))
           glColor3d(1.0, 0.0, 1.0);
 
