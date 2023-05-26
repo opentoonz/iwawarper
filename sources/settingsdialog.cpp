@@ -33,6 +33,7 @@ SettingsDialog::SettingsDialog()
   m_warpPrecisionSlider = new MyIntSlider(0, 5, this);
   m_faceSizeThresSlider = new MyIntSlider(10, 50, this);
   m_alphaModeCombo      = new QComboBox(this);
+  m_resampleModeCombo   = new QComboBox(this);
   m_imageShrinkSlider   = new MyIntSlider(1, 4, this);
   m_antialiasCheckBox   = new QCheckBox(tr("Shape Antialias"), this);
 
@@ -46,6 +47,9 @@ SettingsDialog::SettingsDialog()
   aModeList << "Source"
             << "Shape";
   m_alphaModeCombo->addItems(aModeList);
+
+  m_resampleModeCombo->addItem(tr("Area Average"), AreaAverage);
+  m_resampleModeCombo->addItem(tr("Nearest Neighbor"), NearestNeighbor);
 
   //-- レイアウト
   QVBoxLayout* mainLay = new QVBoxLayout();
@@ -64,6 +68,9 @@ SettingsDialog::SettingsDialog()
     mainLay->addWidget(new QLabel(tr("Alpha Mode:")), 0);
     mainLay->addWidget(m_alphaModeCombo, 0);
     mainLay->addSpacing(3);
+    mainLay->addWidget(new QLabel(tr("Resample Mode:")), 0);
+    mainLay->addWidget(m_resampleModeCombo, 0);
+    mainLay->addSpacing(3);
     mainLay->addWidget(m_antialiasCheckBox, 0);
     mainLay->addSpacing(3);
     mainLay->addWidget(new QLabel(tr("Image Shrink:")), 0);
@@ -81,6 +88,8 @@ SettingsDialog::SettingsDialog()
           SLOT(onFaceSizeValueChanged(bool)));
   connect(m_alphaModeCombo, SIGNAL(activated(int)), this,
           SLOT(onAlphaModeComboActivated(int)));
+  connect(m_resampleModeCombo, SIGNAL(activated(int)), this,
+          SLOT(onResampleModeComboActivated()));
   connect(m_imageShrinkSlider, SIGNAL(valueChanged(bool)), this,
           SLOT(onImageShrinkChanged(bool)));
   connect(m_antialiasCheckBox, SIGNAL(clicked(bool)), this,
@@ -126,6 +135,8 @@ void SettingsDialog::onProjectSwitched() {
     m_warpPrecisionSlider->setValue(settings->getWarpPrecision());
     m_faceSizeThresSlider->setValue(settings->getFaceSizeThreshold());
     m_alphaModeCombo->setCurrentIndex((int)settings->getAlphaMode());
+    m_resampleModeCombo->setCurrentIndex(
+        m_resampleModeCombo->findData((int)settings->getResampleMode()));
     m_imageShrinkSlider->setValue(settings->getImageShrink());
     m_antialiasCheckBox->setChecked(settings->getAntialias());
   }
@@ -189,6 +200,20 @@ void SettingsDialog::onAlphaModeComboActivated(int index) {
   if (index == (int)settings->getAlphaMode()) return;
 
   settings->setAlphaMode((AlphaMode)index);
+}
+
+void SettingsDialog::onResampleModeComboActivated() {
+  // 現在のプロジェクトのOutputSettingsを取得
+  IwProject* project = IwApp::instance()->getCurrentProject()->getProject();
+  if (!project) return;
+  RenderSettings* settings = project->getRenderSettings();
+  if (!settings) return;
+
+  ResampleMode rMode =
+      (ResampleMode)(m_resampleModeCombo->currentData().toInt());
+  if (rMode == settings->getResampleMode()) return;
+
+  settings->setResampleMode(rMode);
 }
 
 void SettingsDialog::onImageShrinkChanged(bool isDragging) {

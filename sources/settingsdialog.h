@@ -20,6 +20,7 @@ class SettingsDialog : public IwDialog {
   MyIntSlider* m_warpPrecisionSlider;
   MyIntSlider* m_faceSizeThresSlider;
   QComboBox* m_alphaModeCombo;
+  QComboBox* m_resampleModeCombo;
   MyIntSlider* m_imageShrinkSlider;
   QCheckBox* m_antialiasCheckBox;
 
@@ -40,6 +41,7 @@ protected slots:
   void onPrecisionValueChanged(bool isDragging);
   void onFaceSizeValueChanged(bool isDragging);
   void onAlphaModeComboActivated(int index);
+  void onResampleModeComboActivated();
   void onImageShrinkChanged(bool isDragging);
   void onAntialiasClicked(bool on);
 };

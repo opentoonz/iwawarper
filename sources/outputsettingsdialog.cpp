@@ -73,7 +73,7 @@ OutputSettingsDialog::OutputSettingsDialog()
   m_shapeTagCombo->setSizeAdjustPolicy(QComboBox::AdjustToContents);
 
   QStringList saverList;
-  saverList << Saver_PNG << Saver_TIFF << Saver_SGI;
+  saverList << Saver_PNG << Saver_TIFF << Saver_SGI << Saver_TGA;
   m_saverCombo->addItems(saverList);
 
   parametersBtn->setFocusPolicy(Qt::NoFocus);

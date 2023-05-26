@@ -22,6 +22,7 @@ QStringList precisionStrList = (QStringList() << "Linear"
 RenderSettings::RenderSettings()
     : m_warpPrecision(4)
     , m_alphaMode(SourceAlpha)
+    , m_resampleMode(AreaAverage)
     , m_faceSizeThreshold(25.0)
     , m_imageShrink(1)
     , m_antialias(true) {}
@@ -45,6 +46,7 @@ void RenderSettings::saveData(QXmlStreamWriter& writer) {
   writer.writeTextElement("faceSizeThreshold",
                           QString::number(m_faceSizeThreshold));
   writer.writeTextElement("alphaMode", QString::number((int)m_alphaMode));
+  writer.writeTextElement("resampleMode", QString::number((int)m_resampleMode));
   writer.writeTextElement("imageShrink", QString::number((int)m_imageShrink));
   writer.writeTextElement("antialias", (m_antialias) ? "1" : "0");
   writer.writeEndElement();
@@ -61,6 +63,8 @@ void RenderSettings::loadData(QXmlStreamReader& reader) {
           m_faceSizeThreshold = reader.readElementText().toDouble();
         else if (reader.name() == "alphaMode")
           m_alphaMode = (AlphaMode)(reader.readElementText().toInt());
+        else if (reader.name() == "resampleMode")
+          m_resampleMode = (ResampleMode)(reader.readElementText().toInt());
         else if (reader.name() == "imageShrink")
           m_imageShrink = (AlphaMode)(reader.readElementText().toInt());
         else if (reader.name() == "antialias")

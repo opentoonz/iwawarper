@@ -77,6 +77,8 @@ QString OutputSettings::getStandardExtension(QString saver) {
     return QString("tif");
   else if (saver == Saver_SGI)
     return QString("sgi");
+  else if (saver == Saver_TGA)
+    return QString("tga");
 
   else
     return QString("");

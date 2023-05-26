@@ -9,6 +9,7 @@ class QXmlStreamWriter;
 class QXmlStreamReader;
 
 enum AlphaMode { SourceAlpha = 0, ShapeAlpha };
+enum ResampleMode { AreaAverage = 0, NearestNeighbor };
 
 class RenderSettings {
   // メッシュ再帰分割の回数
@@ -18,6 +19,9 @@ class RenderSettings {
   // アルファを、素材で抜くか、シェイプの形に抜くか
   AlphaMode m_alphaMode;
 
+  // リサンプル
+  ResampleMode m_resampleMode;
+
   // ラスター画像の縮小読み込み
   int m_imageShrink;
 
@@ -26,20 +30,23 @@ class RenderSettings {
 public:
   RenderSettings();
 
-  int getWarpPrecision() { return m_warpPrecision; }
-  void setWarpPrecision(int prec);
+  int getWarpPrecision() const { return m_warpPrecision; }
+  void setWarpPrecision(const int prec);
 
-  double getFaceSizeThreshold() { return m_faceSizeThreshold; }
-  void setFaceSizeThreshold(double thres) { m_faceSizeThreshold = thres; }
+  double getFaceSizeThreshold() const { return m_faceSizeThreshold; }
+  void setFaceSizeThreshold(const double thres) { m_faceSizeThreshold = thres; }
 
-  AlphaMode getAlphaMode() { return m_alphaMode; }
-  void setAlphaMode(AlphaMode mode) { m_alphaMode = mode; }
+  AlphaMode getAlphaMode() const { return m_alphaMode; }
+  void setAlphaMode(const AlphaMode mode) { m_alphaMode = mode; }
 
-  int getImageShrink() { return m_imageShrink; }
-  void setImageShrink(int imageShrink) { m_imageShrink = imageShrink; }
+  ResampleMode getResampleMode() const { return m_resampleMode; }
+  void setResampleMode(const ResampleMode mode) { m_resampleMode = mode; }
 
-  bool getAntialias() { return m_antialias; }
-  void setAntialias(bool on) { m_antialias = on; }
+  int getImageShrink() const { return m_imageShrink; }
+  void setImageShrink(const int imageShrink) { m_imageShrink = imageShrink; }
+
+  bool getAntialias() const { return m_antialias; }
+  void setAntialias(const bool on) { m_antialias = on; }
 
   // 保存/ロード
   void saveData(QXmlStreamWriter& writer);
