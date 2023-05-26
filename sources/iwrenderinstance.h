@@ -45,6 +45,7 @@ class MapTrianglesToRaster_Worker : public QRunnable {
   bool* m_subPointOccupation;
   int m_subAmount;
   AlphaMode m_alphaMode;
+  ResampleMode m_resampleMode;
   const QImage m_shapeAlphaImg;
 
   void run() override;
@@ -55,7 +56,8 @@ public:
                               QPointF sampleOffset, QPointF outputOffset,
                               TRaster64P outRas, TRaster64P srcRas,
                               bool* subPointOccupation, int subAmount,
-                              AlphaMode alphaMode, QImage shapeAlphaImg)
+                              AlphaMode alphaMode, ResampleMode resampleMode,
+                              QImage shapeAlphaImg)
       : m_from(from)
       , m_to(to)
       , m_model(model)
@@ -67,6 +69,7 @@ public:
       , m_subPointOccupation(subPointOccupation)
       , m_subAmount(subAmount)
       , m_alphaMode(alphaMode)
+      , m_resampleMode(resampleMode)
       , m_shapeAlphaImg(shapeAlphaImg) {}
 };
 

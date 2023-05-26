@@ -12,6 +12,7 @@
 #define Saver_TIFF "TIFF"
 #define Saver_SGI "SGI"
 #define Saver_PNG "PNG"
+#define Saver_TGA "TGA"
 
 #include <QString>
 #include <QMap>

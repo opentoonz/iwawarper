@@ -98,6 +98,14 @@ TPixel64 getInterpolatedPixelVal(TRaster64P srcRas, QPointF& uv) {
               lerp(basePix[1][0], basePix[1][1], uvRatio.x()), uvRatio.y());
 }
 
+//---------------------------------------------------
+// uv座標を元に、最も近いピクセル値を得る。
+//---------------------------------------------------
+TPixel64 getNearestPixelVal(TRaster64P srcRas, QPointF& uv) {
+  QPoint uvIndex(tround(uv.x()), tround(uv.y()));
+  return getPixelVal(srcRas, uvIndex);
+}
+
 bool checkIsPremultiplied(TRaster64P ras) {
   for (int y = 0; y < ras->getLy(); y++) {
     TPixel64* pix = ras->pixels(y);
@@ -150,6 +158,8 @@ void IwRenderInstance::doRender() {
   if (isCanceled()) return;
 
   int targetShapeTag = m_project->getOutputSettings()->getShapeTagId();
+  // リサンプル
+  ResampleMode resampleMode = m_project->getRenderSettings()->getResampleMode();
 
   // 下から、各レイヤについて
   for (int lay = m_project->getLayerCount() - 1; lay >= 0; lay--) {
@@ -182,9 +192,15 @@ void IwRenderInstance::doRender() {
           TRaster64P warpedLayerRas =
               warpLayer(layer, tmpShapes, false, origin);
           if (isCanceled()) return;
-          if (warpedLayerRas)
-            TRop::over(morphedRaster, warpedLayerRas,
-                       TPoint(origin.x(), origin.y()));
+          if (warpedLayerRas) {
+            if (resampleMode == AreaAverage)
+              TRop::over(morphedRaster, warpedLayerRas,
+                         TPoint(origin.x(), origin.y()));
+            else
+              TRop::over(morphedRaster, warpedLayerRas,
+                         TTranslation(origin.x(), origin.y()),
+                         TRop::ClosestPixel);
+          }
         }
         // リストをリセット
         tmpShapes.clear();
@@ -709,7 +725,9 @@ void MapTrianglesToRaster_Worker::run() {
                 tmpXPos < xmax && m_subPointOccupation[subIndex] == false) {
               // TPixel64 pix = getPixelVal(srcRas, uv.toPoint());
               // uv座標を元に、ピクセル値をリニア補間で得る。
-              TPixel64 pix = getInterpolatedPixelVal(m_srcRas, uv);
+              TPixel64 pix = (m_resampleMode == AreaAverage)
+                                 ? getInterpolatedPixelVal(m_srcRas, uv)
+                                 : getNearestPixelVal(m_srcRas, uv);
 
               // シェイプの形で抜く場合は、アルファは必ずMaxにする
               if (m_alphaMode == ShapeAlpha) pix.m = TPixel64::maxChannelValue;
@@ -795,6 +813,7 @@ void ResampleResults_Worker::run() {
   }
   delete[] outpix;
 }
+
 //---------------------------------------------------
 // 　ゆがんだ形状を描画する_マルチスレッド版
 // 　三角形のラスタライズを行う
@@ -830,8 +849,11 @@ TRaster64P IwRenderInstance::HEmapTrianglesToRaster_Multi(
   // アルファを、素材で抜くか、シェイプの形に抜くか
   AlphaMode alphaMode = m_project->getRenderSettings()->getAlphaMode();
 
+  // リサンプル
+  ResampleMode resampleMode = m_project->getRenderSettings()->getResampleMode();
+
   // サブピクセル分割数
-  int subAmount  = 4;
+  int subAmount  = (resampleMode == AreaAverage) ? 4 : 1;
   int subAmount2 = subAmount * subAmount;
 
   int maxThreadCount = QThreadPool::globalInstance()->maxThreadCount() -
@@ -879,7 +901,8 @@ TRaster64P IwRenderInstance::HEmapTrianglesToRaster_Multi(
 
       MapTrianglesToRaster_Worker* task = new MapTrianglesToRaster_Worker(
           tmpStart, tmpEnd, &model, this, sampleOffset, outputOffset, outRasT,
-          srcRas, subPointOccupation, subAmount, alphaMode, shapeAlphaImg);
+          srcRas, subPointOccupation, subAmount, alphaMode, resampleMode,
+          shapeAlphaImg);
 
       QThreadPool::globalInstance()->start(task);
 
@@ -945,6 +968,7 @@ void IwRenderInstance::saveImage(TRaster64P ras) {
 
   TImageWriterP writer(TFilePath(path.toStdWString()));
   writer->setProperties(prop);
+  writer->setBackgroundColor(TPixel32::White);
   writer->save(img);
 }
 
