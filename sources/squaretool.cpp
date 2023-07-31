@@ -186,7 +186,8 @@ CreateSquareShapeUndo::CreateSquareShapeUndo(QRectF& rect, IwProject* prj,
   bpList << p[0] << p[1] << p[2] << p[3];
 
   CorrPointList cpList;
-  cpList << 0 << 1 << 2 << 3;
+  CorrPoint c[4] = {{0., 1.}, {1., 1.}, {2., 1.}, {3., 1.}};
+  cpList << c[0] << c[1] << c[2] << c[3];
 
   // Œ»Ý‚ÌƒtƒŒ[ƒ€
   int frame = m_project->getViewFrame();

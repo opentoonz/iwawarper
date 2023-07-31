@@ -37,7 +37,7 @@
 class DeleteCorrPointUndo : public QUndoCommand {
   ShapePair* m_shape;
   IwProject* m_project;
-  QMap<int, double> m_deletedCorrPos[2];
+  QMap<int, CorrPoint> m_deletedCorrPos[2];
   int m_deletedIndex;
 
 public:
@@ -517,6 +517,7 @@ void IwShapePairSelection::onDeleteCorrPoint() {
 
   // 対応点選択をクリア
   setActiveCorrPoint(OneShape(), -1);
+  IwApp::instance()->getCurrentSelection()->notifySelectionChanged();
 }
 
 //---------------------------------------------------

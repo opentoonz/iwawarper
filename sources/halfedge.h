@@ -21,21 +21,29 @@ public:
   // ワープ後の座標
   QVector3D to_pos;
 
+  double from_weight, to_weight;
+
   // この頂点を始点にもつハーフエッジの1つ
   Halfedge* halfedge = nullptr;
   // 線分制約（動かない）かどうか
   bool constrained = false;
 
   HEVertex(double _x, double _y, double _z)
-      : from_pos(_x, _y, _z), halfedge(nullptr) {
+      : from_pos(_x, _y, _z)
+      , halfedge(nullptr)
+      , from_weight(1.0)
+      , to_weight(1.0) {
     to_pos = from_pos;
   }
   HEVertex(const QPointF& _pos, double depth)
       : HEVertex(_pos.x(), _pos.y(), depth) {}
 
-  HEVertex(const QPointF& _from_pos, const QPointF& _to_pos, double depth)
+  HEVertex(const QPointF& _from_pos, const QPointF& _to_pos, double depth,
+           double _from_weight = 1.0, double _to_weight = 1.0)
       : from_pos(_from_pos.x(), _from_pos.y(), depth)
-      , to_pos(_to_pos.x(), _to_pos.y(), depth) {}
+      , to_pos(_to_pos.x(), _to_pos.y(), depth)
+      , from_weight(_from_weight)
+      , to_weight(_to_weight) {}
 
   bool operator==(const HEVertex& v);
 

@@ -25,12 +25,24 @@ typedef struct BezierPoint {
   QPointF secondHandle;
 } BezierPoint;
 
+// 対応点
+typedef struct CorrPoint {
+  // 対応点のベジエ位置
+  // 値は 0～m_bezierPointCount(Closed)
+  //      0～m_bezierPointCount-1(Open)
+  double value;
+  // 対応点のウェイト（歪みを引き寄せる）
+  double weight;
+
+  bool operator==(const CorrPoint& other) const {
+    return (value == other.value && weight == other.weight);
+  }
+} CorrPoint;
+
 // シェイプ形状のデータ構造（データ数＝コントロールポイント数）
 typedef QList<BezierPoint> BezierPointList;
 // 対応点情報のデータ構造（データ数＝Corrポイント数）
-// 値は 0～m_bezierPointCount(Closed)
-//      0～m_bezierPointCount-1(Open)
-typedef QList<double> CorrPointList;
+typedef QList<CorrPoint> CorrPointList;
 
 template <class T>
 class KeyContainer {

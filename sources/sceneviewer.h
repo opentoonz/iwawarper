@@ -73,6 +73,9 @@ public:
     m_vRuler = vRuler;
   }
 
+  void renderText(double x, double y, const QString &str,
+                  const QFont &font = QFont());
+
 protected:
   void initializeGL() final override;
   void resizeGL(int width, int height) final override;
@@ -105,9 +108,6 @@ protected:
   void keyReleaseEvent(QKeyEvent *e) final override;
 
   void wheelEvent(QWheelEvent *) final override;
-
-  void renderText(double x, double y, const QString &str,
-                  const QFont &font = QFont());
 
 protected slots:
   // テクスチャインデックスを得る。無ければロードして登録

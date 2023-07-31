@@ -128,13 +128,21 @@ double HEFace::size() const {
 // Add new vertex at centroid and returns its pointer
 // 重心にHEVertexを作成しポインタを返す
 HEVertex* HEFace::createCentroidVertex() {
-  HEVertex* A    = halfedge->vertex;
-  HEVertex* B    = halfedge->next->vertex;
-  HEVertex* C    = halfedge->prev->vertex;
-  QVector3D from = (A->from_pos + B->from_pos + C->from_pos) / 3.0;
-  QVector3D to   = (A->to_pos + B->to_pos + C->to_pos) / 3.0;
+  HEVertex* A = halfedge->vertex;
+  HEVertex* B = halfedge->next->vertex;
+  HEVertex* C = halfedge->prev->vertex;
+  QVector3D from =
+      (A->from_pos * A->from_weight + B->from_pos * B->from_weight +
+       C->from_pos * C->from_weight) /
+      (A->from_weight + B->from_weight + C->from_weight);
+  double from_weight = (A->from_weight + B->from_weight + C->from_weight) / 3.0;
+  QVector3D to       = (A->to_pos * A->to_weight + B->to_pos * B->to_weight +
+                  C->to_pos * C->to_weight) /
+                 (A->to_weight + B->to_weight + C->to_weight);
+  double to_weight = (A->to_weight + B->to_weight + C->to_weight) / 3.0;
 
-  return new HEVertex(from.toPointF(), to.toPointF(), from.z());
+  return new HEVertex(from.toPointF(), to.toPointF(), from.z(), from_weight,
+                      to_weight);
 }
 
 bool HEFace::hasConstantDepth() const {
@@ -646,8 +654,9 @@ void HEModel::smooth(double offsetThreshold) {
     QPointF fromOffset, toOffset;
     Halfedge* tmp_he = v->halfedge;
     while (1) {
-      fromOffset += tmp_he->getFromPos2DVector();
-      toOffset += tmp_he->getToPos2DVector();
+      fromOffset +=
+          tmp_he->getFromPos2DVector() * tmp_he->pair->vertex->from_weight;
+      toOffset += tmp_he->getToPos2DVector() * tmp_he->pair->vertex->to_weight;
       // 次のエッジへ
       tmp_he = tmp_he->prev->pair;
       if (tmp_he == v->halfedge) break;

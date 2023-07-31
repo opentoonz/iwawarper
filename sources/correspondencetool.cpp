@@ -65,19 +65,19 @@ void CorrDragTool::onDrag(const QPointF& pos, const QMouseEvent* e) {
     }
 
     // 差分を得る
-    double dc = nearestBezierPos - m_orgCorrs.at(m_corrPointId);
+    double dc = nearestBezierPos - m_orgCorrs.at(m_corrPointId).value;
 
     // 閉じたシェイプの場合、全部回す
     if (m_shape.shapePairP->isClosed()) {
       for (int c = 0; c < m_orgCorrs.size(); c++) {
-        double tmp = m_orgCorrs.at(c) + dc;
+        double tmp = m_orgCorrs.at(c).value + dc;
         // 値をクランプ
         if (tmp >= (double)m_shape.shapePairP->getBezierPointAmount())
           tmp -= (double)m_shape.shapePairP->getBezierPointAmount();
         if (tmp < 0.0)
           tmp += (double)m_shape.shapePairP->getBezierPointAmount();
 
-        newCorrs.push_back(tmp);
+        newCorrs.push_back({tmp, m_orgCorrs.at(c).weight});
       }
     }
     // 開いたシェイプの場合、端点以外をスライド。端についたらそこでストップ
@@ -85,16 +85,17 @@ void CorrDragTool::onDrag(const QPointF& pos, const QMouseEvent* e) {
       int cpAmount = m_shape.shapePairP->getCorrPointAmount();
       // 正方向に移動
       if (dc > 0)
-        dc = std::min(dc, m_orgCorrs.at(cpAmount - 1) -
-                              m_orgCorrs.at(cpAmount - 2) - 0.05);
+        dc = std::min(dc, m_orgCorrs.at(cpAmount - 1).value -
+                              m_orgCorrs.at(cpAmount - 2).value - 0.05);
       // 負方向に移動
       else
-        dc = std::max(dc, m_orgCorrs.at(0) - m_orgCorrs.at(1) + 0.05);
+        dc = std::max(dc,
+                      m_orgCorrs.at(0).value - m_orgCorrs.at(1).value + 0.05);
 
       newCorrs.push_back(m_orgCorrs.at(0));
       for (int c = 1; c < m_orgCorrs.size() - 1; c++) {
-        double tmp = m_orgCorrs.at(c) + dc;
-        newCorrs.push_back(tmp);
+        double tmp = m_orgCorrs.at(c).value + dc;
+        newCorrs.push_back({tmp, m_orgCorrs.at(c).weight});
       }
       newCorrs.push_back(m_orgCorrs.last());
     }
@@ -109,7 +110,7 @@ void CorrDragTool::onDrag(const QPointF& pos, const QMouseEvent* e) {
          m_corrPointId + 1 >= m_shape.shapePairP->getCorrPointAmount())
             ? 0
             : m_corrPointId + 1;
-    double rangeBefore = m_orgCorrs.at(beforeIndex);
+    double rangeBefore = m_orgCorrs.at(beforeIndex).value;
     double beforeSpeed = m_shape.shapePairP->getBezierSpeedAt(
         frame, m_shape.fromTo, rangeBefore, 0.001);
     rangeBefore += std::min(0.01, 0.001 / beforeSpeed);
@@ -117,7 +118,7 @@ void CorrDragTool::onDrag(const QPointF& pos, const QMouseEvent* e) {
     if (rangeBefore >= (double)m_shape.shapePairP->getBezierPointAmount())
       rangeBefore -= (double)m_shape.shapePairP->getBezierPointAmount();
 
-    double rangeAfter = m_orgCorrs.at(afterIndex);
+    double rangeAfter = m_orgCorrs.at(afterIndex).value;
     double afterSpeed = m_shape.shapePairP->getBezierSpeedAt(
         frame, m_shape.fromTo, rangeAfter, -0.001);
     rangeAfter -= std::min(0.01, 0.001 / afterSpeed);
@@ -134,8 +135,8 @@ void CorrDragTool::onDrag(const QPointF& pos, const QMouseEvent* e) {
       doSnap(nearestBezierPos, frame, rangeBefore, rangeAfter);
     }
     // 値を1つだけ変更
-    newCorrs                = m_orgCorrs;
-    newCorrs[m_corrPointId] = nearestBezierPos;
+    newCorrs                      = m_orgCorrs;
+    newCorrs[m_corrPointId].value = nearestBezierPos;
   }
   //----- 対応点キーフレームを格納
   m_shape.shapePairP->setCorrKey(frame, m_shape.fromTo, newCorrs);
@@ -251,6 +252,18 @@ void CorrDragTool::onRelease(const QPointF& /*pos*/, const QMouseEvent*) {
   int frame = m_project->getViewFrame();
   CorrPointList afterCorrs =
       m_shape.shapePairP->getCorrPointList(frame, m_shape.fromTo);
+
+  bool somethingChanged = false;
+  for (int c = 0; c < m_orgCorrs.size(); c++) {
+    if (m_orgCorrs[c] == afterCorrs[c])
+      continue;
+    else {
+      somethingChanged = true;
+      break;
+    }
+  }
+
+  if (!somethingChanged) return;
 
   // Undo登録 同時にredoが呼ばれるが、最初はフラグで回避する
   IwUndoManager::instance()->push(new CorrDragToolUndo(
@@ -482,6 +495,7 @@ bool CorrespondenceTool::leftButtonDown(const QPointF& pos,
     if ((name % 10) != 0) {
       int corrPointId = (int)(name / 10) % 1000;
       m_selection->setActiveCorrPoint(shape, corrPointId);
+      IwApp::instance()->getCurrentSelection()->notifySelectionChanged();
 
       // オープンなシェイプで、端点は動かせない
       if (!shape.shapePairP->isClosed() &&
@@ -538,6 +552,7 @@ bool CorrespondenceTool::leftButtonDown(const QPointF& pos,
 bool CorrespondenceTool::leftButtonDrag(const QPointF& pos,
                                         const QMouseEvent* e) {
   if (m_dragTool) {
+    m_viewer->setFocus();
     m_dragTool->onDrag(pos, e);
     return true;
   }
@@ -691,6 +706,7 @@ void CorrespondenceTool::onActivate() {
 
 void CorrespondenceTool::onDeactivate() {
   m_selection->setActiveCorrPoint(OneShape(), -1);
+  IwApp::instance()->getCurrentSelection()->notifySelectionChanged();
 }
 
 //--------------------------------------------------------
