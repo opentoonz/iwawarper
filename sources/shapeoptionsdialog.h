@@ -24,15 +24,22 @@ class ShapeOptionsDialog : public IwDialog {
 
   // 現在選択されているシェイプ
   QList<OneShape> m_selectedShapes;
+  // 選択中の対応点
+  QPair<OneShape, int> m_activeCorrPoint;
 
   // 対応点の密度スライダ
   QSlider* m_edgeDensitySlider;
   QLineEdit* m_edgeDensityEdit;
 
+  // ウェイトのスライダ(大きいほどメッシュを引き寄せる)
+  QSlider* m_weightSlider;
+  QLineEdit* m_weightEdit;
+
 public:
   ShapeOptionsDialog();
 
   void setDensity(int value);
+  void setWeight(double weight);
 
 protected:
   void showEvent(QShowEvent*);
@@ -42,9 +49,12 @@ protected slots:
 
   void onSelectionSwitched(IwSelection*, IwSelection*);
   void onSelectionChanged(IwSelection*);
+  void onViewFrameChanged();
 
   void onEdgeDensitySliderMoved(int val);
   void onEdgeDensityEditEdited();
+  void onWeightSliderMoved(int val);
+  void onWeightEditEdited();
 };
 
 //-------------------------------------
@@ -71,4 +81,20 @@ public:
   void redo();
 };
 
+class ChangeWeightUndo : public QUndoCommand {
+  IwProject* m_project;
+  QList<QPair<OneShape, int>>
+      m_targetCorrs;  // シェイプ全体の場合はsecondに-1を入れる
+  QList<double> m_beforeWeights;
+  double m_afterWeight;
+  int m_frame;
+  QList<OneShape> m_wasKeyShapes;
+
+public:
+  ChangeWeightUndo(QList<QPair<OneShape, int>>& targets, double afterWeight,
+                   IwProject* project);
+
+  void undo();
+  void redo();
+};
 #endif

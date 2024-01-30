@@ -66,7 +66,8 @@ bool PenTool::leftButtonDown(const QPointF& pos, const QMouseEvent* e) {
 
     // CorrPointListçÏÇÈ
     CorrPointList cpList;
-    cpList << 0 << 0 << 0 << 0;
+    CorrPoint cp = {0., 1.};
+    cpList << cp << cp << cp << cp;
 
     m_editingShape = new ShapePair(frame, false, bpList, cpList, 0.01f);
 
@@ -315,11 +316,11 @@ void PenTool::updateCorrPoints(int fromTo) {
 
   if (m_editingShape->isClosed()) {
     for (int c = 0; c < 4; c++) {
-      cpList.push_back((double)(pointAmount) * (double)c / 4.0);
+      cpList.push_back({(double)(pointAmount) * (double)c / 4.0, 1.0});
     }
   } else {
     for (int c = 0; c < 4; c++) {
-      cpList.push_back((double)(pointAmount - 1) * (double)c / 3.0);
+      cpList.push_back({(double)(pointAmount - 1) * (double)c / 3.0, 1.0});
     }
   }
 

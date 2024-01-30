@@ -171,10 +171,15 @@ public:
 
   // 対応点の座標リストを得る
   QList<QPointF> getCorrPointPositions(int frame, int fromTo);
+  // 対応点のウェイトのリストを得る
+  QList<double> getCorrPointWeights(int frame, int fromTo);
 
   // 現在のフレームのCorrenspondence(対応点)間を分割した点の分割値を得る
   QList<double> getDiscreteCorrValues(const QPointF& onePix, int frame,
                                       int fromTo);
+
+  // 現在のフレームのCorrenspondence(対応点)間を分割した点のウェイト値を得る
+  QList<double> getDiscreteCorrWeights(int frame, int fromTo);
 
   // ベジエ値から座標値を計算する
   QPointF getBezierPosFromValue(int frame, int fromTo, double bezierValue);

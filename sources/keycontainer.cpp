@@ -121,15 +121,21 @@ void simple_InterPolate(CorrPointList &beforeKey, CorrPointList &afterKey,
   double beforeRatio = 1.0 - afterRatio;
 
   for (int c = 0; c < beforeKey.count(); c++) {
-    double beforeVal = beforeKey.at(c);
-    double afterVal  = afterKey.at(c);
+    double beforeVal    = beforeKey.at(c).value;
+    double afterVal     = afterKey.at(c).value;
+    double beforeWeight = beforeKey.at(c).weight;
+    double afterWeight  = afterKey.at(c).weight;
 
     // 補間
     double tmpVal = (beforeVal == afterVal)
                         ? beforeVal
                         : beforeRatio * beforeVal + afterRatio * afterVal;
+    double tmpWeight =
+        (beforeWeight == afterWeight)
+            ? beforeWeight
+            : beforeRatio * beforeWeight + afterRatio * afterWeight;
 
-    result.push_back(tmpVal);
+    result.push_back({tmpVal, tmpWeight});
   }
 }
 
@@ -139,7 +145,7 @@ bool checkIntersect(CorrPointList &beforeKey, QList<double> &tmpAfterPos) {
 
   for (int p = 0; p < beforeKey.count() - 1; p++) {
     for (int q = p + 1; q < beforeKey.count(); q++) {
-      bool bef = (beforeKey[q] - beforeKey[p]) >= 0;
+      bool bef = (beforeKey[q].value - beforeKey[p].value) >= 0;
       bool aft = (tmpAfterPos[q] - tmpAfterPos[p]) >= 0;
 
       // XORを取り、正ならNGなのでfalseをreturn
@@ -161,8 +167,8 @@ void interPolate(CorrPointList &beforeKey, CorrPointList &afterKey,
   QList<double> bestAfterPos;
   QList<double> tmpIdealAfterPos;
   for (int c = 0; c < beforeKey.count(); c++) {
-    double beforeVal = beforeKey.at(c);
-    double afterVal  = afterKey.at(c);
+    double beforeVal = beforeKey.at(c).value;
+    double afterVal  = afterKey.at(c).value;
 
     // 右方向、左方向の、ループをほぐした座標値
     double rightMovePos, leftMovePos;
@@ -194,8 +200,8 @@ void interPolate(CorrPointList &beforeKey, CorrPointList &afterKey,
         afterPos;  //<左,
                    // 右>に移動した場合の座標値(ループをほぐしたもの)を入れる
     for (int c = 0; c < beforeKey.count(); c++) {
-      double beforeVal = beforeKey.at(c);
-      double afterVal  = afterKey.at(c);
+      double beforeVal = beforeKey.at(c).value;
+      double afterVal  = afterKey.at(c).value;
 
       // 右方向、左方向の、ループをほぐした座標値
       double rightMovePos, leftMovePos;
@@ -227,7 +233,7 @@ void interPolate(CorrPointList &beforeKey, CorrPointList &afterKey,
       }
       double moveLength = 0.0;
       for (int p = 0; p < beforeKey.count(); p++) {
-        moveLength += std::abs(tmpAfterPos[p] - beforeKey[p]);
+        moveLength += std::abs(tmpAfterPos[p] - beforeKey[p].value);
       }
       idLengthList.push_back(QPair<unsigned int, double>(k, moveLength));
     }
@@ -261,7 +267,7 @@ void interPolate(CorrPointList &beforeKey, CorrPointList &afterKey,
   double beforeRatio = 1.0 - afterRatio;
 
   for (int c = 0; c < beforeKey.count(); c++) {
-    double beforeVal = beforeKey[c];
+    double beforeVal = beforeKey[c].value;
     double afterVal  = bestAfterPos[c];
     // 補間
     double tmpVal = beforeVal * beforeRatio + afterVal * afterRatio;
@@ -269,7 +275,11 @@ void interPolate(CorrPointList &beforeKey, CorrPointList &afterKey,
     if (tmpVal >= maxValue) tmpVal -= maxValue;
     if (tmpVal < 0.0) tmpVal += maxValue;
 
-    result.push_back(tmpVal);
+    double beforeWeight = beforeKey[c].weight;
+    double afterWeight  = afterKey[c].weight;
+    double tmpWeight    = beforeWeight * beforeRatio + afterWeight * afterRatio;
+
+    result.push_back({tmpVal, tmpWeight});
   }
 }
 
@@ -456,10 +466,12 @@ CorrPointList KeyContainer<CorrPointList>::getData(int frame, int maxValue,
       // 補間値を返す
       CorrPointList list;
       // もし、先頭と最後のCorr点の値が変わっていないなら、Openな線として、単純な補間をする
-      if ((afterKey - 1).value().first() == afterKey.value().first() &&
-          (afterKey - 1).value().last() == afterKey.value().last() &&
-          (afterKey - 1).value().first() == 0.0 &&
-          (afterKey - 1).value().last() == (double)maxValue)
+      if ((afterKey - 1).value().first().value ==
+              afterKey.value().first().value &&
+          (afterKey - 1).value().last().value ==
+              afterKey.value().last().value &&
+          (afterKey - 1).value().first().value == 0.0 &&
+          (afterKey - 1).value().last().value == (double)maxValue)
         simple_InterPolate((afterKey - 1).value(), afterKey.value(), afterRatio,
                            list);
       // それ以外の場合は、Closedな線として、複雑な補間をする
@@ -571,9 +583,18 @@ void KeyContainer<CorrPointList>::saveData(QXmlStreamWriter &writer) {
     for (int cp = 0; cp < cpList.size(); cp++) {
       if (cp != 0) str.append(", ");
 
-      str.append(QString::number(cpList.at(cp)));
+      str.append(QString::number(cpList.at(cp).value));
     }
     writer.writeTextElement("corrPoint", str);
+
+    // ウェイトを保存
+    str.clear();
+    for (int cp = 0; cp < cpList.size(); cp++) {
+      if (cp != 0) str.append(", ");
+
+      str.append(QString::number(cpList.at(cp).weight));
+    }
+    writer.writeTextElement("corrWeights", str);
 
     writer.writeEndElement();
     ++i;
@@ -601,7 +622,12 @@ void KeyContainer<CorrPointList>::loadData(QXmlStreamReader &reader) {
         if (reader.name() == "corrPoint") {
           QStringList list = reader.readElementText().split(", ");
           for (int c = 0; c < list.size(); c++)
-            cpList.append(list.at(c).toDouble());
+            cpList.append({list.at(c).toDouble(), 1.0});
+        } else if (reader.name() == "corrWeights") {
+          assert(!cpList.isEmpty());
+          QStringList list = reader.readElementText().split(", ");
+          for (int c = 0; c < list.size(); c++)
+            cpList[c].weight = list.at(c).toDouble();
         } else
           reader.skipCurrentElement();
       }

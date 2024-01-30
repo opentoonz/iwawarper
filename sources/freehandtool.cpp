@@ -335,7 +335,8 @@ void FreeHandTool::createShape() {
 
   CorrPointList cpList;
   for (int cp = 0; cp < 4; cp++) {
-    cpList.push_back((double)((bpCount - 1) * cp) / ((m_isClosed) ? 4.0 : 3.0));
+    cpList.push_back(
+        {(double)((bpCount - 1) * cp) / ((m_isClosed) ? 4.0 : 3.0), 1.0});
   }
 
   m_currentShape =

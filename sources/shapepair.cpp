@@ -734,25 +734,27 @@ int ShapePair::addControlPoint(const QPointF& pos, int frame, int fromTo) {
 
       for (int p = 0; p < cPList.size(); p++) {
         // nearestSegmentIndexより小さかったらムシ
-        if (cPList.at(p) < (double)nearestSegmentIndex) continue;
+        if (cPList.at(p).value < (double)nearestSegmentIndex) continue;
         // nearestSegmentIndex+1より大きかったら単に値を＋１する
-        if (cPList.at(p) > (double)nearestSegmentIndex + 1.0) {
-          cPList[p] += 1.0;
+        if (cPList.at(p).value > (double)nearestSegmentIndex + 1.0) {
+          cPList[p].value += 1.0;
           continue;
         }
 
         // それ以外の場合
-        double oldCorr = cPList.at(p);
+        double oldCorr = cPList.at(p).value;
 
         double oldCorrRatio = oldCorr - (double)nearestSegmentIndex;
 
         // 新しいコントロールポイントより前のCorr点の場合
         if (oldCorrRatio < nearestRatio)
-          cPList[p] = oldCorrRatio / nearestRatio + (double)nearestSegmentIndex;
+          cPList[p].value =
+              oldCorrRatio / nearestRatio + (double)nearestSegmentIndex;
         // 新しいコントロールポイントより後のCorr点の場合
         else
-          cPList[p] = 1.0 + (double)nearestSegmentIndex +
-                      (oldCorrRatio - nearestRatio) / (1.0 - nearestRatio);
+          cPList[p].value =
+              1.0 + (double)nearestSegmentIndex +
+              (oldCorrRatio - nearestRatio) / (1.0 - nearestRatio);
       }
 
       // キーフレーム情報を更新
@@ -783,7 +785,7 @@ bool ShapePair::addCorrPoint(const QPointF& pos, int frame, int fromTo) {
   int neighbourIndex = 0;
   double minDiff     = 100.0;
   for (int c = 0; c < m_corrPointAmount; c++) {
-    double tmpDiff = nearestBezierPos - orgCorrs.at(c);
+    double tmpDiff = nearestBezierPos - orgCorrs.at(c).value;
     if (abs(minDiff) > abs(tmpDiff)) {
       minDiff        = tmpDiff;
       neighbourIndex = c;
@@ -803,10 +805,10 @@ bool ShapePair::addCorrPoint(const QPointF& pos, int frame, int fromTo) {
     afterIndex = neighbourIndex;
   }
   // 位置の調整 前後の点から0.05ずつ離す
-  double beforeBPos = orgCorrs.at(beforeIndex);
+  double beforeBPos = orgCorrs.at(beforeIndex).value;
   if (m_isClosed && beforeBPos > nearestBezierPos)
     beforeBPos -= (double)m_bezierPointAmount;
-  double afterBPos = orgCorrs.at(afterIndex);
+  double afterBPos = orgCorrs.at(afterIndex).value;
   if (m_isClosed && afterBPos < nearestBezierPos)
     afterBPos += (double)m_bezierPointAmount;
   std::cout << "insert corr point between " << beforeIndex << "(" << beforeBPos
@@ -831,16 +833,20 @@ bool ShapePair::addCorrPoint(const QPointF& pos, int frame, int fromTo) {
     while (i != corrKeysMap.end()) {
       CorrPointList cpList = i.value();
 
-      double before = cpList.at(beforeIndex);
-      double after  = cpList.at(afterIndex);
+      double before = cpList.at(beforeIndex).value;
+      double after  = cpList.at(afterIndex).value;
       if (isClosed() && after < before) after += (double)getBezierPointAmount();
 
       double insertedPos = before + (after - before) * ratio;
       if (isClosed() && insertedPos > (double)getBezierPointAmount())
         insertedPos -= (double)getBezierPointAmount();
 
+      double beforeWeight = cpList.at(beforeIndex).weight;
+      double afterWeight  = cpList.at(afterIndex).weight;
+      double insertedWeight =
+          beforeWeight + (afterWeight - beforeWeight) * ratio;
       // リストに点を挿入
-      cpList.insert(beforeIndex + 1, insertedPos);
+      cpList.insert(beforeIndex + 1, {insertedPos, insertedWeight});
       // insertコマンドは、既に同じKeyにデータが有った場合、置き換えられる
       corrKeysMap.insert(i.key(), cpList);
       ++i;
@@ -1135,7 +1141,7 @@ QList<QPointF> ShapePair::getCorrPointPositions(int frame, int fromTo) {
   QList<QPointF> points;
 
   for (int c = 0; c < cPList.size(); c++) {
-    double cPValue = cPList.at(c);
+    double cPValue = cPList.at(c).value;
 
     int segmentIndex = (int)cPValue;
     double ratio     = cPValue - (double)segmentIndex;
@@ -1152,8 +1158,22 @@ QList<QPointF> ShapePair::getCorrPointPositions(int frame, int fromTo) {
 }
 
 //--------------------------------------------------------
+// 対応点のウェイトのリストを得る
+//--------------------------------------------------------
+QList<double> ShapePair::getCorrPointWeights(int frame, int fromTo) {
+  // 現在の対応点データを得る
+  CorrPointList cPList = getCorrPointList(frame, fromTo);
+  QList<double> weights;
+  for (auto cp : cPList) {
+    weights.push_back(cp.weight);
+  }
+  return weights;
+}
+
+//--------------------------------------------------------
 // 現在のフレームのCorrenspondence(対応点)間を分割した点の分割値を得る
 // 方針：できるだけ等間隔に分割したい。
+// → 対応点のウェイトに応じて分割点も偏らせる
 //--------------------------------------------------------
 QList<double> ShapePair::getDiscreteCorrValues(const QPointF& onePix, int frame,
                                                int fromTo) {
@@ -1168,16 +1188,20 @@ QList<double> ShapePair::getDiscreteCorrValues(const QPointF& onePix, int frame,
 
   int corrSegAmount = (m_isClosed) ? m_corrPointAmount : m_corrPointAmount - 1;
   for (int c = 0; c < corrSegAmount; c++) {
-    double Corr1 = cPList.at(c);
+    double Corr1 = cPList.at(c).value;
     double Corr2 =
-        cPList.at((m_isClosed && c == m_corrPointAmount - 1) ? 0 : c + 1);
+        cPList.at((m_isClosed && c == m_corrPointAmount - 1) ? 0 : c + 1).value;
+
+    double weight1 = cPList.at(c).weight;
+    double weight2 =
+        cPList.at((m_isClosed && c == m_corrPointAmount - 1) ? 0 : c + 1)
+            .weight;
 
     // 対応点間のピクセル長を計算する
     double corrSegLength =
         getBezierLengthFromValueRange(onePix, frame, fromTo, Corr1, Corr2);
 
-    // 対応点を分割するピクセル距離
-    double divideLength = corrSegLength / (double)m_precision;
+    double pre_divideLength = 0.0;  // corrSegLength / (double)m_precision;
 
     double currentCorrPos = Corr1;
 
@@ -1189,7 +1213,12 @@ QList<double> ShapePair::getDiscreteCorrValues(const QPointF& onePix, int frame,
       // 最後の点を格納したらおしまい
       if (p == m_precision - 1) break;
 
-      double remainLength = divideLength;
+      double t = (double)(p + 1) / (double)m_precision;
+      // 対応点を分割するピクセル距離
+      double divideLength =
+          corrSegLength * (t * weight2) / (t * (weight2 - weight1) + weight1);
+      double remainLength = divideLength - pre_divideLength;
+      pre_divideLength    = divideLength;
 
       while (1) {
         int currentIndex    = (int)currentCorrPos;
@@ -1224,9 +1253,38 @@ QList<double> ShapePair::getDiscreteCorrValues(const QPointF& onePix, int frame,
   }
 
   // Openなシェイプの場合は、最後の端点を追加
-  if (!m_isClosed) discreteCorrValues.push_back(cPList.last());
+  if (!m_isClosed) discreteCorrValues.push_back(cPList.last().value);
 
   return discreteCorrValues;
+}
+
+//--------------------------------------------------------
+// 現在のフレームのCorrenspondence(対応点)間を分割した点のウェイト値を得る
+//--------------------------------------------------------
+QList<double> ShapePair::getDiscreteCorrWeights(int frame, int fromTo) {
+  QMutexLocker lock(&mutex_);
+  // 結果を収めるやつ
+  QList<double> discreteCorrWeights;
+  CorrPointList cPList = getCorrPointList(frame, fromTo);
+  int corrSegAmount = (m_isClosed) ? m_corrPointAmount : m_corrPointAmount - 1;
+  for (int c = 0; c < corrSegAmount; c++) {
+    double Corr1 = cPList.at(c).weight;
+    double Corr2 =
+        cPList.at((m_isClosed && c == m_corrPointAmount - 1) ? 0 : c + 1)
+            .weight;
+
+    // 分割点毎にウェイトを追加していく
+    for (int p = 0; p < m_precision; p++) {
+      double ratio = (double)p / (double)m_precision;
+      // 格納
+      discreteCorrWeights.push_back(Corr1 * (1 - ratio) + Corr2 * ratio);
+    }
+  }
+
+  // Openなシェイプの場合は、最後の端点を追加
+  if (!m_isClosed) discreteCorrWeights.push_back(cPList.last().weight);
+
+  return discreteCorrWeights;
 }
 
 //--------------------------------------------------------

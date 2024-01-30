@@ -18,25 +18,27 @@
 #include <QLineEdit>
 #include <QLabel>
 
-#include <QHBoxLayout>
-#include <QVBoxLayout>
-
+#include <QGridLayout>
 #include <iostream>
 #include <QIntValidator>
+#include <QDoubleValidator>
 
 #include "shapepair.h"
 #include "iwshapepairselection.h"
 #include "iwtrianglecache.h"
 
 ShapeOptionsDialog::ShapeOptionsDialog()
-    : IwDialog(IwApp::instance()->getMainWindow(), "ShapeOptionsDialog",
-               false) {
+    : IwDialog(IwApp::instance()->getMainWindow(), "ShapeOptionsDialog", false)
+    , m_activeCorrPoint(QPair<OneShape, int>{OneShape(), -1}) {
   setSizeGripEnabled(false);
 
   //--- オブジェクトの宣言
   // 対応点の密度スライダ
   m_edgeDensitySlider = new QSlider(Qt::Horizontal, this);
   m_edgeDensityEdit   = new QLineEdit(this);
+  // ウェイトのスライダ(大きいほどメッシュを引き寄せる)
+  m_weightSlider = new QSlider(Qt::Horizontal, this);
+  m_weightEdit   = new QLineEdit(this);
 
   //--- プロパティの設定
   m_edgeDensityEdit->setFixedWidth(37);
@@ -44,25 +46,31 @@ ShapeOptionsDialog::ShapeOptionsDialog()
   QIntValidator *validator = new QIntValidator(1, 50, this);
   m_edgeDensityEdit->setValidator(validator);
 
+  m_weightEdit->setFixedWidth(37);
+  m_weightSlider->setRange(1, 50);  // 0.1-5.0
+  QDoubleValidator *weightValidator = new QDoubleValidator(0.1, 5.0, 1, this);
+  m_weightEdit->setValidator(weightValidator);
+
   //--- レイアウト
-  QVBoxLayout *mainLay = new QVBoxLayout();
+  QGridLayout *mainLay = new QGridLayout();
   mainLay->setSpacing(3);
   mainLay->setMargin(3);
   {
     // 対応点の密度スライダ
-    mainLay->addWidget(new QLabel(tr("Edge Density")), 0,
+    mainLay->addWidget(new QLabel(tr("Edge Density")), 0, 0, 1, 2,
                        Qt::AlignLeft | Qt::AlignVCenter);
-    QHBoxLayout *edgeDensityLay = new QHBoxLayout();
-    edgeDensityLay->setSpacing(3);
-    edgeDensityLay->setMargin(0);
-    {
-      edgeDensityLay->addWidget(m_edgeDensitySlider, 1);
-      edgeDensityLay->addWidget(m_edgeDensityEdit, 0);
-    }
-    mainLay->addLayout(edgeDensityLay, 0);
+    mainLay->addWidget(m_edgeDensitySlider, 1, 0);
+    mainLay->addWidget(m_edgeDensityEdit, 1, 1);
 
-    mainLay->addStretch(1);
+    // ウェイトのスライダ
+    mainLay->addWidget(new QLabel(tr("Weight")), 2, 0, 1, 2,
+                       Qt::AlignLeft | Qt::AlignVCenter);
+    mainLay->addWidget(m_weightSlider, 3, 0);
+    mainLay->addWidget(m_weightEdit, 3, 1);
   }
+  mainLay->setColumnStretch(0, 1);
+  mainLay->setColumnStretch(1, 0);
+  mainLay->setRowStretch(4, 1);
   setLayout(mainLay);
 
   //--- シグナル/スロット接続
@@ -71,6 +79,11 @@ ShapeOptionsDialog::ShapeOptionsDialog()
           SLOT(onEdgeDensitySliderMoved(int)));
   connect(m_edgeDensityEdit, SIGNAL(editingFinished()), this,
           SLOT(onEdgeDensityEditEdited()));
+  // ウェイトのスライダ
+  connect(m_weightSlider, SIGNAL(sliderMoved(int)), this,
+          SLOT(onWeightSliderMoved(int)));
+  connect(m_weightEdit, SIGNAL(editingFinished()), this,
+          SLOT(onWeightEditEdited()));
 }
 
 //---------------------------------------------------
@@ -87,7 +100,18 @@ void ShapeOptionsDialog::showEvent(QShowEvent *) {
             SLOT(onSelectionChanged(IwSelection *)));
   }
 
+  IwProjectHandle *projectHandle = IwApp::instance()->getCurrentProject();
+  if (projectHandle) {
+    // 表示フレームが切り替わったら
+    connect(projectHandle, SIGNAL(viewFrameChanged()), this,
+            SLOT(onViewFrameChanged()));
+    connect(projectHandle, SIGNAL(projectChanged()), this,
+            SLOT(onViewFrameChanged()));
+  }
+
   if (selectionHandle) onSelectionChanged(selectionHandle->getSelection());
+
+  // ★フレーム変わったらウェイトの表示を更新、を実装
 }
 
 //---------------------------------------------------
@@ -104,6 +128,13 @@ void ShapeOptionsDialog::hideEvent(QHideEvent *) {
                SLOT(onSelectionChanged(IwSelection *)));
 
     onSelectionChanged(selectionHandle->getSelection());
+  }
+  IwProjectHandle *projectHandle = IwApp::instance()->getCurrentProject();
+  if (projectHandle) {
+    disconnect(projectHandle, SIGNAL(viewFrameChanged()), this,
+               SLOT(onViewFrameChanged()));
+    disconnect(projectHandle, SIGNAL(projectChanged()), this,
+               SLOT(onViewFrameChanged()));
   }
 }
 
@@ -123,14 +154,23 @@ void ShapeOptionsDialog::onSelectionChanged(IwSelection *selection) {
   IwShapePairSelection *shapeSelection =
       dynamic_cast<IwShapePairSelection *>(selection);
   if (shapeSelection) {
+    IwProject *project = IwApp::instance()->getCurrentProject()->getProject();
+    int frame          = project->getViewFrame();
+
     m_selectedShapes.clear();
     m_selectedShapes = shapeSelection->getShapes();
+
+    m_activeCorrPoint = shapeSelection->getActiveCorrPoint();
 
     // ★シェイプ選択無ければ無効化＆グローバル表示
     if (m_selectedShapes.isEmpty()) {
       m_edgeDensitySlider->setDisabled(true);
       m_edgeDensityEdit->setDisabled(true);
       m_edgeDensityEdit->setText("");
+
+      m_weightSlider->setDisabled(true);
+      m_weightEdit->setDisabled(true);
+      m_weightEdit->setText("");
     } else {
       m_edgeDensitySlider->setEnabled(true);
       m_edgeDensityEdit->setEnabled(true);
@@ -149,8 +189,77 @@ void ShapeOptionsDialog::onSelectionChanged(IwSelection *selection) {
         m_edgeDensityEdit->setText(QString::number(minPrec));
       else
         m_edgeDensityEdit->setText(QString("%1-%2").arg(minPrec).arg(maxPrec));
+
+      m_weightSlider->setEnabled(true);
+      m_weightEdit->setEnabled(true);
+
+      //---続いて、ウェイトの更新
+      double minWeight = 100.;
+      double maxWeight = 0;
+      // アクティブ対応点がある場合はその点のウェイト
+      if (m_activeCorrPoint.first.shapePairP && m_activeCorrPoint.second >= 0) {
+        OneShape shape = m_activeCorrPoint.first;
+        minWeight      = shape.shapePairP->getCorrPointList(frame, shape.fromTo)
+                        .at(m_activeCorrPoint.second)
+                        .weight;
+        maxWeight = minWeight;
+      } else {
+        for (auto shape : m_selectedShapes) {
+          CorrPointList cpList =
+              shape.shapePairP->getCorrPointList(frame, shape.fromTo);
+          for (auto cp : cpList) {
+            minWeight = std::min(minWeight, cp.weight);
+            maxWeight = std::max(maxWeight, cp.weight);
+          }
+        }
+      }
+      // 値を格納
+      m_weightSlider->setValue((int)(maxWeight * 10.));
+      if (minWeight == maxWeight)
+        m_weightEdit->setText(QString::number(minWeight));
+      else
+        m_weightEdit->setText(QString("%1-%2").arg(minWeight).arg(maxWeight));
+
+      // クリック時にフォーカスして、すぐに数値入力を可能にする。
+      // 対応点ドラッグ時に再度ビューアーにフォーカスする
+      m_weightEdit->setFocus();
+      m_weightEdit->selectAll();
     }
   }
+}
+
+//---------------------------------------------------
+
+void ShapeOptionsDialog::onViewFrameChanged() {
+  IwProject *project = IwApp::instance()->getCurrentProject()->getProject();
+  int frame          = project->getViewFrame();
+
+  if (m_selectedShapes.isEmpty()) return;
+  double minWeight = 100.;
+  double maxWeight = 0;
+  // アクティブ対応点がある場合はその点のウェイト
+  if (m_activeCorrPoint.first.shapePairP && m_activeCorrPoint.second >= 0) {
+    OneShape shape = m_activeCorrPoint.first;
+    minWeight      = shape.shapePairP->getCorrPointList(frame, shape.fromTo)
+                    .at(m_activeCorrPoint.second)
+                    .weight;
+    maxWeight = minWeight;
+  } else {
+    for (auto shape : m_selectedShapes) {
+      CorrPointList cpList =
+          shape.shapePairP->getCorrPointList(frame, shape.fromTo);
+      for (auto cp : cpList) {
+        minWeight = std::min(minWeight, cp.weight);
+        maxWeight = std::max(maxWeight, cp.weight);
+      }
+    }
+  }
+  // 値を格納
+  m_weightSlider->setValue((int)(maxWeight * 10.));
+  if (minWeight == maxWeight)
+    m_weightEdit->setText(QString::number(minWeight));
+  else
+    m_weightEdit->setText(QString("%1-%2").arg(minWeight).arg(maxWeight));
 }
 
 //---------------------------------------------------
@@ -191,6 +300,43 @@ void ShapeOptionsDialog::setDensity(int val) {
       new ChangeEdgeDensityUndo(infoList, val, project));
 }
 
+//---------------------------------------------------
+
+void ShapeOptionsDialog::onWeightSliderMoved(int val) {
+  double weight = (double)val * 0.1;
+  m_weightEdit->setText(QString::number(weight));
+  setWeight(weight);
+}
+
+void ShapeOptionsDialog::onWeightEditEdited() {
+  double weight = m_weightEdit->text().toDouble();
+  m_weightSlider->setValue((int)(weight * 10.));
+  setWeight(weight);
+}
+
+void ShapeOptionsDialog::setWeight(double weight) {
+  IwProject *project = IwApp::instance()->getCurrentProject()->getProject();
+  if (!project) return;
+  if (m_selectedShapes.isEmpty()) return;
+
+  // 現在のフレームを得る
+  int frame = project->getViewFrame();
+  // 対象となる対応点のリストを得る
+  QList<QPair<OneShape, int>> targetCorrList;
+  // activeCorrがある場合はその１点だけを編集する
+  // それ以外の場合は、選択シェイプの全ての対応点を対象とする
+  if (m_activeCorrPoint.first.shapePairP && m_activeCorrPoint.second >= 0) {
+    targetCorrList.append(m_activeCorrPoint);
+  } else {
+    for (auto shape : m_selectedShapes) {
+      targetCorrList.append({shape, -1});
+    }
+  }
+
+  // Undoに登録 同時にredoが呼ばれ、コマンドが実行される
+  IwUndoManager::instance()->push(
+      new ChangeWeightUndo(targetCorrList, weight, project));
+}
 //-------------------------------------
 // 以下、Undoコマンド
 //-------------------------------------
@@ -225,6 +371,106 @@ void ChangeEdgeDensityUndo::redo() {
     for (auto info : m_info)
       IwTriangleCache::instance()->invalidateShapeCache(
           m_project->getParentShape(info.shape.shapePairP));
+  }
+}
+//---------------------------------------------------
+
+ChangeWeightUndo::ChangeWeightUndo(QList<QPair<OneShape, int>> &targets,
+                                   double afterWeight, IwProject *project)
+    : m_project(project), m_targetCorrs(targets), m_afterWeight(afterWeight) {
+  m_frame = project->getViewFrame();
+
+  for (auto target : m_targetCorrs) {
+    OneShape shape = target.first;
+    if (shape.shapePairP->isCorrKey(m_frame, shape.fromTo)) {
+      m_wasKeyShapes.append(shape);
+      if (target.second >= 0) {
+        double beforeWeight =
+            shape.shapePairP->getCorrPointList(m_frame, shape.fromTo)
+                .at(target.second)
+                .weight;
+        m_beforeWeights.append(beforeWeight);
+      } else {
+        for (int c = 0; c < shape.shapePairP->getCorrPointAmount(); c++) {
+          double beforeWeight =
+              shape.shapePairP->getCorrPointList(m_frame, shape.fromTo)
+                  .at(c)
+                  .weight;
+          m_beforeWeights.append(beforeWeight);
+        }
+      }
+    }
+  }
+}
+
+void ChangeWeightUndo::undo() {
+  QList<OneShape> targetShapes;
+  QList<double>::iterator before_itr = m_beforeWeights.begin();
+  for (auto target : m_targetCorrs) {
+    OneShape shape = target.first;
+
+    // キーフレームじゃなかったシェイプは、単にキーを消去
+    if (!m_wasKeyShapes.contains(shape)) {
+      shape.shapePairP->removeCorrKey(m_frame, shape.fromTo);
+      continue;
+    }
+
+    CorrPointList cpList =
+        shape.shapePairP->getCorrPointList(m_frame, shape.fromTo);
+    if (target.second >= 0) {
+      cpList[target.second].weight = *before_itr;
+      before_itr++;
+    } else {
+      for (auto &cp : cpList) {
+        cp.weight = *before_itr;
+        before_itr++;
+      }
+    }
+    shape.shapePairP->setCorrKey(m_frame, shape.fromTo, cpList);
+
+    // 変更されるフレームをinvalidate
+    if (m_project->isCurrent()) {
+      int start, end;
+      shape.shapePairP->getCorrKeyRange(start, end, m_frame, shape.fromTo);
+      IwTriangleCache::instance()->invalidateCache(
+          start, end, m_project->getParentShape(shape.shapePairP));
+    }
+  }
+
+  // もしこれがカレントなら、シグナルをエミット
+  if (m_project->isCurrent()) {
+    IwApp::instance()->getCurrentProject()->notifyProjectChanged();
+  }
+}
+
+void ChangeWeightUndo::redo() {
+  for (auto target : m_targetCorrs) {
+    OneShape shape = target.first;
+
+    CorrPointList cpList =
+        shape.shapePairP->getCorrPointList(m_frame, shape.fromTo);
+    if (target.second >= 0)
+      cpList[target.second].weight = m_afterWeight;
+    else {
+      for (auto &cp : cpList) {
+        cp.weight = m_afterWeight;
+      }
+    }
+
+    shape.shapePairP->setCorrKey(m_frame, shape.fromTo, cpList);
+
+    // 変更されるフレームをinvalidate
+    if (m_project->isCurrent()) {
+      int start, end;
+      shape.shapePairP->getCorrKeyRange(start, end, m_frame, shape.fromTo);
+      IwTriangleCache::instance()->invalidateCache(
+          start, end, m_project->getParentShape(shape.shapePairP));
+    }
+  }
+
+  // もしこれがカレントなら、シグナルをエミット
+  if (m_project->isCurrent()) {
+    IwApp::instance()->getCurrentProject()->notifyProjectChanged();
   }
 }
 

@@ -390,9 +390,20 @@ void IwRenderInstance::getCorrVectors(IwLayer* /*layer*/,
         shapePair->getDiscreteCorrValues(onePix, m_frame, 0);
     QList<double> discreteCorrValuesTo =
         shapePair->getDiscreteCorrValues(onePix, m_frame, 1);
+    // 対応点の分割点のウェイトを求める
+    QList<double> discreteCorrWeightsFrom =
+        shapePair->getDiscreteCorrWeights(m_frame, 0);
+    QList<double> discreteCorrWeightsTo =
+        shapePair->getDiscreteCorrWeights(m_frame, 1);
+
+    assert(discreteCorrValuesFrom.size() == discreteCorrWeightsFrom.size());
 
     QPointF firstPosFrom, lastPosFrom, prevPosFrom, firstPosTo, lastPosTo,
         prevPosTo;
+
+    double firstWeightFrom, lastWeightFrom, prevWeightFrom, firstWeightTo,
+        lastWeightTo, prevWeightTo;
+
     // 各ベジエ座標を格納
     for (int d = 0; d < discreteCorrValuesFrom.size(); d++) {
       QPointF tmpPosFrom = shapePair->getBezierPosFromValue(
@@ -406,13 +417,20 @@ void IwRenderInstance::getCorrVectors(IwLayer* /*layer*/,
       tmpPosTo   = QPointF(tmpPosTo.x() * (double)workAreaSize.width(),
                            tmpPosTo.y() * (double)workAreaSize.height());
 
+      double tmpWeightFrom = discreteCorrWeightsFrom.at(d);
+      double tmpWeightTo   = discreteCorrWeightsTo.at(d);
+      assert(tmpWeightTo > 0.5);
       if (d == 0) {
-        firstPosFrom = tmpPosFrom;
-        firstPosTo   = tmpPosTo;
+        firstPosFrom    = tmpPosFrom;
+        firstPosTo      = tmpPosTo;
+        firstWeightFrom = tmpWeightFrom;
+        firstWeightTo   = tmpWeightTo;
       } else {
         if (d == discreteCorrValuesFrom.size() - 1) {
-          lastPosFrom = tmpPosFrom;
-          lastPosTo   = tmpPosTo;
+          lastPosFrom    = tmpPosFrom;
+          lastPosTo      = tmpPosTo;
+          lastWeightFrom = tmpWeightFrom;
+          lastWeightTo   = tmpWeightTo;
         }
 
         // ここで、ワープ先（Toの方）のCorrVecの長さが、５ピクセルより短い場合、
@@ -424,13 +442,19 @@ void IwRenderInstance::getCorrVectors(IwLayer* /*layer*/,
             !isDecimal(discreteCorrValuesTo.at(d)))
           continue;
 
-        CorrVector corrVec = {
-            {prevPosFrom, tmpPosFrom}, {prevPosTo, tmpPosTo}, depth, false};
+        CorrVector corrVec = {{prevPosFrom, tmpPosFrom},
+                              {prevPosTo, tmpPosTo},
+                              depth,
+                              false,
+                              {prevWeightFrom, tmpWeightFrom},
+                              {prevWeightTo, tmpWeightTo}};
 
         corrVectors.append(corrVec);
       }
-      prevPosFrom = tmpPosFrom;
-      prevPosTo   = tmpPosTo;
+      prevPosFrom    = tmpPosFrom;
+      prevPosTo      = tmpPosTo;
+      prevWeightFrom = tmpWeightFrom;
+      prevWeightTo   = tmpWeightTo;
 
       if (shapePair->isParent()) {
         parentShapeVerticesFrom.append(tmpPosFrom);
@@ -439,8 +463,12 @@ void IwRenderInstance::getCorrVectors(IwLayer* /*layer*/,
     }
     // 閉じたシェイプの場合、最後と最初を繋ぐベクトルを追加
     if (shapePair->isClosed()) {
-      CorrVector corrVec = {
-          {lastPosFrom, firstPosFrom}, {lastPosTo, firstPosTo}, depth, false};
+      CorrVector corrVec = {{lastPosFrom, firstPosFrom},
+                            {lastPosTo, firstPosTo},
+                            depth,
+                            false,
+                            {lastWeightFrom, firstWeightFrom},
+                            {lastWeightTo, firstWeightTo}};
       corrVectors.append(corrVec);
     }
   }
@@ -526,7 +554,8 @@ void IwRenderInstance::HEcreateTriangleMesh(
 
     if (!start) {
       start = new HEVertex(corrVec.from_p[0], corrVec.to_p[0],
-                           (double)corrVec.stackOrder);
+                           (double)corrVec.stackOrder, corrVec.from_weight[0],
+                           corrVec.to_weight[0]);
       // モデルに点を追加
       //     B2 - 2) piを含む三角形ABCを発見し, この三角形をAB pi, BC pi, CA pi
       //     の3個の三角形に分割． この時, 辺AB, BC, CAをスタックSに積む． B2 -
@@ -547,7 +576,8 @@ void IwRenderInstance::HEcreateTriangleMesh(
     HEVertex* end = model.findVertex(corrVec.from_p[1], corrVec.to_p[1]);
     if (!end) {
       end = new HEVertex(corrVec.from_p[1], corrVec.to_p[1],
-                         (double)corrVec.stackOrder);
+                         (double)corrVec.stackOrder, corrVec.from_weight[1],
+                         corrVec.to_weight[1]);
       model.addVertex(end, start);
     } else  // すでに追加済みの点の場合（平曲線の始点に戻ってきたときなど）は、制約のみ付加する
       model.setConstraint(start, end, true);

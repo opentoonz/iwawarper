@@ -203,7 +203,7 @@ void ProjectUtils::deleteFormPoints(QMap<ShapePair*, QList<int>>& pointList) {
           CorrPointList cpList = corrItr.value();
           // ポイント全てに、「つめる割合」を掛けていく
           for (int cp = 0; cp < cpList.size(); cp++)
-            cpList[cp] *= corrShrinkRatio;
+            cpList[cp].value *= corrShrinkRatio;
           // 値を上書きで戻す
           corrData.insert(corrItr.key(), cpList);
         }
@@ -299,7 +299,7 @@ void ProjectUtils::deleteFormPoints(QMap<ShapePair*, QList<int>>& pointList) {
           CorrPointList cpList = corrItr.value();
           // ポイント全てに、「つめる割合」を掛けていく
           for (int cp = 0; cp < cpList.size(); cp++) {
-            double tmpCorr = cpList.at(cp);
+            double tmpCorr = cpList.at(cp).value;
             int k1         = (int)tmpCorr;
             double ratio   = tmpCorr - (double)k1;
             int k2         = (k1 + 1 >= oldPointAmount) ? 0 : k1 + 1;
@@ -311,7 +311,7 @@ void ProjectUtils::deleteFormPoints(QMap<ShapePair*, QList<int>>& pointList) {
             // 補間後、Corr値が０を超えた場合クランプする
             if (newCorr >= remainingPointAmount)
               newCorr -= remainingPointAmount;
-            cpList.replace(cp, newCorr);
+            cpList.replace(cp, {newCorr, cpList.at(cp).weight});
           }
           // 値を上書きで戻す
           corrData.insert(corrItr.key(), cpList);

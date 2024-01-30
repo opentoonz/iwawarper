@@ -32,7 +32,9 @@ struct CorrVector {
   QPointF to_p[2];
   int stackOrder;  // レイヤインデックス ＝ 重ね順
   bool isEdge;     // 輪郭ならtrue, シェイプ由来ならtrue
-  int indices[2];  // samplePointsのインデックス
+  double from_weight[2];
+  double to_weight[2];
+  // int indices[2];  // samplePointsのインデックス
 };
 
 class MapTrianglesToRaster_Worker : public QRunnable {

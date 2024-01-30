@@ -271,25 +271,23 @@ int TranslatePointDragTool::calculateSnap(QPointF& pos) {
                      std::abs(posAfter.y() - pos.y()) < thres_dist.y()) {
             minimumW = pointAfter;
             ret      = (int)minimumW;
-          }
-          else { // 対応点へのスナップ
-            CorrPointList corrs = shapePair->getCorrPointList(frame, fromTo);
-            double minDiff = 100.0;
+          } else {  // 対応点へのスナップ
+            CorrPointList corrs   = shapePair->getCorrPointList(frame, fromTo);
+            double minDiff        = 100.0;
             double nearestCorrPos = 0.;
             for (auto corrPos : corrs) {
-              double tmpDiff = w - corrPos;
+              double tmpDiff = w - corrPos.value;
               if (abs(minDiff) > abs(tmpDiff)) {
-                minDiff = tmpDiff;
-                nearestCorrPos = corrPos;
+                minDiff        = tmpDiff;
+                nearestCorrPos = corrPos.value;
               }
             }
             QPointF posCorr =
-              shapePair->getBezierPosFromValue(frame, fromTo, nearestCorrPos);
+                shapePair->getBezierPosFromValue(frame, fromTo, nearestCorrPos);
             if (std::abs(posCorr.x() - pos.x()) < thres_dist.x() &&
-              std::abs(posCorr.y() - pos.y()) < thres_dist.y()) {
+                std::abs(posCorr.y() - pos.y()) < thres_dist.y()) {
               minimumW = nearestCorrPos;
-            }
-            else // 線上へのスナップ
+            } else  // 線上へのスナップ
               minimumW = w;
           }
           minimumDist  = dist;
@@ -496,11 +494,10 @@ void TranslatePointDragTool::draw(const QPointF& onePixelLength) {
     BezierPointList bPList =
         m_snapTarget.shapePairP->getBezierPointList(frame, m_snapTarget.fromTo);
 
-
     // 対応点の描画
     glColor3d(1.0, 1.0, 0.0);
-    QList<QPointF> corrPoints =
-      m_snapTarget.shapePairP->getCorrPointPositions(frame, m_snapTarget.fromTo);
+    QList<QPointF> corrPoints = m_snapTarget.shapePairP->getCorrPointPositions(
+        frame, m_snapTarget.fromTo);
     for (auto corrP : corrPoints) {
       glPushMatrix();
       glTranslated(corrP.x(), corrP.y(), 0.0);

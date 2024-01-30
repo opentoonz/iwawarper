@@ -150,6 +150,9 @@ void IwTool::drawCorrLine(OneShape shape)
   // 対応点の座標リストを得る
   QList<QPointF> corrPoints =
       shape.shapePairP->getCorrPointPositions(frame, shape.fromTo);
+  // ウェイトのリストも得る
+  QList<double> corrWeights =
+      shape.shapePairP->getCorrPointWeights(frame, shape.fromTo);
 
   // 名前
   int shapeName = layer->getNameFromShapePair(shape);
@@ -179,10 +182,16 @@ void IwTool::drawCorrLine(OneShape shape)
     glPopName();
 
     // テキストの描画
-    glColor3d(cNumberCol[0], cNumberCol[1], cNumberCol[2]);
-    // TODO
-    // m_viewer->renderText(5.0, -15.0, 0.0,QString::number(p+1),f);
-
+    // ウェイトが1じゃない場合に描画する
+    double weight = corrWeights.at(p);
+    if (weight != 1.) {
+      glColor3d(cNumberCol[0], cNumberCol[1], cNumberCol[2]);
+      GLdouble model[16];
+      glGetDoublev(GL_MODELVIEW_MATRIX, model);
+      m_viewer->renderText(model[12] + 5.0, model[13] - 15.0,
+                           QString::number(weight),
+                           QFont("Helvetica", 10, QFont::Normal));
+    }
     glPopMatrix();
   }
 }
