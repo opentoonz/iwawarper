@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 jobs:
   macOS:
-    runs-on: macos-latest
+    runs-on: 	macos-13
     steps:
     - name: checkout with cached LFS
       uses: nschloe/action-cached-lfs-checkout@v1
@@ -39,7 +39,7 @@ jobs:
         mkdir build
         cd build
         cmake ../sources -G Ninja -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DQTDIR='/usr/local/opt/qt@5' -DWITH_TRANSLATION=OFF
-        ninja -w dupbuild=warn
+        ninja
     
     - name: Introduce Libraries and Stuff
       run: |
