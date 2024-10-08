@@ -8,6 +8,8 @@
 
 #include <QVariant>
 #include <iostream>
+#include <QGuiApplication>
+#include <QScreen>
 
 //---------------------------------------------------
 // コンストラクタで、位置/サイズをロード
@@ -43,6 +45,13 @@ IwDialog::IwDialog(QWidget* parent, SettingsId dialogName, bool isResizable)
   // リサイズ不可なら移動だけ
   else {
     m_geom = QRect(leftEdge, topEdge, 1, 1);
+  }
+
+  // スクリーン画面外の場合は、プライマリスクリーンの中心に持ってくる
+  QScreen* screen = QGuiApplication::screenAt(mapToGlobal(m_geom.center()));
+  if (!screen) {
+    m_geom.moveCenter(mapFromGlobal(
+        QGuiApplication::primaryScreen()->virtualGeometry().center()));
   }
 }
 
