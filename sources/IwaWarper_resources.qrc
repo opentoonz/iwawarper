@@ -1,6 +1,15 @@
 <RCC>
   <qresource prefix="/">
-    <file>Resources/cursors/blackarrow.png</file>
+	<file>tex_frag.glsl</file>
+	<file>tex_vert.glsl</file>
+	<file>line_frag.glsl</file>
+	<file>line_vert.glsl</file>
+	<file>mesh_to_line_geom.glsl</file>
+	<file>stipple_line_geom.glsl</file>
+	<file>stipple_line_frag.glsl</file>
+	<file>fill_frag.glsl</file>
+	<file>fill_vert.glsl</file>
+	<file>Resources/cursors/blackarrow.png</file>
     <file>Resources/cursors/blackarrowadd.png</file>
     <file>Resources/cursors/blackarrowcloseshape.png</file>
     <file>Resources/cursors/circle.png</file>
@@ -58,6 +67,6 @@
     <file>Resources/tool_transform_rollover.svg</file>
     <file>Resources/visible_half.svg</file>
     <file>Resources/visible_off.svg</file>
-    <file>Resources/visible_on.svg</file>
+	<file>Resources/visible_on.svg</file>
   </qresource>
 </RCC>

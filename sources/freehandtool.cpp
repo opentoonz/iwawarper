@@ -246,16 +246,18 @@ void FreeHandTool::draw() {
   // 色の取得
 
   // シェイプの現在の状況に合わせて色を得る
-  double tracedLineColor[3];
-  ColorSettings::instance()->getColor(tracedLineColor,
-                                      Color_FreeHandToolTracedLine);
-  glColor3d(tracedLineColor[0], tracedLineColor[1], tracedLineColor[2]);
+  QColor tracedLineColor =
+      ColorSettings::instance()->getQColor(Color_FreeHandToolTracedLine);
 
-  glBegin((m_isClosed) ? GL_LINE_LOOP : GL_LINE_STRIP);
+  m_viewer->setColor(tracedLineColor);
+
+  QVector3D* vert = new QVector3D[m_points.size()];
   for (int p = 0; p < m_points.size(); p++) {
-    glVertex3d(m_points.at(p).x(), m_points.at(p).y(), 0.0);
+    vert[p] = QVector3D(m_points.at(p));
   }
-  glEnd();
+  m_viewer->doDrawLine((m_isClosed) ? GL_LINE_LOOP : GL_LINE_STRIP, vert,
+                       m_points.size());
+  delete[] vert;
 
   if (!m_currentShape.shapePairP) return;
 
@@ -265,21 +267,14 @@ void FreeHandTool::draw() {
   int frame = project->getViewFrame();
 
   // シェイプの現在の状況に合わせて色を得る
-  glColor3d(1.0, 1.0, 1.0);
+  m_viewer->setColor(QColor(Qt::white));
+  // glColor3d(1.0, 1.0, 1.0);
 
-  GLdouble* vertexArray = m_currentShape.shapePairP->getVertexArray(
+  QVector3D* vertexArray = m_currentShape.shapePairP->getVertexArray(
       frame, m_currentShape.fromTo, project);
 
-  // VertexArrayの有効化
-  glEnableClientState(GL_VERTEX_ARRAY);
-  // 1頂点は3つで構成、double型、オフセット０、データ元
-  glVertexPointer(3, GL_DOUBLE, 0, vertexArray);
-  // シェイプは開いている
-  glDrawArrays(GL_LINE_STRIP, 0,
-               m_currentShape.shapePairP->getVertexAmount(project));
-
-  // VertexArrayの無効化
-  glDisableClientState(GL_VERTEX_ARRAY);
+  m_viewer->doDrawLine(GL_LINE_STRIP, vertexArray,
+                       m_currentShape.shapePairP->getVertexAmount(project));
 
   // データを解放
   delete[] vertexArray;
@@ -287,9 +282,8 @@ void FreeHandTool::draw() {
   // コントロールポイントを描画
 
   // コントロールポイントの色を得ておく
-  double cpColor[3], cpSelected[3];
-  ColorSettings::instance()->getColor(cpColor, Color_CtrlPoint);
-  ColorSettings::instance()->getColor(cpSelected, Color_ActiveCtrl);
+  QColor cpColor    = ColorSettings::instance()->getQColor(Color_CtrlPoint);
+  QColor cpSelected = ColorSettings::instance()->getQColor(Color_ActiveCtrl);
   // それぞれのポイントについて、選択されていたらハンドル付きで描画
   // 選択されていなければ普通に四角を描く
   BezierPointList bPList = m_currentShape.shapePairP->getBezierPointList(
@@ -297,8 +291,8 @@ void FreeHandTool::draw() {
 
   for (int p = 0; p < bPList.size(); p++) {
     // 単にコントロールポイントを描画する
-    glColor3d(cpColor[0], cpColor[1], cpColor[2]);
-    ReshapeTool::drawControlPoint(m_currentShape, bPList, p, false,
+    m_viewer->setColor(cpColor);
+    ReshapeTool::drawControlPoint(m_viewer, m_currentShape, bPList, p, false,
                                   m_viewer->getOnePixelLength());
   }
 }

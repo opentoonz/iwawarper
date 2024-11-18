@@ -15,6 +15,7 @@
 class QPointF;
 
 class IwShapePairSelection;
+class SceneViewer;
 
 //--------------------------------------------------------
 // 対応点ドラッグツール
@@ -49,7 +50,7 @@ public:
 
   void doSnap(double &bezierPos, int frame, double rangeBefore = -1.,
               double rangeAfter = -1.);
-  void draw();
+  void draw(SceneViewer *viewer);
 };
 
 //--------------------------------------------------------

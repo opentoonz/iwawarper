@@ -19,6 +19,7 @@ class QPointF;
 
 class IwLayer;
 struct OneShape;
+class SceneViewer;
 
 //--------------------------------------------------------
 class TransformTool : public IwTool {
@@ -63,14 +64,15 @@ public:
   int getCursorId(const QMouseEvent*);
 
   // ハンドルをいっこ描く
-  void drawHandle(IwLayer* layer, OneShape shape, TransformHandleId handleId,
-                  const QPointF& onePix, const QPointF& pos);
+  void drawHandle(SceneViewer* viewer, IwLayer* layer, OneShape shape,
+                  TransformHandleId handleId, const QPointF& onePix,
+                  const QPointF& pos);
   // void drawHandle(IwProject* project, IwShape* shape,
   //				TransformHandleId handleId,
   //				QPointF & onePix, QPointF & pos);
 
   // 140110 iwasawa Ctrl押したとき辺ドラッグでサイズ変更のための辺
-  void drawEdgeForResize(IwLayer* layer, OneShape shape,
+  void drawEdgeForResize(SceneViewer* viewer, IwLayer* layer, OneShape shape,
                          TransformHandleId handleId, const QPointF& p1,
                          const QPointF& p2);
 

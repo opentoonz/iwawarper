@@ -15,6 +15,7 @@ class IwShapePairSelection;
 class PointDragTool;
 class ReshapeToolContextMenu;
 class IwLayer;
+class SceneViewer;
 
 class ReshapeTool : public IwTool {
   Q_DECLARE_TR_FUNCTIONS(ReshapeTool)
@@ -61,11 +62,11 @@ public:
   // コントロールポイントを描画する。ハンドルも付けるかどうかも引数で決める
   //  PenToolでも使いたいので、static化する
   static void drawControlPoint(
-      OneShape shape, BezierPointList& pointList, int cpIndex, bool drawHandles,
-      const QPointF& onePix,
+      SceneViewer* viewer, OneShape shape, BezierPointList& pointList,
+      int cpIndex, bool drawHandles, const QPointF& onePix,
       int specialShapeIndex =
           0,  // PenToolで使う。Projectに属していないシェイプに使う
-      bool fillPoint = false);
+      bool fillPoint = false, QColor fillColor = QColor());
   // static void drawControlPoint(IwShape* shape,
   //							BezierPointList&
   // pointList, 							int
@@ -76,7 +77,7 @@ public:
 
   // ハンドル用の円を描く
   //  PenToolでも使いたいので、static化する
-  static void drawCircle();
+  static void drawCircle(SceneViewer* viewer);
 
   // アクティブなシェイプをAltクリックした場合、コントロールポイントを追加する
   void addControlPoint(OneShape shape, const QPointF& pos);

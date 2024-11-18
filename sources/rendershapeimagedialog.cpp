@@ -11,6 +11,7 @@
 #include "shapepair.h"
 #include "iwimagecache.h"
 #include "iocommand.h"
+#include "sceneviewer.h"
 
 #include "outputsettings.h"
 #include <QLineEdit>
@@ -25,203 +26,6 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QCoreApplication>
-
-#include <QOpenGLFramebufferObject>
-
-namespace {
-void doShapeRender() {
-  IwProject* project = IwApp::instance()->getCurrentProject()->getProject();
-  if (!project) return;
-
-  auto drawOneShape = [&](const OneShape& shape, int frame) {
-    GLdouble* vertexArray =
-        shape.shapePairP->getVertexArray(frame, shape.fromTo, project);
-    // シェイプが閉じている場合
-    if (shape.shapePairP->isClosed()) {
-      glBegin(GL_LINE_LOOP);
-      GLdouble* v_p = vertexArray;
-      for (int v = 0; v < shape.shapePairP->getVertexAmount(project); v++) {
-        glVertex3d(v_p[0], v_p[1], v_p[2]);
-        v_p += 3;
-      }
-      glEnd();
-    }
-    // シェイプが開いている場合
-    else {
-      glBegin(GL_LINE_STRIP);
-      GLdouble* v_p = vertexArray;
-      for (int v = 0; v < shape.shapePairP->getVertexAmount(project); v++) {
-        glVertex3d(v_p[0], v_p[1], v_p[2]);
-        v_p += 3;
-      }
-      glEnd();
-    }
-    // データを解放
-    delete[] vertexArray;
-  };
-
-  // 計算範囲を求める
-  // 何フレーム計算するか
-  OutputSettings* settings            = project->getOutputSettings();
-  OutputSettings::SaveRange saveRange = settings->getSaveRange();
-  QString fileName                    = settings->getShapeImageFileName();
-  int sizeId                          = settings->getShapeImageSizeId();
-  QSize workAreaSize                  = project->getWorkAreaSize();
-
-  if (settings->getDirectory().isEmpty()) {
-    QMessageBox::warning(0, QObject::tr("Output Settings Error"),
-                         QObject::tr("Output directory is not set."));
-    return;
-  }
-
-  QDir dir(settings->getDirectory());
-  if (!dir.exists()) {
-    QMessageBox::StandardButton ret = QMessageBox::question(
-        0, QObject::tr("Do you want to create folder?"),
-        QString("The folder %1 does not exist.\nDo you want to create it?")
-            .arg(settings->getDirectory()),
-        QMessageBox::Yes | QMessageBox::Cancel, QMessageBox::Cancel);
-    if (ret == QMessageBox::Yes) {
-      std::cout << "yes" << std::endl;
-      // フォルダ作る
-      bool ok = dir.mkpath(dir.path());
-      if (!ok) {
-        QMessageBox::critical(
-            0, QObject::tr("Failed to create folder."),
-            QString("Failed to create folder %1.").arg(dir.path()));
-        return;
-      }
-    } else
-      return;
-  }
-
-  if (saveRange.endFrame == -1)
-    saveRange.endFrame = project->getProjectFrameLength() - 1;
-
-  // プログレスバー作る
-  RenderProgressPopup progressPopup(project);
-  int frameAmount =
-      (int)((saveRange.endFrame - saveRange.startFrame) / saveRange.stepFrame) +
-      1;
-
-  // 各フレームについて
-  QList<int> frames;
-  for (int i = 0; i < frameAmount; i++) {
-    // フレームを求める
-    int frame = saveRange.startFrame + i * saveRange.stepFrame;
-    frames.append(frame);
-  }
-
-  progressPopup.open();
-
-  for (auto frame : frames) {
-    if (progressPopup.isCanceled()) break;
-
-    // 出力サイズを取得
-    QSize outputSize;
-    if (sizeId < 0)
-      outputSize = workAreaSize;
-    else {
-      IwLayer* layer = project->getLayer(sizeId);
-      QString path   = layer->getImageFilePath(frame);
-      if (path.isEmpty()) {  // 空のレイヤはスキップする
-        progressPopup.onFrameFinished();
-        continue;
-      }
-      ViewSettings* vs = project->getViewSettings();
-      if (vs->hasTexture(path))
-        outputSize = vs->getTextureId(path).size;
-      else {
-        TImageP img;
-        // キャッシュされていたら、それを返す
-        if (IwImageCache::instance()->isCached(path))
-          img = IwImageCache::instance()->get(path);
-        else
-          img = IoCmd::loadImage(path);
-        if (img.getPointer())
-          outputSize = QSize(img->raster()->getLx(), img->raster()->getLy());
-        else {  // 画像が読み込めなければスキップ
-          progressPopup.onFrameFinished();
-          continue;
-        }
-      }
-    }
-
-    QOpenGLFramebufferObject fbo(outputSize);
-    fbo.bind();
-
-    glViewport(0, 0, outputSize.width(), outputSize.height());
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(0, outputSize.width(), 0, outputSize.height(), -4000, 4000);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    glTranslated((double)outputSize.width() / 2.0,
-                 (double)outputSize.height() / 2.0, 0.0);
-
-    glPushMatrix();
-    glTranslated(-(double)workAreaSize.width() / 2.0,
-                 -(double)workAreaSize.height() / 2.0, 0.0);
-    glScaled((double)workAreaSize.width(), (double)workAreaSize.height(), 1.0);
-
-    //---- ロック情報を得る
-    bool fromToVisible[2];
-    for (int fromTo = 0; fromTo < 2; fromTo++)
-      fromToVisible[fromTo] =
-          project->getViewSettings()->isFromToVisible(fromTo);
-    //----
-
-    // 各レイヤについて
-    for (int lay = project->getLayerCount() - 1; lay >= 0; lay--) {
-      // レイヤを取得
-      IwLayer* layer = project->getLayer(lay);
-      if (!layer) continue;
-
-      if (!layer->isVisibleInViewer()) continue;
-
-      for (int sp = 0; sp < layer->getShapePairCount(); sp++) {
-        ShapePair* shapePair = layer->getShapePair(sp);
-        if (!shapePair) continue;
-
-        // 非表示ならconitnue
-        if (!shapePair->isVisible()) continue;
-
-        for (int fromTo = 0; fromTo < 2; fromTo++) {
-          // 140128 ロックされていたら非表示にする
-          if (!fromToVisible[fromTo]) continue;
-
-          OneShape oneShape(shapePair, fromTo);
-
-          glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-          (fromTo == 0) ? glColor3d(1.0, 0.0, 0.0) : glColor3d(0.0, 0.0, 1.0);
-
-          drawOneShape(oneShape, frame);
-
-          glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-        }
-      }
-    }
-
-    glPopMatrix();
-
-    fbo.release();
-    QImage img = fbo.toImage();
-
-    QString path = project->getOutputPath(
-        frame, QString("[dir]/%1.[num].[ext]").arg(fileName));
-    path.chop(3);
-    path += "png";
-
-    img.save(path);
-
-    progressPopup.onFrameFinished();
-    qApp->processEvents();
-  }
-
-  progressPopup.close();
-}
-
-}  // namespace
 
 RenderShapeImageDialog::RenderShapeImageDialog()
     : IwDialog(IwApp::instance()->getMainWindow(), "RenderShapeImageDialog",
@@ -547,7 +351,9 @@ void RenderShapeImageDialog::onOpenBrowserBtnClicked() {
   updateGuis();
 }
 //---------------------------------------------------
-void RenderShapeImageDialog::onRenderButtonClicked() { doShapeRender(); }
+void RenderShapeImageDialog::onRenderButtonClicked() {
+  IwApp::instance()->getMainWindow()->getViewer()->doShapeRender();
+}
 
 OpenPopupCommandHandler<RenderShapeImageDialog> openRenderShapeImageDialog(
     MI_RenderShapeImage);

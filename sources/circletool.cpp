@@ -129,31 +129,35 @@ void CircleTool::draw() {
   glEnable(GL_BLEND);
   glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
 
-  glPushMatrix();
-  glColor3d(0.8, 1.0, 0.8);
+  m_viewer->pushMatrix();
+  m_viewer->setColor(QColor::fromRgbF(0.8, 1.0, 0.8));
 
   // 描いたRECTに収まるように移動
-  glTranslated(rect.center().x(), rect.center().y(), 0.0);
-  glScaled(rect.width() / 2.0, rect.height() / 2.0, 1.0);
+  m_viewer->translate(rect.center().x(), rect.center().y(), 0.0);
+  m_viewer->scale(rect.width() / 2.0, rect.height() / 2.0, 1.0);
 
   // ベジエの分割数を求める
   // 1周4セグメントなので、1ステップ当たりπ／(2*bezierPrec)
   int bezierPrec = Preferences::instance()->getBezierActivePrecision();
+
   // 中心(0,0), 半径1の円を描く
-  glBegin(GL_LINE_LOOP);
+  QVector3D* vert = new QVector3D[4 * bezierPrec];
   // 角度の変分
   double dTheta = M_PI / (double)(bezierPrec * 2);
   double theta  = 0.0;
   for (int t = 0; t < 4 * bezierPrec; t++) {
-    glVertex3d(cosf(theta), sinf(theta), 0.0);
+    vert[t] = QVector3D(cosf(theta), sinf(theta), 0.0);
     theta += dTheta;
   }
-  glEnd();
+  m_viewer->doDrawLine(GL_LINE_LOOP, vert, 4 * bezierPrec);
+
+  delete[] vert;
 
   if (!isEnabled) glDisable(GL_BLEND);
   glBlendFunc(src, dst);
 
-  glPopMatrix();
+  m_viewer->popMatrix();
+  // glPopMatrix();
 }
 //--------------------------------------------------------
 

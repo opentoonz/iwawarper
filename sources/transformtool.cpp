@@ -484,52 +484,53 @@ void TransformTool::draw() {
     QPointF onePix = m_viewer->getOnePixelLength();
     bBox.adjust(-onePix.x(), -onePix.y(), onePix.x(), onePix.y());
 
-    {
-      glEnable(GL_LINE_STIPPLE);
-      if (shape.fromTo == 0)
-        glLineStipple(3, 0xFCFC);
-      else
-        glLineStipple(3, 0xAAAA);
-    }
+    if (shape.fromTo == 0)
+      m_viewer->setLineStipple(3, 0xFCFC);
+    else
+      m_viewer->setLineStipple(3, 0xAAAA);
 
-    glColor3d(1.0, 1.0, 1.0);
+    m_viewer->setColor(QColor(Qt::white));
+    // glColor3d(1.0, 1.0, 1.0);
 
     // バウンディングを描く
     if (m_ctrlPressed) {
-      drawEdgeForResize(layer, shape, Handle_RightEdge, bBox.bottomRight(),
-                        bBox.topRight());
-      drawEdgeForResize(layer, shape, Handle_TopEdge, bBox.topRight(),
+      drawEdgeForResize(m_viewer, layer, shape, Handle_RightEdge,
+                        bBox.bottomRight(), bBox.topRight());
+      drawEdgeForResize(m_viewer, layer, shape, Handle_TopEdge, bBox.topRight(),
                         bBox.topLeft());
-      drawEdgeForResize(layer, shape, Handle_LeftEdge, bBox.topLeft(),
+      drawEdgeForResize(m_viewer, layer, shape, Handle_LeftEdge, bBox.topLeft(),
                         bBox.bottomLeft());
-      drawEdgeForResize(layer, shape, Handle_BottomEdge, bBox.bottomLeft(),
-                        bBox.bottomRight());
+      drawEdgeForResize(m_viewer, layer, shape, Handle_BottomEdge,
+                        bBox.bottomLeft(), bBox.bottomRight());
     } else {
       glPushName(name);
-      glBegin(GL_LINE_LOOP);
-      glVertex3d(bBox.bottomRight().x(), bBox.bottomRight().y(), 0.0);
-      glVertex3d(bBox.topRight().x(), bBox.topRight().y(), 0.0);
-      glVertex3d(bBox.topLeft().x(), bBox.topLeft().y(), 0.0);
-      glVertex3d(bBox.bottomLeft().x(), bBox.bottomLeft().y(), 0.0);
-      glEnd();
+
+      QVector3D vert[4] = {
+          QVector3D(bBox.bottomRight()), QVector3D(bBox.topRight()),
+          QVector3D(bBox.topLeft()), QVector3D(bBox.bottomLeft())};
+      m_viewer->doDrawLine(GL_LINE_LOOP, vert, 4);
+
       glPopName();
     }
 
     // 点線を解除
-    glDisable(GL_LINE_STIPPLE);
+    m_viewer->setLineStipple(1, 0xFFFF);
 
     // ハンドルを描く
-    drawHandle(layer, shape, Handle_BottomRight, onePix, bBox.bottomRight());
-    drawHandle(layer, shape, Handle_Right, onePix,
+    drawHandle(m_viewer, layer, shape, Handle_BottomRight, onePix,
+               bBox.bottomRight());
+    drawHandle(m_viewer, layer, shape, Handle_Right, onePix,
                QPointF(bBox.right(), bBox.center().y()));
-    drawHandle(layer, shape, Handle_TopRight, onePix, bBox.topRight());
-    drawHandle(layer, shape, Handle_Top, onePix,
+    drawHandle(m_viewer, layer, shape, Handle_TopRight, onePix,
+               bBox.topRight());
+    drawHandle(m_viewer, layer, shape, Handle_Top, onePix,
                QPointF(bBox.center().x(), bBox.top()));
-    drawHandle(layer, shape, Handle_TopLeft, onePix, bBox.topLeft());
-    drawHandle(layer, shape, Handle_Left, onePix,
+    drawHandle(m_viewer, layer, shape, Handle_TopLeft, onePix, bBox.topLeft());
+    drawHandle(m_viewer, layer, shape, Handle_Left, onePix,
                QPointF(bBox.left(), bBox.center().y()));
-    drawHandle(layer, shape, Handle_BottomLeft, onePix, bBox.bottomLeft());
-    drawHandle(layer, shape, Handle_Bottom, onePix,
+    drawHandle(m_viewer, layer, shape, Handle_BottomLeft, onePix,
+               bBox.bottomLeft());
+    drawHandle(m_viewer, layer, shape, Handle_Bottom, onePix,
                QPointF(bBox.center().x(), bBox.bottom()));
   }
 
@@ -539,61 +540,58 @@ void TransformTool::draw() {
     QRectF rubberBand =
         QRectF(m_rubberStartPos, m_currentMousePos).normalized();
     // 点線で描画
-    glColor3d(1.0, 1.0, 1.0);
-    glEnable(GL_LINE_STIPPLE);
-    glLineStipple(3, 0xAAAA);
+    m_viewer->setColor(QColor(Qt::white));
+    m_viewer->setLineStipple(3, 0xAAAA);
 
-    glBegin(GL_LINE_LOOP);
-
-    glVertex3d(rubberBand.bottomRight().x(), rubberBand.bottomRight().y(), 0.0);
-    glVertex3d(rubberBand.topRight().x(), rubberBand.topRight().y(), 0.0);
-    glVertex3d(rubberBand.topLeft().x(), rubberBand.topLeft().y(), 0.0);
-    glVertex3d(rubberBand.bottomLeft().x(), rubberBand.bottomLeft().y(), 0.0);
-
-    glEnd();
+    QVector3D vert[4] = {
+        QVector3D(rubberBand.bottomRight()), QVector3D(rubberBand.topRight()),
+        QVector3D(rubberBand.topLeft()), QVector3D(rubberBand.bottomLeft())};
+    m_viewer->doDrawLine(GL_LINE_LOOP, vert, 4);
 
     // 点線を解除
-    glDisable(GL_LINE_STIPPLE);
+    m_viewer->setLineStipple(1, 0xFFFF);
   }
 }
 
 //--------------------------------------------------------
 // ハンドルをいっこ描く
 //--------------------------------------------------------
-void TransformTool::drawHandle(IwLayer* layer, OneShape shape,
-                               TransformHandleId handleId,
+void TransformTool::drawHandle(SceneViewer* viewer, IwLayer* layer,
+                               OneShape shape, TransformHandleId handleId,
                                const QPointF& onePix, const QPointF& pos) {
   // 名前を作る
   int handleName = layer->getNameFromShapePair(shape);
   handleName += (int)handleId;
 
-  glPushMatrix();
+  viewer->pushMatrix();
   glPushName(handleName);
-  glTranslated(pos.x(), pos.y(), 0.0);
-  glScaled(onePix.x(), onePix.y(), 1.0);
-  glBegin(GL_LINE_LOOP);
-  glVertex3d(2.0, -2.0, 0.0);
-  glVertex3d(2.0, 2.0, 0.0);
-  glVertex3d(-2.0, 2.0, 0.0);
-  glVertex3d(-2.0, -2.0, 0.0);
-  glEnd();
+
+  viewer->translate(pos.x(), pos.y(), 0.0);
+  viewer->scale(onePix.x(), onePix.y(), 1.0);
+
+  static QVector3D vert[4] = {
+      QVector3D(2.0, -2.0, 0.0), QVector3D(2.0, 2.0, 0.0),
+      QVector3D(-2.0, 2.0, 0.0), QVector3D(-2.0, -2.0, 0.0)};
+  viewer->doDrawLine(GL_LINE_LOOP, vert, 4);
+
   glPopName();
-  glPopMatrix();
+  viewer->popMatrix();
 }
 
 //--------------------------------------------------------
 // Ctrl押したとき辺ドラッグでサイズ変更のための辺
 //--------------------------------------------------------
-void TransformTool::drawEdgeForResize(IwLayer* layer, OneShape shape,
+void TransformTool::drawEdgeForResize(SceneViewer* viewer, IwLayer* layer,
+                                      OneShape shape,
                                       TransformHandleId handleId,
                                       const QPointF& p1, const QPointF& p2) {
   int handleName = layer->getNameFromShapePair(shape);
   handleName += (int)handleId;
   glPushName(handleName);
-  glBegin(GL_LINE_STRIP);
-  glVertex3d(p1.x(), p1.y(), 0.0);
-  glVertex3d(p2.x(), p2.y(), 0.0);
-  glEnd();
+
+  QVector3D vert[2] = {QVector3D(p1), QVector3D(p2)};
+  viewer->doDrawLine(GL_LINE_STRIP, vert, 2);
+
   glPopName();
 }
 

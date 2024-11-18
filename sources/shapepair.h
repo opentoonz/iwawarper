@@ -91,7 +91,7 @@ public:
 
   // 指定したフレームのベジエ頂点情報を返す
   //  isFromShape = true ならFROM, falseならTO の シェイプの頂点を得る
-  double* getVertexArray(int frame, int fromTo, IwProject* project);
+  QVector3D* getVertexArray(int frame, int fromTo, IwProject* project);
 
   // 閉じているかどうかを返す
   bool isClosed() { return m_isClosed; }

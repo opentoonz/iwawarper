@@ -105,6 +105,8 @@ public:
 
   void onClearMeshCache();
 
+  SceneViewer *getViewer() { return m_viewer; }
+
 protected:
   void closeEvent(QCloseEvent *) override;
 

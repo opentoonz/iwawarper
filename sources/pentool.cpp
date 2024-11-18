@@ -249,22 +249,16 @@ void PenTool::draw() {
   // 現在のフレーム
   int frame = project->getViewFrame();
 
-  glColor3d(1.0, 1.0, 1.0);
+  m_viewer->setColor(QColor(Qt::white));
 
-  GLdouble* vertexArray = m_editingShape->getVertexArray(frame, 0, project);
+  QVector3D* vertexArray = m_editingShape->getVertexArray(frame, 0, project);
 
   // 名前付ける
   int name = PenTool::EDITING_SHAPE_ID * 10000;
   glPushName(name);
 
-  // VertexArrayの有効化
-  glEnableClientState(GL_VERTEX_ARRAY);
-  // 1頂点は3つで構成、double型、オフセット０、データ元
-  glVertexPointer(3, GL_DOUBLE, 0, vertexArray);
-  // シェイプは開いている
-  glDrawArrays(GL_LINE_STRIP, 0, m_editingShape->getVertexAmount(project));
-  // VertexArrayの無効化
-  glDisableClientState(GL_VERTEX_ARRAY);
+  m_viewer->doDrawLine(GL_LINE_STRIP, vertexArray,
+                       m_editingShape->getVertexAmount(project));
 
   glPopName();
 
@@ -274,9 +268,8 @@ void PenTool::draw() {
   // コントロールポイントを描画
 
   // コントロールポイントの色を得ておく
-  double cpColor[3], cpSelected[3];
-  ColorSettings::instance()->getColor(cpColor, Color_CtrlPoint);
-  ColorSettings::instance()->getColor(cpSelected, Color_ActiveCtrl);
+  QColor cpColor    = ColorSettings::instance()->getQColor(Color_CtrlPoint);
+  QColor cpSelected = ColorSettings::instance()->getQColor(Color_ActiveCtrl);
   // それぞれのポイントについて、選択されていたらハンドル付きで描画
   // 選択されていなければ普通に四角を描く
   BezierPointList bPList = m_editingShape->getBezierPointList(frame, 0);
@@ -284,18 +277,18 @@ void PenTool::draw() {
     // 選択されている場合
     if (isPointActive(p)) {
       // ハンドル付きでコントロールポイントを描画する
-      glColor3d(cpSelected[0], cpSelected[1], cpSelected[2]);
-      ReshapeTool::drawControlPoint(OneShape(m_editingShape, 0), bPList, p,
-                                    true, m_viewer->getOnePixelLength(),
-                                    PenTool::EDITING_SHAPE_ID);
+      m_viewer->setColor(cpSelected);
+      ReshapeTool::drawControlPoint(
+          m_viewer, OneShape(m_editingShape, 0), bPList, p, true,
+          m_viewer->getOnePixelLength(), PenTool::EDITING_SHAPE_ID);
     }
     // 選択されていない場合
     else {
       // 単にコントロールポイントを描画する
-      glColor3d(cpColor[0], cpColor[1], cpColor[2]);
-      ReshapeTool::drawControlPoint(OneShape(m_editingShape, 0), bPList, p,
-                                    false, m_viewer->getOnePixelLength(),
-                                    PenTool::EDITING_SHAPE_ID);
+      m_viewer->setColor(cpColor);
+      ReshapeTool::drawControlPoint(
+          m_viewer, OneShape(m_editingShape, 0), bPList, p, false,
+          m_viewer->getOnePixelLength(), PenTool::EDITING_SHAPE_ID);
     }
   }
 }

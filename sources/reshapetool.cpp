@@ -26,29 +26,29 @@
 
 namespace {
 
-void drawEdgeForResize(TransformHandleId handleId, const QPointF& p1,
-                       const QPointF& p2) {
+void drawEdgeForResize(SceneViewer* viewer, TransformHandleId handleId,
+                       const QPointF& p1, const QPointF& p2) {
   glPushName((int)handleId);
-  glBegin(GL_LINE_STRIP);
-  glVertex3d(p1.x(), p1.y(), 0.0);
-  glVertex3d(p2.x(), p2.y(), 0.0);
-  glEnd();
+
+  QVector3D vert[2] = {QVector3D(p1), QVector3D(p2)};
+  viewer->doDrawLine(GL_LINE_STRIP, vert, 2);
+
   glPopName();
 }
-void drawHandle(TransformHandleId handleId, const QPointF& onePix,
-                const QPointF& pos) {
-  glPushMatrix();
+void drawHandle(SceneViewer* viewer, TransformHandleId handleId,
+                const QPointF& onePix, const QPointF& pos) {
+  viewer->pushMatrix();
   glPushName((int)handleId);
-  glTranslated(pos.x(), pos.y(), 0.0);
-  glScaled(onePix.x(), onePix.y(), 1.0);
-  glBegin(GL_LINE_LOOP);
-  glVertex3d(2.0, -2.0, 0.0);
-  glVertex3d(2.0, 2.0, 0.0);
-  glVertex3d(-2.0, 2.0, 0.0);
-  glVertex3d(-2.0, -2.0, 0.0);
-  glEnd();
+  viewer->translate(pos.x(), pos.y(), 0.0);
+  viewer->scale(onePix.x(), onePix.y(), 1.0);
+
+  static QVector3D vert[4] = {
+      QVector3D(2.0, -2.0, 0.0), QVector3D(2.0, 2.0, 0.0),
+      QVector3D(-2.0, 2.0, 0.0), QVector3D(-2.0, -2.0, 0.0)};
+  viewer->doDrawLine(GL_LINE_LOOP, vert, 4);
+
   glPopName();
-  glPopMatrix();
+  viewer->popMatrix();
 }
 
 }  // namespace
@@ -376,10 +376,10 @@ void ReshapeTool::draw() {
   int frame = project->getViewFrame();
 
   // コントロールポイントの色を得ておく
-  double cpColor[3], cpSelected[3], cpInbetween[3];
-  ColorSettings::instance()->getColor(cpColor, Color_CtrlPoint);
-  ColorSettings::instance()->getColor(cpSelected, Color_ActiveCtrl);
-  ColorSettings::instance()->getColor(cpInbetween, Color_InbetweenCtrl);
+  QColor cpColor    = ColorSettings::instance()->getQColor(Color_CtrlPoint);
+  QColor cpSelected = ColorSettings::instance()->getQColor(Color_ActiveCtrl);
+  QColor cpInbetween =
+      ColorSettings::instance()->getQColor(Color_InbetweenCtrl);
 
   QList<OneShape> shapes = m_selection->getShapes();
 
@@ -404,8 +404,8 @@ void ReshapeTool::draw() {
       // 選択されている場合
       if (m_selection->isPointActive(shape, p)) {
         // ハンドル付きでコントロールポイントを描画する
-        glColor3dv(cpSelected);
-        ReshapeTool::drawControlPoint(shape, bPList, p, true,
+        m_viewer->setColor(cpSelected);
+        ReshapeTool::drawControlPoint(m_viewer, shape, bPList, p, true,
                                       m_viewer->getOnePixelLength());
 
         // get bounding box for transform handle
@@ -421,47 +421,51 @@ void ReshapeTool::draw() {
       else {
         // 単にコントロールポイントを描画する
         // カレントフレームがキーフレームかどうかで表示を分ける
-        glColor3dv(shape.shapePairP->isFormKey(frame, shape.fromTo)
-                       ? cpColor
-                       : cpInbetween);
-        ReshapeTool::drawControlPoint(shape, bPList, p, false,
+        m_viewer->setColor(shape.shapePairP->isFormKey(frame, shape.fromTo)
+                               ? cpColor
+                               : cpInbetween);
+        ReshapeTool::drawControlPoint(m_viewer, shape, bPList, p, false,
                                       m_viewer->getOnePixelLength());
       }
     }
     //	++i;
   }
 
-  if (m_dragTool) m_dragTool->draw(m_viewer->getOnePixelLength());
+  if (m_dragTool) m_dragTool->draw(m_viewer, m_viewer->getOnePixelLength());
 
   if (m_transformHandles) {
     QRectF handleRect(topLeft, bottomRight);
     if (!handleRect.isEmpty()) {
       QPointF onePix = m_viewer->getOnePixelLength();
       handleRect.adjust(-onePix.x(), -onePix.y(), onePix.x(), onePix.y());
-      glColor3dv(cpSelected);
-      glEnable(GL_LINE_STIPPLE);
-      glLineStipple(3, 0xAAAA);
-      drawEdgeForResize(Handle_RightEdge, handleRect.bottomRight(),
+      m_viewer->setColor(cpSelected);
+
+      m_viewer->setLineStipple(3, 0xAAAA);
+
+      drawEdgeForResize(m_viewer, Handle_RightEdge, handleRect.bottomRight(),
                         handleRect.topRight());
-      drawEdgeForResize(Handle_TopEdge, handleRect.topRight(),
+      drawEdgeForResize(m_viewer, Handle_TopEdge, handleRect.topRight(),
                         handleRect.topLeft());
-      drawEdgeForResize(Handle_LeftEdge, handleRect.topLeft(),
+      drawEdgeForResize(m_viewer, Handle_LeftEdge, handleRect.topLeft(),
                         handleRect.bottomLeft());
-      drawEdgeForResize(Handle_BottomEdge, handleRect.bottomLeft(),
+      drawEdgeForResize(m_viewer, Handle_BottomEdge, handleRect.bottomLeft(),
                         handleRect.bottomRight());
-      glDisable(GL_LINE_STIPPLE);
+
+      m_viewer->setLineStipple(1, 0xFFFF);
+
       // ハンドルを描く
-      drawHandle(Handle_BottomRight, onePix, handleRect.bottomRight());
-      drawHandle(Handle_Right, onePix,
+      drawHandle(m_viewer, Handle_BottomRight, onePix,
+                 handleRect.bottomRight());
+      drawHandle(m_viewer, Handle_Right, onePix,
                  QPointF(handleRect.right(), handleRect.center().y()));
-      drawHandle(Handle_TopRight, onePix, handleRect.topRight());
-      drawHandle(Handle_Top, onePix,
+      drawHandle(m_viewer, Handle_TopRight, onePix, handleRect.topRight());
+      drawHandle(m_viewer, Handle_Top, onePix,
                  QPointF(handleRect.center().x(), handleRect.top()));
-      drawHandle(Handle_TopLeft, onePix, handleRect.topLeft());
-      drawHandle(Handle_Left, onePix,
+      drawHandle(m_viewer, Handle_TopLeft, onePix, handleRect.topLeft());
+      drawHandle(m_viewer, Handle_Left, onePix,
                  QPointF(handleRect.left(), handleRect.center().y()));
-      drawHandle(Handle_BottomLeft, onePix, handleRect.bottomLeft());
-      drawHandle(Handle_Bottom, onePix,
+      drawHandle(m_viewer, Handle_BottomLeft, onePix, handleRect.bottomLeft());
+      drawHandle(m_viewer, Handle_Bottom, onePix,
                  QPointF(handleRect.center().x(), handleRect.bottom()));
       m_handleRect = handleRect;
     }
@@ -473,21 +477,16 @@ void ReshapeTool::draw() {
     QRectF rubberBand =
         QRectF(m_rubberStartPos, m_currentMousePos).normalized();
     // 点線で描画
-    glColor3d(1.0, 1.0, 1.0);
-    glEnable(GL_LINE_STIPPLE);
-    glLineStipple(3, 0xAAAA);
+    m_viewer->setColor(QColor(Qt::white));
+    m_viewer->setLineStipple(3, 0xAAAA);
 
-    glBegin(GL_LINE_LOOP);
-
-    glVertex3d(rubberBand.bottomRight().x(), rubberBand.bottomRight().y(), 0.0);
-    glVertex3d(rubberBand.topRight().x(), rubberBand.topRight().y(), 0.0);
-    glVertex3d(rubberBand.topLeft().x(), rubberBand.topLeft().y(), 0.0);
-    glVertex3d(rubberBand.bottomLeft().x(), rubberBand.bottomLeft().y(), 0.0);
-
-    glEnd();
+    QVector3D vert[4] = {
+        QVector3D(rubberBand.bottomRight()), QVector3D(rubberBand.topRight()),
+        QVector3D(rubberBand.topLeft()), QVector3D(rubberBand.bottomLeft())};
+    m_viewer->doDrawLine(GL_LINE_LOOP, vert, 4);
 
     // 点線を解除
-    glDisable(GL_LINE_STIPPLE);
+    m_viewer->setLineStipple(1, 0xFFFF);
   }
 }
 
@@ -678,21 +677,22 @@ int ReshapeTool::getCursorId(const QMouseEvent* e) {
 // コントロールポイントを描画する。ハンドルも付けるかどうかも引数で決める
 //--------------------------------------------------------
 
-void ReshapeTool::drawControlPoint(OneShape shape, BezierPointList& pointList,
-                                   int cpIndex, bool drawHandles,
-                                   const QPointF& onePix, int specialShapeIndex,
-                                   bool fillPoint) {
+void ReshapeTool::drawControlPoint(SceneViewer* viewer, OneShape shape,
+                                   BezierPointList& pointList, int cpIndex,
+                                   bool drawHandles, const QPointF& onePix,
+                                   int specialShapeIndex, bool fillPoint,
+                                   QColor fillColor) {
   IwLayer* layer = IwApp::instance()->getCurrentLayer()->getLayer();
   if (!layer) return;
   BezierPoint bPoint = pointList.at(cpIndex);
 
   // ハンドルを描く場合、CPとハンドルを繋ぐ直線を描く
   if (drawHandles) {
-    glBegin(GL_LINE_STRIP);
-    glVertex3d(bPoint.firstHandle.x(), bPoint.firstHandle.y(), 0.0);
-    glVertex3d(bPoint.pos.x(), bPoint.pos.y(), 0.0);
-    glVertex3d(bPoint.secondHandle.x(), bPoint.secondHandle.y(), 0.0);
-    glEnd();
+    QVector3D vert[3] = {
+        QVector3D(bPoint.firstHandle.x(), bPoint.firstHandle.y(), 0.0),
+        QVector3D(bPoint.pos.x(), bPoint.pos.y(), 0.0),
+        QVector3D(bPoint.secondHandle.x(), bPoint.secondHandle.y(), 0.0)};
+    viewer->doDrawLine(GL_LINE_STRIP, vert, 3);
   }
 
   // 名前を付ける
@@ -705,20 +705,21 @@ void ReshapeTool::drawControlPoint(OneShape shape, BezierPointList& pointList,
            1;  // 1はコントロールポイントの印
 
   // コントロールポイントを描く
-  glPushMatrix();
+  viewer->pushMatrix();
   glPushName(name);
 
-  glTranslated(bPoint.pos.x(), bPoint.pos.y(), 0.0);
-  glScaled(onePix.x(), onePix.y(), 1.0);
-  glBegin((fillPoint) ? GL_POLYGON : GL_LINE_LOOP);
-  glVertex3d(2.0, -2.0, 0.0);
-  glVertex3d(2.0, 2.0, 0.0);
-  glVertex3d(-2.0, 2.0, 0.0);
-  glVertex3d(-2.0, -2.0, 0.0);
-  glEnd();
+  viewer->translate(bPoint.pos.x(), bPoint.pos.y(), 0.0);
+  viewer->scale(onePix.x(), onePix.y(), 1.0);
+
+  QVector3D vert[4] = {QVector3D(2.0, -2.0, 0.0), QVector3D(2.0, 2.0, 0.0),
+                       QVector3D(-2.0, 2.0, 0.0), QVector3D(-2.0, -2.0, 0.0)};
+  if (fillPoint)
+    viewer->doDrawFill(GL_POLYGON, vert, 4, fillColor);
+  else
+    viewer->doDrawLine(GL_LINE_LOOP, vert, 4);
 
   glPopName();
-  glPopMatrix();
+  viewer->popMatrix();
 
   if (!drawHandles) return;
 
@@ -726,43 +727,49 @@ void ReshapeTool::drawControlPoint(OneShape shape, BezierPointList& pointList,
 
   // firstHandle
   name += 1;
-  glPushMatrix();
+  viewer->pushMatrix();
   glPushName(name);
 
-  glTranslated(bPoint.firstHandle.x(), bPoint.firstHandle.y(), 0.0);
-  glScaled(onePix.x(), onePix.y(), 1.0);
+  viewer->translate(bPoint.firstHandle.x(), bPoint.firstHandle.y(), 0.0);
+  viewer->scale(onePix.x(), onePix.y(), 1.0);
 
-  ReshapeTool::drawCircle();
+  ReshapeTool::drawCircle(viewer);
 
   glPopName();
-  glPopMatrix();
+  viewer->popMatrix();
 
   // secondHandle
   name += 1;
-  glPushMatrix();
+  viewer->pushMatrix();
   glPushName(name);
 
-  glTranslated(bPoint.secondHandle.x(), bPoint.secondHandle.y(), 0.0);
-  glScaled(onePix.x(), onePix.y(), 1.0);
+  viewer->translate(bPoint.secondHandle.x(), bPoint.secondHandle.y(), 0.0);
+  viewer->scale(onePix.x(), onePix.y(), 1.0);
 
-  ReshapeTool::drawCircle();
+  ReshapeTool::drawCircle(viewer);
 
   glPopName();
-  glPopMatrix();
+  viewer->popMatrix();
+  // glPopMatrix();
 }
 
 //--------------------------------------------------------
 // ハンドル用の円を描く
 //--------------------------------------------------------
-void ReshapeTool::drawCircle() {
-  double theta;
-  glBegin(GL_LINE_LOOP);
-  for (int i = 0; i < 12; i++) {
-    theta = (double)i * M_PI / 6.0;
+void ReshapeTool::drawCircle(SceneViewer* viewer) {
+  static QVector3D vert[12];
+  static bool init = true;
+  if (init) {
+    double theta;
+    for (int i = 0; i < 12; i++) {
+      theta   = (double)i * M_PI / 6.0;
+      vert[i] = QVector3D(2.0 * cosf(theta), 2.0 * sinf(theta), 0.0);
+    }
 
-    glVertex3d(2.0 * cosf(theta), 2.0 * sinf(theta), 0.0);
+    init = false;
   }
-  glEnd();
+
+  viewer->doDrawLine(GL_LINE_LOOP, vert, 12);
 }
 
 //--------------------------------------------------------

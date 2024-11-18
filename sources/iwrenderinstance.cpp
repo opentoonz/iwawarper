@@ -1013,9 +1013,9 @@ void IwRenderInstance::HEcacheTriangles(
   // サンプル点のためのオフセット
   QPointF sampleOffset(0.5 * (double)(srcDim.lx - workAreaSize.width()),
                        0.5 * (double)(srcDim.ly - workAreaSize.height()));
-  auto getUV = [&](const QPointF& samplePoint) {
-    return QPointF((samplePoint.x() + sampleOffset.x()) / (double)srcDim.lx,
-                   (samplePoint.y() + sampleOffset.y()) / (double)srcDim.ly);
+  auto getUV = [&](const QVector2D& samplePoint) {
+    return QVector2D((samplePoint.x() + sampleOffset.x()) / (double)srcDim.lx,
+                     (samplePoint.y() + sampleOffset.y()) / (double)srcDim.ly);
   };
 
   int count  = model.faces.size() * 3;
@@ -1035,22 +1035,18 @@ void IwRenderInstance::HEcacheTriangles(
     ids_p += 3;
   }
 
-  int pointCount = model.vertices.size();
-  Vertex* vert   = new Vertex[pointCount];
+  int pointCount   = model.vertices.size();
+  MeshVertex* vert = new MeshVertex[pointCount];
 
-  Vertex* v_p = vert;
+  MeshVertex* v_p = vert;
   for (HEVertex* heV : model.vertices) {
-    v_p->pos[0] = heV->to_pos.x();
-    v_p->pos[1] = heV->to_pos.y();
-    v_p->pos[2] = heV->to_pos.z();
-    QPointF uv  = getUV(heV->from_pos.toPointF());
-    v_p->uv[0]  = uv.x();
-    v_p->uv[1]  = uv.y();
+    v_p->setPosition(heV->to_pos);
+    v_p->setUV(getUV(heV->from_pos.toVector2D()));
     v_p++;
   }
 
   IwTriangleCache::instance()->addCache(m_frame, shape,
-                                        {vert, ids, count, true});
+                                        {vert, ids, pointCount, count, true});
 }
 
 //---------------------------------------------------
