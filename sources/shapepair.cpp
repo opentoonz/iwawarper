@@ -56,7 +56,7 @@ const int CorrIndent  = 100;
 
 // verticePに、Start, Endをリニア補間した座標を格納していく
 // endPointのいっこ手前まで
-void makeLinearPoints(double* vertexP, QPointF startPoint, QPointF endPoint,
+void makeLinearPoints(QVector3D* vertexP, QPointF startPoint, QPointF endPoint,
                       int precision) {
   double ratioStep = 1.0 / (double)precision;
   double tmpR      = 0.0;
@@ -64,10 +64,8 @@ void makeLinearPoints(double* vertexP, QPointF startPoint, QPointF endPoint,
     // リニア補間した座標を取得
     QPointF tmpPoint = startPoint * (1.0 - tmpR) + endPoint * tmpR;
     // 値を格納、ポインタを進める
-    vertexP[0] = tmpPoint.x();
-    vertexP[1] = tmpPoint.y();
-    vertexP[2] = 0.0;
-    vertexP += 3;
+    *vertexP = QVector3D(tmpPoint.x(), tmpPoint.y(), 0.0);
+    vertexP++;
 
     // ratioをインクリメント
     tmpR += ratioStep;
@@ -90,7 +88,7 @@ QPointF calcBezier(double t, QPointF& v0, QPointF& v1, QPointF& v2,
 }
 
 // ●ベジエ曲線を作る
-void makeBezierPoints(double* vertexP, QPointF p0, QPointF p1, QPointF p2,
+void makeBezierPoints(QVector3D* vertexP, QPointF p0, QPointF p1, QPointF p2,
                       QPointF p3, int precision) {
   double ratioStep = 1.0 / (double)precision;
   double tmpR      = 0.0;
@@ -101,10 +99,8 @@ void makeBezierPoints(double* vertexP, QPointF p0, QPointF p1, QPointF p2,
                        p2 * (1.0 - tmpR) * tmpR * tmpR * 3.0 +
                        p3 * tmpR * tmpR * tmpR;
     // 値を格納、ポインタを進める
-    vertexP[0] = tmpPoint.x();
-    vertexP[1] = tmpPoint.y();
-    vertexP[2] = 0.0;
-    vertexP += 3;
+    *vertexP = QVector3D(tmpPoint.x(), tmpPoint.y(), 0.0);
+    vertexP++;
 
     // ratioをインクリメント
     tmpR += ratioStep;
@@ -479,7 +475,8 @@ int ShapePair::getVertexAmount(IwProject* /*project*/) {
 //-----------------------------------------------------------------------------
 // 指定したフレームのベジエ頂点情報を返す
 //-----------------------------------------------------------------------------
-double* ShapePair::getVertexArray(int frame, int fromTo, IwProject* project) {
+QVector3D* ShapePair::getVertexArray(int frame, int fromTo,
+                                     IwProject* project) {
   PRINT_LOG("   getVertexArray frame " + std::to_string(frame) + "  start")
   BezierPointList pointList = getBezierPointList(frame, fromTo);
 
@@ -489,9 +486,9 @@ double* ShapePair::getVertexArray(int frame, int fromTo, IwProject* project) {
   // 頂点数を求める。線が閉じているか空いているかで異なる
   int vertSize = getVertexAmount(project);
 
-  double* vertices = new double[vertSize * 3];
+  QVector3D* vertices = new QVector3D[vertSize];
 
-  double* v_p = vertices;
+  QVector3D* v_p = vertices;
 
   // 閉じたシェイプの場合
   if (m_isClosed) {
@@ -507,13 +504,13 @@ double* ShapePair::getVertexArray(int frame, int fromTo, IwProject* project) {
       if (startPoint.pos == startPoint.secondHandle &&
           endPoint.pos == endPoint.firstHandle) {
         makeLinearPoints(v_p, startPoint.pos, endPoint.pos, bezierPrec);
-        v_p += 3 * bezierPrec;
+        v_p += bezierPrec;
       }
       // ４つのコントロールポイントから、各ベジエの点を分割数分格納する
       else {
         makeBezierPoints(v_p, startPoint.pos, startPoint.secondHandle,
                          endPoint.firstHandle, endPoint.pos, bezierPrec);
-        v_p += 3 * bezierPrec;
+        v_p += bezierPrec;
       }
     }
   }
@@ -529,20 +526,18 @@ double* ShapePair::getVertexArray(int frame, int fromTo, IwProject* project) {
       if (startPoint.pos == startPoint.secondHandle &&
           endPoint.pos == endPoint.firstHandle) {
         makeLinearPoints(v_p, startPoint.pos, endPoint.pos, bezierPrec);
-        v_p += 3 * bezierPrec;
+        v_p += bezierPrec;
       }
       // ４つのコントロールポイントから、各ベジエの点を分割数分格納する
       else {
         makeBezierPoints(v_p, startPoint.pos, startPoint.secondHandle,
                          endPoint.firstHandle, endPoint.pos, bezierPrec);
-        v_p += 3 * bezierPrec;
+        v_p += bezierPrec;
       }
     }
     // 最後に端点の座標を追加
     BezierPoint lastPoint = pointList.at(pointList.size() - 1);
-    v_p[0]                = lastPoint.pos.x();
-    v_p[1]                = lastPoint.pos.y();
-    v_p[2]                = 0.0;
+    *v_p = QVector3D(lastPoint.pos.x(), lastPoint.pos.y(), 0.0);
   }
   PRINT_LOG("   getVertexArray frame " + std::to_string(frame) + "  end")
 

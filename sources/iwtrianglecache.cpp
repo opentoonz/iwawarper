@@ -17,7 +17,15 @@ void suspend(int frame) {
 }
 };  // namespace
 
-//---------------
+// Note: Q_MOVABLE_TYPE means it can be memcpy'd.
+Q_DECLARE_TYPEINFO(MeshVertex, Q_MOVABLE_TYPE);
+
+// Constructor
+MeshVertex::MeshVertex(const QVector3D& position, const QVector2D& uv)
+    : m_position(position), m_uv(uv) {}
+
+//============================================================
+
 IwTriangleCache::IwTriangleCache() {}
 
 //---------------
@@ -49,12 +57,19 @@ bool IwTriangleCache::isValid(int frame, ShapePair* shape) {
 
 int IwTriangleCache::vertexCount(int frame, ShapePair* shape) {
   if (!isCached(frame, shape)) return -1;
-  return m_data.value(frame).value(shape).count;
+  return m_data.value(frame).value(shape).vertexCount;
 }
 
 //---------------
 
-Vertex* IwTriangleCache::vertexData(int frame, ShapePair* shape) {
+int IwTriangleCache::pointCount(int frame, ShapePair* shape) {
+  if (!isCached(frame, shape)) return -1;
+  return m_data.value(frame).value(shape).pointCount;
+}
+
+//---------------
+
+MeshVertex* IwTriangleCache::vertexData(int frame, ShapePair* shape) {
   if (!isCached(frame, shape)) return nullptr;
   return m_data.value(frame).value(shape).vert;
 }

@@ -280,18 +280,19 @@ void CorrDragTool::onRelease(const QPointF& /*pos*/, const QMouseEvent*) {
 
 //--------------------------------------------------------
 
-void CorrDragTool::draw() {
+void CorrDragTool::draw(SceneViewer* viewer) {
   int frame = m_project->getViewFrame();
   // 自身のシェイプのコントロールポイントにスナップ
   if (m_snappedCpId >= 0) {
-    glColor3d(1.0, 0.0, 1.0);
+    viewer->setColor(QColor::fromRgbF(1.0, 0.0, 1.0));
     BezierPointList bPList =
         m_shape.shapePairP->getBezierPointList(frame, m_shape.fromTo);
     for (int p = 0; p < bPList.size(); p++) {
-      ReshapeTool::drawControlPoint(m_shape, bPList, p, false, m_onePixLength,
-                                    0, true);
+      ReshapeTool::drawControlPoint(viewer, m_shape, bPList, p, false,
+                                    m_onePixLength, 0, true,
+                                    QColor::fromRgbF(1.0, 0.0, 1.0));
       if (p == m_snappedCpId)
-        ReshapeTool::drawControlPoint(m_shape, bPList, p, false,
+        ReshapeTool::drawControlPoint(viewer, m_shape, bPList, p, false,
                                       QPointF(3.0 * m_onePixLength));
     }
   }
@@ -622,7 +623,7 @@ void CorrespondenceTool::draw() {
 
   // スナップ操作中はコントロールポイントを描く。対応線は描かない
   if (isSnapping) {
-    m_dragTool->draw();
+    m_dragTool->draw(m_viewer);
   }
 }
 

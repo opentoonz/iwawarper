@@ -476,7 +476,8 @@ bool TranslatePointDragTool::setSpecialGridColor(int gId, bool isVertical) {
   return gId == ((isVertical) ? m_snapVGrid : m_snapHGrid);
 }
 
-void TranslatePointDragTool::draw(const QPointF& onePixelLength) {
+void TranslatePointDragTool::draw(SceneViewer* viewer,
+                                  const QPointF& onePixelLength) {
   if (!m_snapTarget.shapePairP) return;
   IwProject* project = IwApp::instance()->getCurrentProject()->getProject();
   if (!project) return;
@@ -487,34 +488,37 @@ void TranslatePointDragTool::draw(const QPointF& onePixelLength) {
     BezierPointList bPList =
         m_shape.shapePairP->getBezierPointList(frame, m_shape.fromTo);
 
-    glColor3d(1.0, 0.5, 1.0);
-    ReshapeTool::drawControlPoint(m_shape, bPList, m_pointIndex, true,
+    viewer->setColor(QColor::fromRgbF(1.0, 0.5, 1.0));
+    // glColor3d(1.0, 0.5, 1.0);
+    ReshapeTool::drawControlPoint(viewer, m_shape, bPList, m_pointIndex, true,
                                   onePixelLength);
   } else {
     BezierPointList bPList =
         m_snapTarget.shapePairP->getBezierPointList(frame, m_snapTarget.fromTo);
 
     // 対応点の描画
-    glColor3d(1.0, 1.0, 0.0);
+    viewer->setColor(QColor::fromRgbF(1.0, 1.0, 0.0));
+    // glColor3d(1.0, 1.0, 0.0);
     QList<QPointF> corrPoints = m_snapTarget.shapePairP->getCorrPointPositions(
         frame, m_snapTarget.fromTo);
     for (auto corrP : corrPoints) {
-      glPushMatrix();
-      glTranslated(corrP.x(), corrP.y(), 0.0);
-      glScaled(onePixelLength.x(), onePixelLength.y(), 1.0);
-      glBegin(GL_LINE_LOOP);
-      glVertex3d(2.0, -2.0, 0.0);
-      glVertex3d(2.0, 2.0, 0.0);
-      glVertex3d(-2.0, 2.0, 0.0);
-      glVertex3d(-2.0, -2.0, 0.0);
-      glEnd();
-      glPopMatrix();
+      viewer->pushMatrix();
+      viewer->translate(corrP.x(), corrP.y(), 0.0);
+      viewer->scale(onePixelLength.x(), onePixelLength.y(), 1.0);
+
+      static QVector3D vert[4] = {
+          QVector3D(2.0, -2.0, 0.0), QVector3D(2.0, 2.0, 0.0),
+          QVector3D(-2.0, 2.0, 0.0), QVector3D(-2.0, -2.0, 0.0)};
+
+      viewer->doDrawLine(GL_LINE_LOOP, vert, 4);
+      viewer->popMatrix();
     }
 
     // コントロールポイントの描画
-    glColor3d(1.0, 0.0, 1.0);
+    viewer->setColor(QColor::fromRgbF(1.0, 0.0, 1.0));
+    // glColor3d(1.0, 0.0, 1.0);
     for (int p = 0; p < bPList.size(); p++) {
-      ReshapeTool::drawControlPoint(m_snapTarget, bPList, p, false,
+      ReshapeTool::drawControlPoint(viewer, m_snapTarget, bPList, p, false,
                                     onePixelLength);
     }
   }
@@ -808,18 +812,20 @@ void TranslateHandleDragTool::calculateHandleSnap(const QPointF pointPos,
 
 //--------------------------------------------------------
 
-void TranslateHandleDragTool::draw(const QPointF& onePixelLength) {
+void TranslateHandleDragTool::draw(SceneViewer* viewer,
+                                   const QPointF& onePixelLength) {
   if (m_snapCandidates.isEmpty()) return;
   IwProject* project = IwApp::instance()->getCurrentProject()->getProject();
   if (!project) return;
   // 表示フレームを得る
   int frame = project->getViewFrame();
 
-  glColor3d(1.0, 0.0, 1.0);
+  viewer->setColor(QColor::fromRgbF(1.0, 0.0, 1.0));
+
   for (auto snapCandidate : m_snapCandidates) {
     BezierPointList bPList = snapCandidate.shape.shapePairP->getBezierPointList(
         frame, snapCandidate.shape.fromTo);
-    ReshapeTool::drawControlPoint(snapCandidate.shape, bPList,
+    ReshapeTool::drawControlPoint(viewer, snapCandidate.shape, bPList,
                                   snapCandidate.pointIndex, true,
                                   onePixelLength);
   }
@@ -828,9 +834,10 @@ void TranslateHandleDragTool::draw(const QPointF& onePixelLength) {
     BezierPointList bPList =
         m_shape.shapePairP->getBezierPointList(frame, m_shape.fromTo);
 
-    glColor3d(1.0, 0.5, 1.0);
+    viewer->setColor(QColor::fromRgbF(1.0, 0.5, 1.0));
+
     glLineWidth(1.5);
-    ReshapeTool::drawControlPoint(m_shape, bPList, m_pointIndex, true,
+    ReshapeTool::drawControlPoint(viewer, m_shape, bPList, m_pointIndex, true,
                                   onePixelLength);
     glLineWidth(1);
   }

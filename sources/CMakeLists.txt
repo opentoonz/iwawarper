@@ -177,6 +177,18 @@ ${VIEW_SOURCES}
 main.cpp
 )
 
+set(SHADERS
+tex_vert.glsl
+tex_frag.glsl
+line_vert.glsl
+line_frag.glsl
+mesh_to_line_geom.glsl
+stipple_line_geom.glsl
+stipple_line_frag.glsl
+fill_vert.glsl
+fill_frag.glsl
+)
+
 #-----------------------------------------------------------------------------
 # Select build environment
 set(BUILD_ENV_MSVC     OFF)
@@ -243,10 +255,12 @@ source_group("Source Files\\0_Moc Files" FILES ${MOC_SOURCES})
 source_group("Source Files\\1_Model" FILES ${MODEL_SOURCES})
 source_group("Source Files\\2_View" FILES ${VIEW_SOURCES})
 source_group("Source Files\\3_Control" FILES ${CONTROL_SOURCES})
+source_group("Source Files\\4_Shaders" FILES ${SHADERS})
 
 set(SOURCES
     ${SOURCES}
     ${MOC_SOURCES}
+    ${SHADERS}
 )
 
 # resource

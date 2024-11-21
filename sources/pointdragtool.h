@@ -30,7 +30,7 @@ protected:
 
 public:
   PointDragTool();
-  virtual ~PointDragTool(){};
+  virtual ~PointDragTool() {};
   virtual void onClick(const QPointF &, const QMouseEvent *) = 0;
   virtual void onDrag(const QPointF &, const QMouseEvent *)  = 0;
 
@@ -40,7 +40,7 @@ public:
   virtual bool setSpecialShapeColor(OneShape) { return false; }
   virtual bool setSpecialGridColor(int, bool) { return false; }
 
-  virtual void draw(const QPointF & /*onePixelLength*/) {}
+  virtual void draw(SceneViewer *viewer, const QPointF & /*onePixelLength*/) {}
 };
 
 //--------------------------------------------------------
@@ -87,7 +87,7 @@ public:
   bool setSpecialShapeColor(OneShape) override;
   bool setSpecialGridColor(int, bool) override;
 
-  void draw(const QPointF &onePixelLength) override;
+  void draw(SceneViewer *viewer, const QPointF &onePixelLength) override;
 };
 
 //--------------------------------------------------------
@@ -136,7 +136,7 @@ public:
   void setIsInitial() { m_isInitial = true; }
 
   void calculateHandleSnap(const QPointF, QPointF &);
-  void draw(const QPointF &onePixelLength) override;
+  void draw(SceneViewer *viewer, const QPointF &onePixelLength) override;
 };
 
 //--------------------------------------------------------

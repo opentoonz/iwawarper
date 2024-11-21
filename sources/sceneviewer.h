@@ -12,10 +12,16 @@
 #include <QOpenGLFunctions>
 #include <QTransform>
 #include <QMouseEvent>
+#include <QStack>
+#include <QMatrix4x4>
 
 class IwProject;
 class QMenu;
 class Ruler;
+
+class QOpenGLShaderProgram;
+class QOpenGLBuffer;
+class QOpenGLVertexArrayObject;
 
 class SceneViewer : public QOpenGLWidget, protected QOpenGLFunctions {
   Q_OBJECT
@@ -47,6 +53,39 @@ class SceneViewer : public QOpenGLWidget, protected QOpenGLFunctions {
   void addContextMenus(QMenu &menu);
   void updateRulers();
 
+  // opengl
+  QOpenGLShaderProgram *m_program_texture  = nullptr;
+  QOpenGLShaderProgram *m_program_meshLine = nullptr;
+  QOpenGLShaderProgram *m_program_line     = nullptr;
+  QOpenGLShaderProgram *m_program_fill     = nullptr;
+  QOpenGLBuffer *m_vbo                     = nullptr;
+  QOpenGLBuffer *m_ibo                     = nullptr;  // index buffer
+  QOpenGLVertexArrayObject *m_vao          = nullptr;
+
+  QOpenGLBuffer *m_line_vbo            = nullptr;
+  QOpenGLVertexArrayObject *m_line_vao = nullptr;
+
+  GLint u_tex_matrix  = 0;
+  GLint u_tex_texture = 0;
+  GLint u_tex_alpha   = 0;
+
+  GLint u_meshLine_matrix = 0;
+  GLint u_meshLine_color  = 0;
+
+  GLint u_line_matrix         = 0;
+  GLint u_line_color          = 0;
+  GLint u_line_viewportSize   = 0;
+  GLint u_line_stippleFactor  = 0;
+  GLint u_line_stipplePattern = 0;
+
+  GLint u_fill_matrix = 0;
+  GLint u_fill_color  = 0;
+
+  QMatrix4x4 m_viewProjMatrix;
+  QStack<QMatrix4x4> m_modelMatrix;
+
+  QPainter *m_p = nullptr;
+
 public:
   SceneViewer(QWidget *parent);
 
@@ -73,8 +112,25 @@ public:
     m_vRuler = vRuler;
   }
 
-  void renderText(double x, double y, const QString &str,
+  void renderText(double x, double y, const QString &str, const QColor color,
                   const QFont &font = QFont());
+
+  void setLineStipple(GLint factor, GLushort pattern);
+
+  // utility functions for IwTool::draw
+  void pushMatrix();
+  void popMatrix();
+  void translate(GLdouble, GLdouble, GLdouble);
+  void scale(GLdouble, GLdouble, GLdouble);
+  void setColor(const QColor &);
+  QMatrix4x4 modelMatrix() { return m_modelMatrix.top(); }
+  void doDrawLine(GLenum mode, QVector3D *verts, int vertCount);
+  void doDrawFill(GLenum mode, QVector3D *verts, int vertCount,
+                  QColor fillColor);
+  void releaseBufferObjects();
+  void bindBufferObjects();
+
+  void doShapeRender();
 
 protected:
   void initializeGL() final override;
@@ -134,6 +190,8 @@ public slots:
 
   // ƒJƒŒƒ“ƒgƒŒƒCƒ„‚ð•Ï‚¦‚é
   void onChangeCurrentLayer();
+
+  void cleanup() {}
 };
 
 #endif

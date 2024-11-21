@@ -27,6 +27,7 @@
 #include "cursormanager.h"
 
 #include "iwrenderinstance.h"
+#include "renderprogresspopup.h"
 #include "mainwindow.h"
 
 #include "iwshapepairselection.h"
@@ -41,6 +42,12 @@
 
 #include <QPointF>
 #include <QVector3D>
+#include <QOpenGLShaderProgram>
+#include <QOpenGLBuffer>
+#include <QOpenGLVertexArrayObject>
+#include <QOpenGLFramebufferObject>
+#include <QMessageBox>
+#include <QApplication>
 
 #ifdef MACOSX
 #include <GLUT/glut.h>
@@ -103,15 +110,15 @@ bool isPoint(const int& id1, const int& id2) {
   return (id1 % 100) < (id2 % 100);
 }
 
-void my_gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
-                      GLint viewport[4]) {
+void my_gluPickMatrix(QMatrix4x4& mat, GLdouble x, GLdouble y, GLdouble deltax,
+                      GLdouble deltay, GLint viewport[4]) {
   if (deltax <= 0 || deltay <= 0) {
     return;
   }
 
-  glTranslatef((viewport[2] - 2 * (x - viewport[0])) / deltax,
-               (viewport[3] - 2 * (y - viewport[1])) / deltay, 0);
-  glScalef(viewport[2] / deltax, viewport[3] / deltay, 1.0);
+  mat.translate((viewport[2] - 2 * (x - viewport[0])) / deltax,
+                (viewport[3] - 2 * (y - viewport[1])) / deltay, 0);
+  mat.scale(viewport[2] / deltax, viewport[3] / deltay, 1.0);
 }
 
 };  // namespace
@@ -191,6 +198,177 @@ void SceneViewer::setProject(IwProject* prj) {
 //----------------------------------
 void SceneViewer::initializeGL() {
   initializeOpenGLFunctions();
+
+  connect(context(), &QOpenGLContext::aboutToBeDestroyed, this,
+          &SceneViewer::cleanup);
+  m_program_texture = new QOpenGLShaderProgram(this);
+  m_program_texture->addShaderFromSourceFile(QOpenGLShader::Vertex,
+                                             ":/tex_vert.glsl");
+  m_program_texture->addShaderFromSourceFile(QOpenGLShader::Fragment,
+                                             ":/tex_frag.glsl");
+  m_program_texture->link();
+  m_program_texture->bind();
+
+  u_tex_matrix  = m_program_texture->uniformLocation("matrix");
+  u_tex_texture = m_program_texture->uniformLocation("texture");
+  u_tex_alpha   = m_program_texture->uniformLocation("alpha");
+
+  // 頂点バッファオブジェクト
+  if (m_vbo) {
+    delete m_vbo;
+    m_vbo = nullptr;
+  }
+  m_vbo = new QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
+  if (m_vbo->create())
+    m_vbo->bind();
+  else
+    std::cout << "failed to bind QOpenGLBuffer" << std::endl;
+  m_vbo->allocate(VertAmount * sizeof(MeshVertex));
+
+  // 頂点インデックスオブジェクト
+  if (m_ibo) {
+    delete m_ibo;
+    m_ibo = nullptr;
+  }
+  m_ibo = new QOpenGLBuffer(QOpenGLBuffer::IndexBuffer);
+  if (m_ibo->create())
+    m_ibo->bind();
+  else
+    std::cout << "failed to bind IndexBuffer" << std::endl;
+  m_ibo->allocate(VertAmount * sizeof(GLint));
+
+  // Create Vertex Array Object
+  if (m_vao) {
+    delete m_vao;
+    m_vao = 0;
+  }
+  // 配列バッファオブジェクトを作り、バインド
+  m_vao = new QOpenGLVertexArrayObject;
+  if (m_vao->create())
+    m_vao->bind();
+  else
+    std::cout << "failed to bind QOpenGLVertexArrayObject" << std::endl;
+
+  m_program_texture->enableAttributeArray(0);
+  m_program_texture->enableAttributeArray(1);
+  m_program_texture->setAttributeBuffer(
+      0, GL_FLOAT, MeshVertex::positionOffset(), MeshVertex::PositionTupleSize,
+      MeshVertex::stride());
+  m_program_texture->setAttributeBuffer(1, GL_FLOAT, MeshVertex::uvOffset(),
+                                        MeshVertex::UvTupleSize,
+                                        MeshVertex::stride());
+
+  m_vao->release();
+  m_vbo->release();
+  m_ibo->release();
+  m_program_texture->release();
+
+  //------
+
+  m_program_meshLine = new QOpenGLShaderProgram(this);
+  m_program_meshLine->addShaderFromSourceFile(QOpenGLShader::Vertex,
+                                              ":/line_vert.glsl");
+  m_program_meshLine->addShaderFromSourceFile(QOpenGLShader::Geometry,
+                                              ":/mesh_to_line_geom.glsl");
+  m_program_meshLine->addShaderFromSourceFile(QOpenGLShader::Fragment,
+                                              ":/line_frag.glsl");
+  m_program_meshLine->link();
+  m_program_meshLine->bind();
+
+  u_meshLine_matrix = m_program_meshLine->uniformLocation("matrix");
+  u_meshLine_color  = m_program_meshLine->uniformLocation("color");
+
+  m_vbo->bind();
+  m_vao->bind();
+  m_ibo->bind();
+
+  m_program_meshLine->enableAttributeArray(0);
+  m_program_meshLine->setAttributeBuffer(
+      0, GL_FLOAT, MeshVertex::positionOffset(), MeshVertex::PositionTupleSize,
+      MeshVertex::stride());
+
+  m_vao->release();
+  m_vbo->release();
+  m_ibo->release();
+  m_program_meshLine->release();
+
+  //------
+
+  // 頂点バッファオブジェクト
+  if (m_line_vbo) {
+    delete m_line_vbo;
+    m_line_vbo = nullptr;
+  }
+  m_line_vbo = new QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
+  if (m_line_vbo->create())
+    m_line_vbo->bind();
+  else
+    std::cout << "failed to bind QOpenGLBuffer" << std::endl;
+  m_line_vbo->allocate(VertAmount * sizeof(QVector3D));
+
+  // Create Vertex Array Object
+  if (m_line_vao) {
+    delete m_line_vao;
+    m_line_vao = 0;
+  }
+  // 配列バッファオブジェクトを作り、バインド
+  m_line_vao = new QOpenGLVertexArrayObject;
+  if (m_line_vao->create())
+    m_line_vao->bind();
+  else
+    std::cout << "failed to bind QOpenGLVertexArrayObject" << std::endl;
+
+  m_program_line = new QOpenGLShaderProgram(this);
+  m_program_line->addShaderFromSourceFile(QOpenGLShader::Vertex,
+                                          ":/line_vert.glsl");
+  m_program_line->addShaderFromSourceFile(QOpenGLShader::Geometry,
+                                          ":/stipple_line_geom.glsl");
+  m_program_line->addShaderFromSourceFile(QOpenGLShader::Fragment,
+                                          ":/stipple_line_frag.glsl");
+  m_program_line->link();
+  m_program_line->bind();
+
+  m_line_vbo->bind();
+  m_line_vao->bind();
+
+  u_line_matrix         = m_program_line->uniformLocation("matrix");
+  u_line_color          = m_program_line->uniformLocation("color");
+  u_line_viewportSize   = m_program_line->uniformLocation("viewportSize");
+  u_line_stippleFactor  = m_program_line->uniformLocation("stippleFactor");
+  u_line_stipplePattern = m_program_line->uniformLocation("stipplePattern");
+
+  m_program_line->enableAttributeArray(0);
+  m_program_line->setAttributeBuffer(0, GL_FLOAT, 0, 3, sizeof(QVector3D));
+
+  m_line_vao->release();
+  m_line_vbo->release();
+  m_program_line->release();
+
+  //------
+
+  m_program_fill = new QOpenGLShaderProgram(this);
+  m_program_fill->addShaderFromSourceFile(QOpenGLShader::Vertex,
+                                          ":/fill_vert.glsl");
+  m_program_fill->addShaderFromSourceFile(QOpenGLShader::Fragment,
+                                          ":/fill_frag.glsl");
+  m_program_fill->link();
+  m_program_fill->bind();
+
+  m_line_vbo->bind();
+  m_line_vao->bind();
+
+  u_fill_matrix = m_program_fill->uniformLocation("matrix");
+  u_fill_color  = m_program_fill->uniformLocation("color");
+
+  m_program_fill->enableAttributeArray(0);
+  m_program_fill->setAttributeBuffer(0, GL_FLOAT, 0, 3, sizeof(QVector3D));
+
+  m_line_vao->release();
+  m_line_vbo->release();
+  m_program_fill->release();
+
+  //------
+
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glEnable(GL_BLEND);
   glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
@@ -202,17 +380,19 @@ void SceneViewer::initializeGL() {
 //----------------------------------
 void SceneViewer::resizeGL(int w, int h) {
   glViewport(0, 0, w, h);
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  glOrtho(0, w, 0, h, -4000, 4000);
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
-  glTranslated(w * 0.5, h * 0.5, 0);
+  m_viewProjMatrix = QMatrix4x4();
+  m_viewProjMatrix.ortho(0, w, 0, h, -4000, 4000);
+
+  m_modelMatrix.push(QMatrix4x4());
+  m_modelMatrix.top().translate(w * 0.5, h * 0.5, 0);
 }
 
 //----------------------------------
 
 void SceneViewer::paintGL() {
+  if (m_p) delete m_p;
+  m_p = new QPainter(this);
+  m_p->beginNativePainting();
   // 背景のクリア
   // 色設定から色を拾う
   double bgCol[3];
@@ -225,13 +405,13 @@ void SceneViewer::paintGL() {
   ViewSettings* settings = m_project->getViewSettings();
   if (!settings) return;
 
-  glPushMatrix();
+  m_modelMatrix.push(m_modelMatrix.top());
   // カメラ移動
-  glScaled(m_affine.m11(), m_affine.m22(), 1.0);
-  glTranslated(m_affine.dx(), m_affine.dy(), 0.0);
+  m_modelMatrix.top().scale(m_affine.m11(), m_affine.m22(), 1.0);
+  m_modelMatrix.top().translate(m_affine.dx(), m_affine.dy(), 0.0);
 
   PRINT_LOG("paintGL")
-  // ロードされた画像を表示する
+  //// ロードされた画像を表示する
   if (settings->getImageMode() == ImageMode_Edit ||
       settings->getImageMode() == ImageMode_Half)
     drawImage();
@@ -246,32 +426,85 @@ void SceneViewer::paintGL() {
   // シェイプを描く。中でツールの描画もやっとる
   drawShapes();
 
-  glPopMatrix();
+  m_modelMatrix.pop();
 
   // 現在のレイヤ名を書く
+
   IwLayer* layer = IwApp::instance()->getCurrentLayer()->getLayer();
   if (layer) {
-    glColor3d(1.0, 1.0, 0.0);
-    renderText(10, 30, layer->getName(), QFont("Helvetica", 20, QFont::Normal));
+    renderText(10, 30, layer->getName(), QColor(Qt::yellow),
+               QFont("Helvetica", 20, QFont::Normal));
   }
+
+  m_p->endNativePainting();
   PRINT_LOG("paintGL End")
 }
 
 //----------------------------------
 
 void SceneViewer::renderText(double x, double y, const QString& str,
-                             const QFont& font) {
-  GLdouble glColor[4];
-  glGetDoublev(GL_CURRENT_COLOR, glColor);
-  QColor fontColor;
-  fontColor.setRgbF(glColor[0], glColor[1], glColor[2], glColor[3]);
+                             const QColor fontColor, const QFont& font) {
+  m_p->endNativePainting();
+  m_p->setPen(fontColor);
+  m_p->setFont(font);
+  m_p->drawText(x, this->height() - y, str);
+  m_p->beginNativePainting();
+}
 
-  // Render text
-  QPainter painter(this);
-  painter.setPen(fontColor);
-  painter.setFont(font);
-  painter.drawText(x, this->height() - y, str);
-  painter.end();
+//----------------------------------
+
+void SceneViewer::pushMatrix() { m_modelMatrix.push(m_modelMatrix.top()); }
+void SceneViewer::popMatrix() { m_modelMatrix.pop(); }
+void SceneViewer::translate(GLdouble x, GLdouble y, GLdouble z) {
+  m_modelMatrix.top().translate(x, y, z);
+}
+void SceneViewer::scale(GLdouble x, GLdouble y, GLdouble z) {
+  m_modelMatrix.top().scale(x, y, z);
+}
+void SceneViewer::setColor(const QColor& color) {
+  m_program_line->setUniformValue(u_line_color, color);
+}
+void SceneViewer::doDrawLine(GLenum mode, QVector3D* verts, int vertCount) {
+  m_program_line->setUniformValue(u_line_matrix,
+                                  m_viewProjMatrix * m_modelMatrix.top());
+  auto ptr = m_line_vbo->map(QOpenGLBuffer::WriteOnly);
+  memcpy(ptr, verts, sizeof(QVector3D) * vertCount);
+  m_line_vbo->unmap();
+  glDrawArrays(mode, 0, vertCount);
+}
+void SceneViewer::doDrawFill(GLenum mode, QVector3D* verts, int vertCount,
+                             QColor fillColor) {
+  m_program_fill->bind();
+
+  m_program_fill->setUniformValue(u_fill_color, fillColor);
+  m_program_fill->setUniformValue(u_fill_matrix,
+                                  m_viewProjMatrix * m_modelMatrix.top());
+
+  m_line_vbo->bind();
+  m_line_vao->bind();
+
+  auto ptr = m_line_vbo->map(QOpenGLBuffer::WriteOnly);
+  memcpy(ptr, verts, sizeof(QVector3D) * vertCount);
+  m_line_vbo->unmap();
+
+  glDrawArrays(mode, 0, vertCount);
+
+  m_line_vao->release();
+  m_line_vbo->release();
+
+  m_program_line->bind();
+  m_line_vbo->bind();
+  m_line_vao->bind();
+}
+void SceneViewer::releaseBufferObjects() {
+  m_line_vao->release();
+  m_line_vbo->release();
+  m_program_line->release();
+}
+void SceneViewer::bindBufferObjects() {
+  m_program_line->bind();
+  m_line_vbo->bind();
+  m_line_vao->bind();
 }
 
 //----------------------------------
@@ -284,10 +517,17 @@ void SceneViewer::drawImage() {
   int frame = settings->getFrame();
 
   // 素材の描画
-
-  glPushMatrix();
+  m_modelMatrix.push(m_modelMatrix.top());
 
   glEnable(GL_TEXTURE_2D);
+
+  m_program_texture->bind();
+  m_program_texture->setUniformValue(u_tex_matrix,
+                                     m_viewProjMatrix * m_modelMatrix.top());
+  m_program_texture->setUniformValue(u_tex_texture, 0);
+
+  m_vao->bind();
+  m_vbo->bind();
 
   double modeVal = (settings->getImageMode() == ImageMode_Half) ? 0.5 : 1.0;
 
@@ -305,8 +545,7 @@ void SceneViewer::drawImage() {
         getLayerImage(path, layer->brightness(), layer->contrast());
 
     if (!layerImage.size.isEmpty()) {
-      GLuint texName = (GLuint)layerImage.texture->textureId();
-      glBindTexture(GL_TEXTURE_2D, texName);
+      layerImage.texture->bind();
 
       QSize texSize = layerImage.size;
       QPointF texCornerPos((double)texSize.width() / 2.0,
@@ -315,22 +554,33 @@ void SceneViewer::drawImage() {
       // 半透明
       double visibleVal =
           (m_project->getLayer(lay)->isVisibleInViewer() == 1) ? 0.5 : 1.0;
-      double chan = modeVal * visibleVal;
-      glColor4d(chan, chan, chan, chan);
-      glBegin(GL_POLYGON);
-      glTexCoord2d(0.0, 0.0);
-      glVertex2d(-texCornerPos.x(), -texCornerPos.y());
-      glTexCoord2d(0.0, 1.0);
-      glVertex2d(-texCornerPos.x(), texCornerPos.y());
-      glTexCoord2d(1.0, 1.0);
-      glVertex2d(texCornerPos.x(), texCornerPos.y());
-      glTexCoord2d(1.0, 0.0);
-      glVertex2d(texCornerPos.x(), -texCornerPos.y());
+      GLfloat chan = modeVal * visibleVal;
+      m_program_texture->setUniformValue(u_tex_alpha, chan);
 
-      glEnd();
+      MeshVertex verts[4] = {
+          MeshVertex(QVector3D(-texCornerPos.x(), -texCornerPos.y(), 0.),
+                     QVector2D(0., 0.)),
+          MeshVertex(QVector3D(-texCornerPos.x(), texCornerPos.y(), 0.),
+                     QVector2D(0., 1.)),
+          MeshVertex(QVector3D(texCornerPos.x(), -texCornerPos.y(), 0.),
+                     QVector2D(1., 0.)),
+          MeshVertex(QVector3D(texCornerPos.x(), texCornerPos.y(), 0.),
+                     QVector2D(1., 1.))};
+
+      auto ptr = m_vbo->map(QOpenGLBuffer::WriteOnly);
+      memcpy(ptr, verts, sizeof(MeshVertex) * 4);
+      m_vbo->unmap();
+      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+      layerImage.texture->release();
     }
   }
-  glPopMatrix();
+
+  m_vao->release();
+  m_vbo->release();
+  m_program_texture->release();
+
+  m_modelMatrix.pop();
 
   glDisable(GL_TEXTURE_2D);
 }
@@ -345,8 +595,7 @@ void SceneViewer::drawGLPreview() {
   int frame = settings->getFrame();
 
   // 素材の描画
-
-  glPushMatrix();
+  m_modelMatrix.push(m_modelMatrix.top());
 
   glEnable(GL_TEXTURE_2D);
 
@@ -356,7 +605,13 @@ void SceneViewer::drawGLPreview() {
   QPointF texCornerPos((double)workAreaSize.width() / 2.0,
                        (double)workAreaSize.height() / 2.0);
 
-  glTranslated(-texCornerPos.x(), -texCornerPos.y(), 0);
+  m_modelMatrix.top().translate(-texCornerPos.x(), -texCornerPos.y(), 0.);
+
+  m_program_texture->bind();
+  m_program_texture->setUniformValue(u_tex_texture, 0);
+
+  m_vao->bind();
+  m_vbo->bind();
 
   int targetShapeTag = m_project->getOutputSettings()->getShapeTagId();
 
@@ -373,99 +628,139 @@ void SceneViewer::drawGLPreview() {
     ViewSettings::LAYERIMAGE layerImage =
         getLayerImage(path, layer->brightness(), layer->contrast());
 
-    if (!layerImage.size.isEmpty()) {
-      double visibleVal =
-          (m_project->getLayer(lay)->isVisibleInViewer() == 1) ? 0.5 : 1.0;
-      double chan = modeVal * visibleVal;
-      glColor4d(chan, chan, chan, chan);
+    if (layerImage.size.isEmpty()) continue;
 
-      GLuint texName = (GLuint)layerImage.texture->textureId();
-      glBindTexture(GL_TEXTURE_2D, texName);
+    double visibleVal =
+        (m_project->getLayer(lay)->isVisibleInViewer() == 1) ? 0.5 : 1.0;
+    GLfloat chan = modeVal * visibleVal;
 
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    m_program_texture->setUniformValue(u_tex_alpha, chan);
 
-      // シェイプが無い場合、「参照用」シェイプと判断して描画する
-      if (layer->getShapePairCount(true) == 0) {
-        QSize layerSize = layerImage.size;
-        QPointF layerCornerPos((double)layerSize.width() / 2.0,
-                               (double)layerSize.height() / 2.0);
-        double texClipMargin[2] = {0.0, 0.0};
-        if (layerSize.width() > workAreaSize.width()) {
-          texClipMargin[0] = (1.0 - ((double)workAreaSize.width() /
-                                     (double)layerSize.width())) *
-                             0.5;
-          layerCornerPos.setX((double)workAreaSize.width() / 2.0);
-        }
-        if (layerSize.height() > workAreaSize.height()) {
-          texClipMargin[1] = (1.0 - ((double)workAreaSize.height() /
-                                     (double)layerSize.height())) *
-                             0.5;
-          layerCornerPos.setY((double)workAreaSize.height() / 2.0);
-        }
-        glPushMatrix();
-        glTranslated(texCornerPos.x(), texCornerPos.y(), 0);
-        glBegin(GL_QUADS);
-        glTexCoord2d(texClipMargin[0], texClipMargin[1]);
-        glVertex2d(-layerCornerPos.x(), -layerCornerPos.y());
-        glTexCoord2d(texClipMargin[0], 1.0 - texClipMargin[1]);
-        glVertex2d(-layerCornerPos.x(), layerCornerPos.y());
-        glTexCoord2d(1.0 - texClipMargin[0], 1.0 - texClipMargin[1]);
-        glVertex2d(layerCornerPos.x(), layerCornerPos.y());
-        glTexCoord2d(1.0 - texClipMargin[0], texClipMargin[1]);
-        glVertex2d(layerCornerPos.x(), -layerCornerPos.y());
-        glEnd();
-        glPopMatrix();
-      } else {
-        // シェイプを下から走査していく
-        for (int s = layer->getShapePairCount() - 1; s >= 0; s--) {
-          ShapePair* shape = layer->getShapePair(s);
-          if (!shape) continue;
-          // 子シェイプのとき次のシェイプへ
-          if (!shape->isParent()) continue;
+    layerImage.texture->bind();
 
-          // ターゲットでない場合、次のシェイプへ
-          if (!shape->isRenderTarget(targetShapeTag)) continue;
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-          // 親シェイプのとき、キャッシュをチェックして描画
-          if (!IwTriangleCache::instance()->isCached(frame, shape)) continue;
-          int vertCount =
-              IwTriangleCache::instance()->vertexCount(frame, shape);
-          Vertex* vertex =
-              IwTriangleCache::instance()->vertexData(frame, shape);
-          int* ids = IwTriangleCache::instance()->idsData(frame, shape);
-          // Vertices vertices = IwTriangleCache::instance()->data(frame,
-          // shape);
-
-          glVertexPointer(3, GL_DOUBLE, sizeof(Vertex), vertex);
-          glTexCoordPointer(2, GL_DOUBLE, sizeof(Vertex), vertex[0].uv);
-
-          glEnableClientState(GL_VERTEX_ARRAY);
-          glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-
-          glDrawElements(GL_TRIANGLES, vertCount, GL_UNSIGNED_INT, ids);
-
-          // メッシュを表示
-          if (settings->isMeshVisible()) {
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            glColor4d(0.5, 1.0, 0.0, 0.2);
-            glDisable(GL_TEXTURE_2D);
-            for (int t = 0; t < vertCount / 3; t++)
-              glDrawElements(GL_LINE_LOOP, 3, GL_UNSIGNED_INT, &ids[t * 3]);
-            glEnable(GL_TEXTURE_2D);
-            glColor4d(chan, chan, chan, chan);
-            glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-          }
-        }
+    // シェイプが無い場合、「参照用」シェイプと判断して描画する
+    if (layer->getShapePairCount(true) == 0) {
+      QSize layerSize = layerImage.size;
+      QPointF layerCornerPos((double)layerSize.width() / 2.0,
+                             (double)layerSize.height() / 2.0);
+      double texClipMargin[2] = {0.0, 0.0};
+      if (layerSize.width() > workAreaSize.width()) {
+        texClipMargin[0] =
+            (1.0 - ((double)workAreaSize.width() / (double)layerSize.width())) *
+            0.5;
+        layerCornerPos.setX((double)workAreaSize.width() / 2.0);
+      }
+      if (layerSize.height() > workAreaSize.height()) {
+        texClipMargin[1] = (1.0 - ((double)workAreaSize.height() /
+                                   (double)layerSize.height())) *
+                           0.5;
+        layerCornerPos.setY((double)workAreaSize.height() / 2.0);
       }
 
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      m_modelMatrix.push(m_modelMatrix.top());
+      m_modelMatrix.top().translate(texCornerPos.x(), texCornerPos.y(), 0.);
+      // glPushMatrix();
+      // glTranslated(texCornerPos.x(), texCornerPos.y(), 0);
+      m_program_texture->setUniformValue(
+          u_tex_matrix, m_viewProjMatrix * m_modelMatrix.top());
+
+      MeshVertex verts[4] = {
+          MeshVertex(QVector3D(-layerCornerPos.x(), -layerCornerPos.y(), 0.),
+                     QVector2D(texClipMargin[0], texClipMargin[1])),
+          MeshVertex(QVector3D(-layerCornerPos.x(), layerCornerPos.y(), 0.),
+                     QVector2D(texClipMargin[0], 1.0 - texClipMargin[1])),
+          MeshVertex(QVector3D(layerCornerPos.x(), -layerCornerPos.y(), 0.),
+                     QVector2D(1.0 - texClipMargin[0], texClipMargin[1])),
+          MeshVertex(
+              QVector3D(layerCornerPos.x(), layerCornerPos.y(), 0.),
+              QVector2D(1.0 - texClipMargin[0], 1.0 - texClipMargin[1]))};
+
+      auto ptr = m_vbo->map(QOpenGLBuffer::WriteOnly);
+      memcpy(ptr, verts, sizeof(MeshVertex) * 4);
+      m_vbo->unmap();
+      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+      m_modelMatrix.pop();
+    } else {
+      // シェイプを下から走査していく
+      for (int s = layer->getShapePairCount() - 1; s >= 0; s--) {
+        ShapePair* shape = layer->getShapePair(s);
+        if (!shape) continue;
+        // 子シェイプのとき次のシェイプへ
+        if (!shape->isParent()) continue;
+
+        // ターゲットでない場合、次のシェイプへ
+        if (!shape->isRenderTarget(targetShapeTag)) continue;
+
+        // 親シェイプのとき、キャッシュをチェックして描画
+        if (!IwTriangleCache::instance()->isCached(frame, shape)) continue;
+
+        m_program_texture->setUniformValue(
+            u_tex_matrix, m_viewProjMatrix * m_modelMatrix.top());
+
+        int vertCount  = IwTriangleCache::instance()->vertexCount(frame, shape);
+        int pointCount = IwTriangleCache::instance()->pointCount(frame, shape);
+
+        // 来週はここから！！頂点とインデックス情報を格納するべし
+        MeshVertex* vertex =
+            IwTriangleCache::instance()->vertexData(frame, shape);
+        int* ids = IwTriangleCache::instance()->idsData(frame, shape);
+
+        auto vptr = m_vbo->map(QOpenGLBuffer::WriteOnly);
+        memcpy(vptr, vertex, sizeof(MeshVertex) * pointCount);
+        m_vbo->unmap();
+
+        m_ibo->bind();
+        auto iptr = m_ibo->map(QOpenGLBuffer::WriteOnly);
+        memcpy(iptr, ids, sizeof(int) * vertCount);
+        m_ibo->unmap();
+
+        glDrawElements(GL_TRIANGLES, vertCount, GL_UNSIGNED_INT, (void*)0);
+
+        // メッシュを表示
+        if (settings->isMeshVisible()) {
+          m_program_meshLine->bind();
+          m_program_meshLine->setUniformValue(
+              u_meshLine_color, QColor::fromRgbF(0.5, 1.0, 0.0, 0.4));
+          m_program_meshLine->setUniformValue(
+              u_meshLine_matrix, m_viewProjMatrix * m_modelMatrix.top());
+
+          glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+          glDrawElements(GL_TRIANGLES, vertCount, GL_UNSIGNED_INT, (void*)0);
+          glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+
+          m_program_texture->bind();
+        }
+
+        m_ibo->release();
+      }
     }
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    layerImage.texture->release();
   }
-  glPopMatrix();
+  m_vao->release();
+  m_vbo->release();
+  m_program_texture->release();
+
+  m_modelMatrix.pop();
 
   glDisable(GL_TEXTURE_2D);
 
   IwTriangleCache::instance()->unlock();
+}
+
+void SceneViewer::setLineStipple(GLint factor, GLushort pattern) {
+  GLfloat p[16];
+  int i;
+  for (i = 0; i < 16; i++) {
+    p[i] = (pattern & (1 << i)) ? 1.0f : 0.0f;
+  }
+  m_program_line->setUniformValueArray(u_line_stipplePattern, p, 16, 1);
+  m_program_line->setUniformValue(u_line_stippleFactor, GLfloat(factor));
 }
 
 //----------------------------------
@@ -476,32 +771,50 @@ void SceneViewer::drawWorkArea() {
   // ワークエリアサイズが空ならreturn
   if (workAreaSize.isEmpty()) return;
 
-  glPushMatrix();
-  glTranslated(-(double)workAreaSize.width() / 2.0,
-               -(double)workAreaSize.height() / 2.0, 0.0);
-  glScaled((double)workAreaSize.width(), (double)workAreaSize.height(), 1.0);
+  m_modelMatrix.push(m_modelMatrix.top());
+  m_modelMatrix.top().translate(-(double)workAreaSize.width() / 2.0,
+                                -(double)workAreaSize.height() / 2.0, 0.0);
+  m_modelMatrix.top().scale((double)workAreaSize.width(),
+                            (double)workAreaSize.height(), 1.0);
+
+  m_program_line->bind();
+  m_line_vao->bind();
+  m_line_vbo->bind();
+
+  m_program_line->setUniformValue(u_line_matrix,
+                                  m_viewProjMatrix * m_modelMatrix.top());
+
+  GLfloat viewport[4];
+  glGetFloatv(GL_VIEWPORT, viewport);
+  m_program_line->setUniformValue(u_line_viewportSize,
+                                  QSizeF(viewport[2], viewport[3]));
 
   ViewSettings* settings = m_project->getViewSettings();
-  glEnable(GL_LINE_STIPPLE);
+
   if (settings->getImageMode() == ImageMode_Preview ||
       settings->getImageMode() == ImageMode_Half) {
-    glColor3d(1.0, 0.545, 0.392);
-    glLineStipple(2, 0x00FF);
+    m_program_line->setUniformValue(u_line_color,
+                                    QColor::fromRgbF(1.0, 0.545, 0.392));
+    setLineStipple(2, 0x00FF);
   } else {
-    glColor3d(1.0, 0.5, 0.5);
-    glLineStipple(2, 0xAAAA);
+    m_program_line->setUniformValue(u_line_color,
+                                    QColor::fromRgbF(1.0, 0.5, 0.5));
+    setLineStipple(2, 0xAAAA);
   }
 
-  glBegin(GL_LINE_LOOP);
-  glVertex3d(1.0, 0.0, 0.0);
-  glVertex3d(1.0, 1.0, 0.0);
-  glVertex3d(0.0, 1.0, 0.0);
-  glVertex3d(0.0, 0.0, 0.0);
-  glEnd();
+  QVector3D verts[4]{QVector3D(1.0, 0.0, 0.0), QVector3D(1.0, 1.0, 0.0),
+                     QVector3D(0.0, 1.0, 0.0), QVector3D(0.0, 0.0, 0.0)};
 
-  glDisable(GL_LINE_STIPPLE);
+  auto ptr = m_line_vbo->map(QOpenGLBuffer::WriteOnly);
+  memcpy(ptr, verts, sizeof(QVector3D) * 4);
+  m_line_vbo->unmap();
+  glDrawArrays(GL_LINE_LOOP, 0, 4);
 
-  glPopMatrix();
+  m_line_vao->release();
+  m_line_vbo->release();
+  m_program_line->release();
+
+  m_modelMatrix.pop();
 }
 
 //----------------------------------
@@ -509,29 +822,18 @@ void SceneViewer::drawWorkArea() {
 //----------------------------------
 void SceneViewer::drawShapes() {
   auto drawOneShape = [&](const OneShape& shape, int frame) {
-    GLdouble* vertexArray =
+    QVector3D* vertexArray =
         shape.shapePairP->getVertexArray(frame, shape.fromTo, m_project);
-    // シェイプが閉じている場合
-    if (shape.shapePairP->isClosed()) {
-      glBegin(GL_LINE_LOOP);
-      GLdouble* v_p = vertexArray;
-      for (int v = 0; v < shape.shapePairP->getVertexAmount(m_project); v++) {
-        glVertex3d(v_p[0], v_p[1], v_p[2]);
-        v_p += 3;
-      }
-      glEnd();
-    }
-    // シェイプが開いている場合
-    else {
-      glBegin(GL_LINE_STRIP);
-      GLdouble* v_p = vertexArray;
-      for (int v = 0; v < shape.shapePairP->getVertexAmount(m_project); v++) {
-        glVertex3d(v_p[0], v_p[1], v_p[2]);
-        v_p += 3;
-      }
-      glEnd();
-    }
-    // データを解放
+
+    auto ptr       = m_line_vbo->map(QOpenGLBuffer::WriteOnly);
+    int vertAmount = shape.shapePairP->getVertexAmount(m_project);
+    memcpy(ptr, vertexArray, sizeof(QVector3D) * vertAmount);
+    m_line_vbo->unmap();
+    if (shape.shapePairP->isClosed())
+      glDrawArrays(GL_LINE_LOOP, 0, vertAmount);
+    else
+      glDrawArrays(GL_LINE_STRIP, 0, vertAmount);
+
     delete[] vertexArray;
   };
 
@@ -544,10 +846,24 @@ void SceneViewer::drawShapes() {
   int frame = m_project->getViewFrame();
 
   // ワークエリアの左下を原点、ワークエリアの縦横サイズを１に正規化した座標系に変換する
-  glPushMatrix();
-  glTranslated(-(double)workAreaSize.width() / 2.0,
-               -(double)workAreaSize.height() / 2.0, 0.0);
-  glScaled((double)workAreaSize.width(), (double)workAreaSize.height(), 1.0);
+  m_modelMatrix.push(m_modelMatrix.top());
+  m_modelMatrix.top().translate(-(double)workAreaSize.width() / 2.0,
+                                -(double)workAreaSize.height() / 2.0, 0.0);
+  m_modelMatrix.top().scale((double)workAreaSize.width(),
+                            (double)workAreaSize.height(), 1.0);
+
+  m_program_line->bind();
+  m_line_vao->bind();
+  m_line_vbo->bind();
+
+  m_program_line->setUniformValue(u_line_matrix,
+                                  m_viewProjMatrix * m_modelMatrix.top());
+  GLfloat viewport[4];
+  glGetFloatv(GL_VIEWPORT, viewport);
+  m_program_line->setUniformValue(u_line_viewportSize,
+                                  QSizeF(viewport[2], viewport[3]));
+
+  setLineStipple(1, 0xFFFF);
 
   // カレントレイヤの場合は色を変える
   IwLayer* currentLayer = IwApp::instance()->getCurrentLayer()->getLayer();
@@ -610,21 +926,25 @@ void SceneViewer::drawShapes() {
           glPushName(layer->getNameFromShapePair(oneShape));
 
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glColor4d(0.7, 0.7, 0.7, 0.5);
+
+        QColor lineColor = QColor::fromRgbF(0.7, 0.7, 0.7, 0.5);
         if (isCurrent) {
           if (isSelected)
-            (fromTo == 0) ? glColor3d(1.0, 0.7, 0.0) : glColor3d(0.0, 0.7, 1.0);
+            lineColor = (fromTo == 0) ? QColor::fromRgbF(1.0, 0.7, 0.0)
+                                      : QColor::fromRgbF(0.0, 0.7, 1.0);
           // ロックされていたら薄くする
           else if (shapePair->isLocked(fromTo) || layer->isLocked())
-            (fromTo == 0) ? glColor4d(0.7, 0.2, 0.2, 0.7)
-                          : glColor4d(0.2, 0.2, 0.7, 0.7);
+            lineColor = (fromTo == 0) ? QColor::fromRgbF(0.7, 0.2, 0.2, 0.7)
+                                      : QColor::fromRgbF(0.2, 0.2, 0.7, 0.7);
           else
-            (fromTo == 0) ? glColor3d(1.0, 0.0, 0.0) : glColor3d(0.0, 0.0, 1.0);
+            lineColor = (fromTo == 0) ? QColor::fromRgbF(1.0, 0.0, 0.0)
+                                      : QColor::fromRgbF(0.0, 0.0, 1.0);
         }
-
         // ReshapeToolおよびCorrToolのSnap対象のシェイプ
         if (tool && tool->setSpecialShapeColor(oneShape))
-          glColor3d(1.0, 0.0, 1.0);
+          lineColor = QColor::fromRgbF(1.0, 0.0, 1.0);
+
+        m_program_line->setUniformValue(u_line_color, lineColor);
 
         drawOneShape(oneShape, frame);
 
@@ -640,8 +960,12 @@ void SceneViewer::drawShapes() {
       // オニオンシェイプの描画
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
       if (!onionFrames.isEmpty()) {
-        (oneShape.fromTo == 0) ? glColor4d(0.8, 0.7, 0.2, 0.8)
-                               : glColor4d(0.2, 0.7, 0.8, 0.8);
+        QColor lineColor;
+        lineColor = (oneShape.fromTo == 0)
+                        ? QColor::fromRgbF(0.8, 0.7, 0.2, 0.8)
+                        : QColor::fromRgbF(0.2, 0.7, 0.8, 0.8);
+        m_program_line->setUniformValue(u_line_color, lineColor);
+
         foreach (const int& onionFrame, onionFrames) {
           if (onionFrame == frame) continue;
           drawOneShape(oneShape, onionFrame);
@@ -659,8 +983,12 @@ void SceneViewer::drawShapes() {
           double ratio =
               1.0 - (double)(std::abs(relativeOf - frame)) / (double)onionRange;
           double alpha = 0.8 * ratio + 0.1 * (1.0 - ratio);
-          (oneShape.fromTo == 0) ? glColor4d(0.8, 0.7, 0.2, alpha)
-                                 : glColor4d(0.2, 0.7, 0.8, alpha);
+          QColor lineColor;
+          lineColor = (oneShape.fromTo == 0)
+                          ? QColor::fromRgbF(0.8, 0.7, 0.2, alpha)
+                          : QColor::fromRgbF(0.2, 0.7, 0.8, alpha);
+          m_program_line->setUniformValue(u_line_color, lineColor);
+
           drawOneShape(oneShape, relativeOf);
         }
       }
@@ -668,14 +996,15 @@ void SceneViewer::drawShapes() {
       if (!oneShape.shapePairP->isLocked(oneShape.fromTo) && !layer->isLocked())
         glPushName(layer->getNameFromShapePair(oneShape));
 
+      QColor lineColor;
       if (oneShape.fromTo == 0)
-        glColor3d(1.0, 0.7, 0.0);
+        lineColor = QColor::fromRgbF(1.0, 0.7, 0.0);
       else
-        glColor3d(0.0, 0.7, 1.0);
-
+        lineColor = QColor::fromRgbF(0.0, 0.7, 1.0);
       // 今のところReshapeToolのSnap対象のシェイプのみ
       if (tool && tool->setSpecialShapeColor(oneShape))
-        glColor3d(1.0, 0.0, 1.0);
+        lineColor = QColor::fromRgbF(1.0, 0.0, 1.0);
+      m_program_line->setUniformValue(u_line_color, lineColor);
 
       drawOneShape(oneShape, frame);
 
@@ -694,7 +1023,8 @@ void SceneViewer::drawShapes() {
     int key, nextKey;
     InterpHandleDragTool::instance()->getInfo(shape, isForm, key, nextKey);
     if (isForm) {
-      glColor3d(1.0, 0.0, 1.0);
+      m_program_line->setUniformValue(u_line_color,
+                                      QColor::fromRgbF(1.0, 0.0, 1.0));
       for (int f = key; f <= nextKey; f++) {
         drawOneShape(shape, f);
       }
@@ -704,35 +1034,42 @@ void SceneViewer::drawShapes() {
   PRINT_LOG("  Draw Guides")
   // ガイドを描く
   if (m_hRuler->getGuideCount() > 0 || m_vRuler->getGuideCount() > 0) {
-    glLineStipple(1, 0xAAAA);
-    glEnable(GL_LINE_STIPPLE);
-    glBegin(GL_LINES);
+    setLineStipple(1, 0xAAAA);
     // 描画範囲
     double minV = m_vRuler->posToValue(QPoint(0, 0));
     double maxV = m_vRuler->posToValue(QPoint(0, height()));
+    QColor lineColor;
     for (int gId = 0; gId < m_hRuler->getGuideCount(); gId++) {
       if (tool && tool->setSpecialGridColor(gId, false))
-        glColor3d(1.0, 0.0, 1.0);
+        lineColor = QColor::fromRgbF(1.0, 0.0, 1.0);
       else
-        glColor3d(0.7, 0.7, 0.7);
+        lineColor = QColor::fromRgbF(0.7, 0.7, 0.7);
+      m_program_line->setUniformValue(u_line_color, lineColor);
       double g = m_hRuler->getGuide(gId);
-      glVertex2d(g, minV);
-      glVertex2d(g, maxV);
+
+      auto ptr = m_line_vbo->map(QOpenGLBuffer::WriteOnly);
+      QVector3D verts[2]{QVector3D(g, minV, 0.0), QVector3D(g, maxV, 0.0)};
+      memcpy(ptr, verts, sizeof(QVector3D) * 2);
+      m_line_vbo->unmap();
+      glDrawArrays(GL_LINES, 0, 2);
     }
 
     minV = m_hRuler->posToValue(QPoint(0, 0));
     maxV = m_hRuler->posToValue(QPoint(width(), 0));
     for (int gId = 0; gId < m_vRuler->getGuideCount(); gId++) {
-      if (tool && tool->setSpecialGridColor(gId, true))
-        glColor3d(1.0, 0.0, 1.0);
+      if (tool && tool->setSpecialGridColor(gId, false))
+        lineColor = QColor::fromRgbF(1.0, 0.0, 1.0);
       else
-        glColor3d(0.7, 0.7, 0.7);
+        lineColor = QColor::fromRgbF(0.7, 0.7, 0.7);
+      m_program_line->setUniformValue(u_line_color, lineColor);
       double g = m_vRuler->getGuide(gId);
-      glVertex2d(minV, g);
-      glVertex2d(maxV, g);
+
+      auto ptr = m_line_vbo->map(QOpenGLBuffer::WriteOnly);
+      QVector3D verts[2]{QVector3D(minV, g, 0.0), QVector3D(maxV, g, 0.0)};
+      memcpy(ptr, verts, sizeof(QVector3D) * 2);
+      m_line_vbo->unmap();
+      glDrawArrays(GL_LINES, 0, 2);
     }
-    glEnd();
-    glDisable(GL_LINE_STIPPLE);
   }
 
   PRINT_LOG("  Draw Tools")
@@ -745,7 +1082,11 @@ void SceneViewer::drawShapes() {
     tool->draw();
   }
 
-  glPopMatrix();
+  m_line_vao->release();
+  m_line_vbo->release();
+  m_program_line->release();
+
+  m_modelMatrix.pop();
   PRINT_LOG("drawShapes end")
 }
 
@@ -1362,7 +1703,7 @@ QList<int> SceneViewer::pickAll(const QPoint& pos) {
 
   // 返されるセレクションデータに用いる配列を指定する
   GLuint selectBuffer[512];
-  GLdouble mat[16];
+  // GLdouble mat[16];
   QList<int> keepList;
 
   QList<int> pickRanges = {5, 10, 20};
@@ -1374,31 +1715,24 @@ QList<int> SceneViewer::pickAll(const QPoint& pos) {
     // アプリケーションをセレクションモードに指定する
     glRenderMode(GL_SELECT);
 
-    glMatrixMode(GL_PROJECTION);
-    glGetDoublev(GL_PROJECTION_MATRIX, mat);
-    glPushMatrix();
-    glLoadIdentity();
+    QMatrix4x4 viewProjMat = m_viewProjMatrix;
+    QMatrix4x4 pickMat;
     // ピック領域の指定。この範囲に描画を制限する
-    my_gluPickMatrix(pos.x() * devPixRatio, (height() - pos.y()) * devPixRatio,
-                     pickRange * devPixRatio, pickRange * devPixRatio,
-                     viewport);
+    my_gluPickMatrix(
+        pickMat, pos.x() * devPixRatio, (height() - pos.y()) * devPixRatio,
+        pickRange * devPixRatio, pickRange * devPixRatio, viewport);
 
-    glMultMatrixd(mat);
+    m_viewProjMatrix = pickMat * m_viewProjMatrix;
 
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
+    m_modelMatrix.push(m_modelMatrix.top());
     // ネームスタックをクリアして空にする
     glInitNames();
-
     // 描画
     paintGL();
-    glPopMatrix();
+    m_modelMatrix.pop();
 
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
+    m_viewProjMatrix = viewProjMat;
 
-    glMatrixMode(GL_MODELVIEW);
-    // int ret = 0;
     // セレクションモードを抜ける。同時に、セレクションのヒット数が返る。
     int hitCount = glRenderMode(GL_RENDER);
     GLuint* p    = selectBuffer;
@@ -1474,4 +1808,201 @@ void SceneViewer::onLayerChanged() {
   // 自分のプロジェクトがカレントプロジェクトじゃなければreturn
   if (IwApp::instance()->getCurrentProject()->getProject() != m_project) return;
   update();
+}
+
+void SceneViewer::doShapeRender() {
+  IwProject* project = IwApp::instance()->getCurrentProject()->getProject();
+  if (!project) return;
+
+  auto drawOneShape = [&](const OneShape& shape, int frame) {
+    QVector3D* vertexArray =
+        shape.shapePairP->getVertexArray(frame, shape.fromTo, m_project);
+
+    auto ptr       = m_line_vbo->map(QOpenGLBuffer::WriteOnly);
+    int vertAmount = shape.shapePairP->getVertexAmount(m_project);
+    memcpy(ptr, vertexArray, sizeof(QVector3D) * vertAmount);
+    m_line_vbo->unmap();
+    if (shape.shapePairP->isClosed())
+      glDrawArrays(GL_LINE_LOOP, 0, vertAmount);
+    else
+      glDrawArrays(GL_LINE_STRIP, 0, vertAmount);
+
+    delete[] vertexArray;
+  };
+
+  // 計算範囲を求める
+  // 何フレーム計算するか
+  OutputSettings* settings            = project->getOutputSettings();
+  OutputSettings::SaveRange saveRange = settings->getSaveRange();
+  QString fileName                    = settings->getShapeImageFileName();
+  int sizeId                          = settings->getShapeImageSizeId();
+  QSize workAreaSize                  = project->getWorkAreaSize();
+
+  if (settings->getDirectory().isEmpty()) {
+    QMessageBox::warning(0, QObject::tr("Output Settings Error"),
+                         QObject::tr("Output directory is not set."));
+    return;
+  }
+
+  QDir dir(settings->getDirectory());
+  if (!dir.exists()) {
+    QMessageBox::StandardButton ret = QMessageBox::question(
+        0, QObject::tr("Do you want to create folder?"),
+        QString("The folder %1 does not exist.\nDo you want to create it?")
+            .arg(settings->getDirectory()),
+        QMessageBox::Yes | QMessageBox::Cancel, QMessageBox::Cancel);
+    if (ret == QMessageBox::Yes) {
+      std::cout << "yes" << std::endl;
+      // フォルダ作る
+      bool ok = dir.mkpath(dir.path());
+      if (!ok) {
+        QMessageBox::critical(
+            0, QObject::tr("Failed to create folder."),
+            QString("Failed to create folder %1.").arg(dir.path()));
+        return;
+      }
+    } else
+      return;
+  }
+
+  if (saveRange.endFrame == -1)
+    saveRange.endFrame = project->getProjectFrameLength() - 1;
+
+  // プログレスバー作る
+  RenderProgressPopup progressPopup(project);
+  int frameAmount =
+      (int)((saveRange.endFrame - saveRange.startFrame) / saveRange.stepFrame) +
+      1;
+
+  // 各フレームについて
+  QList<int> frames;
+  for (int i = 0; i < frameAmount; i++) {
+    // フレームを求める
+    int frame = saveRange.startFrame + i * saveRange.stepFrame;
+    frames.append(frame);
+  }
+
+  progressPopup.open();
+
+  for (auto frame : frames) {
+    if (progressPopup.isCanceled()) break;
+
+    // 出力サイズを取得
+    QSize outputSize;
+    if (sizeId < 0)
+      outputSize = workAreaSize;
+    else {
+      IwLayer* layer = project->getLayer(sizeId);
+      QString path   = layer->getImageFilePath(frame);
+      if (path.isEmpty()) {  // 空のレイヤはスキップする
+        progressPopup.onFrameFinished();
+        continue;
+      }
+      ViewSettings* vs = project->getViewSettings();
+      if (vs->hasTexture(path))
+        outputSize = vs->getTextureId(path).size;
+      else {
+        TImageP img;
+        // キャッシュされていたら、それを返す
+        if (IwImageCache::instance()->isCached(path))
+          img = IwImageCache::instance()->get(path);
+        else
+          img = IoCmd::loadImage(path);
+        if (img.getPointer())
+          outputSize = QSize(img->raster()->getLx(), img->raster()->getLy());
+        else {  // 画像が読み込めなければスキップ
+          progressPopup.onFrameFinished();
+          continue;
+        }
+      }
+    }
+
+    makeCurrent();
+
+    QOpenGLFramebufferObject fbo(outputSize);
+    fbo.bind();
+
+    glViewport(0, 0, outputSize.width(), outputSize.height());
+    QMatrix4x4 projMatrix = QMatrix4x4();
+    projMatrix.ortho(0, outputSize.width(), 0, outputSize.height(), -4000,
+                     4000);
+    QMatrix4x4 modelMatrix = QMatrix4x4();
+    modelMatrix.translate((double)outputSize.width() / 2.0,
+                          (double)outputSize.height() / 2.0, 0.0);
+    modelMatrix.translate(-(double)workAreaSize.width() / 2.0,
+                          -(double)workAreaSize.height() / 2.0, 0.0);
+    modelMatrix.scale((double)workAreaSize.width(),
+                      (double)workAreaSize.height(), 1.0);
+
+    m_program_line->bind();
+
+    m_line_vao->bind();
+    m_line_vbo->bind();
+
+    m_program_line->setUniformValue(u_line_matrix, projMatrix * modelMatrix);
+    m_program_line->setUniformValue(u_line_viewportSize, QSizeF(outputSize));
+    setLineStipple(1, 0xFFFF);
+
+    //---- ロック情報を得る
+    bool fromToVisible[2];
+    for (int fromTo = 0; fromTo < 2; fromTo++)
+      fromToVisible[fromTo] =
+          project->getViewSettings()->isFromToVisible(fromTo);
+    //----
+
+    // 各レイヤについて
+    for (int lay = project->getLayerCount() - 1; lay >= 0; lay--) {
+      // レイヤを取得
+      IwLayer* layer = project->getLayer(lay);
+      if (!layer) continue;
+
+      if (!layer->isVisibleInViewer()) continue;
+
+      for (int sp = 0; sp < layer->getShapePairCount(); sp++) {
+        ShapePair* shapePair = layer->getShapePair(sp);
+        if (!shapePair) continue;
+
+        // 非表示ならconitnue
+        if (!shapePair->isVisible()) continue;
+
+        for (int fromTo = 0; fromTo < 2; fromTo++) {
+          // 140128 ロックされていたら非表示にする
+          if (!fromToVisible[fromTo]) continue;
+
+          OneShape oneShape(shapePair, fromTo);
+
+          glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+          m_program_line->setUniformValue(
+              u_line_color, (fromTo == 0) ? QColor(Qt::red) : QColor(Qt::blue));
+
+          drawOneShape(oneShape, frame);
+
+          glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+        }
+      }
+    }
+
+    // glPopMatrix();
+
+    fbo.release();
+
+    QImage img = fbo.toImage();
+
+    m_line_vao->release();
+    m_line_vbo->release();
+    m_program_line->release();
+
+    QString path = project->getOutputPath(
+        frame, QString("[dir]/%1.[num].[ext]").arg(fileName));
+    path.chop(3);
+    path += "png";
+
+    img.save(path);
+
+    progressPopup.onFrameFinished();
+    qApp->processEvents();
+  }
+
+  progressPopup.close();
 }

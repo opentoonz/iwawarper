@@ -100,14 +100,14 @@ void IwTool::drawCorrLine(OneShape shape)
   int frame = project->getViewFrame();
 
   // 対応点表示用の色を得る
-  double cPointCol[3];        // 対応点
-  double cActivePointCol[3];  // アクティブ対応点
-  double cInbtwnPointCol[3];  // キーフレームでない対応点
-  double cNumberCol[3];       // 対応点右下の番号
-  ColorSettings::instance()->getColor(cPointCol, Color_CorrPoint);
-  ColorSettings::instance()->getColor(cActivePointCol, Color_ActiveCorr);
-  ColorSettings::instance()->getColor(cInbtwnPointCol, Color_InbetweenCorr);
-  ColorSettings::instance()->getColor(cNumberCol, Color_CorrNumber);
+  QColor cPointCol =
+      ColorSettings::instance()->getQColor(Color_CorrPoint);  // 対応点
+  QColor cActivePointCol = ColorSettings::instance()->getQColor(
+      Color_ActiveCorr);  // アクティブ対応点
+  QColor cInbtwnPointCol = ColorSettings::instance()->getQColor(
+      Color_InbetweenCorr);  // キーフレームでない対応点
+  QColor cNumberCol = ColorSettings::instance()->getQColor(
+      Color_CorrNumber);  // 対応点右下の番号
   // シェイプ座標系で見た目１ピクセルになる長さを取得する
   QPointF onePix = m_viewer->getOnePixelLength();
   // 文字用のフォントの指定
@@ -122,29 +122,33 @@ void IwTool::drawCorrLine(OneShape shape)
 
   //---分割点を繋ぐ線を描く
   if (corrpointIsActive)
-    glColor3d(cPointCol[0], cPointCol[1], cPointCol[2]);
+    m_viewer->setColor(cPointCol);
   else
-    glColor3d(cActivePointCol[0], cActivePointCol[1], cActivePointCol[2]);
+    m_viewer->setColor(cActivePointCol);
 
   // 対応点の分割点のベジエ座標値を求める
   QList<double> discreteCorrValues =
       shape.shapePairP->getDiscreteCorrValues(onePix, frame, shape.fromTo);
 
+  GLenum mode;
   if (shape.shapePairP->isClosed())
-    glBegin(GL_LINE_LOOP);
+    mode = GL_LINE_LOOP;
   else
-    glBegin(GL_LINE_STRIP);
+    mode = GL_LINE_STRIP;
 
+  QVector3D* vert = new QVector3D[discreteCorrValues.size()];
   // 各ベジエ座標を繋ぐ
   for (int d = 0; d < discreteCorrValues.size(); d++) {
     double value = discreteCorrValues.at(d);
     // ベジエ値から座標値を計算する
     QPointF tmpPos =
         shape.shapePairP->getBezierPosFromValue(frame, shape.fromTo, value);
-    glVertex3d(tmpPos.x(), tmpPos.y(), 0.0);
+    vert[d] = QVector3D(tmpPos.x(), tmpPos.y(), 0.0);
   }
+  m_viewer->doDrawLine(mode, vert, discreteCorrValues.size());
+  delete[] vert;
 
-  glEnd();
+  // glEnd();
 
   //---対応点の描画(横に数字も)
   // 対応点の座標リストを得る
@@ -156,43 +160,45 @@ void IwTool::drawCorrLine(OneShape shape)
 
   // 名前
   int shapeName = layer->getNameFromShapePair(shape);
-  // int shapeName = project->getNameFromShape(shape);
 
   for (int p = 0; p < corrPoints.size(); p++) {
     QPointF corrP = corrPoints.at(p);
 
     // 色を指定
     if (IwShapePairSelection::instance()->isActiveCorrPoint(shape, p))
-      glColor3d(cActivePointCol[0], cActivePointCol[1], cActivePointCol[2]);
+      m_viewer->setColor(cActivePointCol);
     else if (shape.shapePairP->isCorrKey(frame, shape.fromTo))
-      glColor3d(cPointCol[0], cPointCol[1], cPointCol[2]);
+      m_viewer->setColor(cPointCol);
     else
-      glColor3d(cInbtwnPointCol[0], cInbtwnPointCol[1], cInbtwnPointCol[2]);
+      m_viewer->setColor(cInbtwnPointCol);
 
-    glPushMatrix();
+    m_viewer->pushMatrix();
+
     glPushName(shapeName + p * 10 + 1);
-    glTranslated(corrP.x(), corrP.y(), 0.0);
-    glScaled(onePix.x(), onePix.y(), 1.0);
-    glBegin(GL_LINE_LOOP);
-    glVertex3d(2.0, -2.0, 0.0);
-    glVertex3d(2.0, 2.0, 0.0);
-    glVertex3d(-2.0, 2.0, 0.0);
-    glVertex3d(-2.0, -2.0, 0.0);
-    glEnd();
+
+    m_viewer->translate(corrP.x(), corrP.y(), 0.0);
+    m_viewer->scale(onePix.x(), onePix.y(), 1.0);
+
+    static QVector3D vert[4] = {
+        QVector3D(2.0, -2.0, 0.0), QVector3D(2.0, 2.0, 0.0),
+        QVector3D(-2.0, 2.0, 0.0), QVector3D(-2.0, -2.0, 0.0)};
+
+    m_viewer->doDrawLine(GL_LINE_LOOP, vert, 4);
     glPopName();
 
     // テキストの描画
     // ウェイトが1じゃない場合に描画する
     double weight = corrWeights.at(p);
     if (weight != 1.) {
-      glColor3d(cNumberCol[0], cNumberCol[1], cNumberCol[2]);
-      GLdouble model[16];
-      glGetDoublev(GL_MODELVIEW_MATRIX, model);
-      m_viewer->renderText(model[12] + 5.0, model[13] - 15.0,
-                           QString::number(weight),
+      m_viewer->releaseBufferObjects();
+      QMatrix4x4 mat = m_viewer->modelMatrix();
+      QPointF pos    = mat.map(QPointF(0., 0.));
+      m_viewer->renderText(pos.x() + 5.0, pos.y() - 15.0,
+                           QString::number(weight), cNumberCol,
                            QFont("Helvetica", 10, QFont::Normal));
+      m_viewer->bindBufferObjects();
     }
-    glPopMatrix();
+    m_viewer->popMatrix();
   }
 }
 
@@ -215,12 +221,11 @@ void IwTool::drawJoinLine(ShapePair* shapePair) {
   int frame = project->getViewFrame();
 
   // 対応点表示用の色を得る
-  double col[3];  // 対応点
-  ColorSettings::instance()->getColor(col, Color_CorrPoint);
+  QColor col = ColorSettings::instance()->getQColor(Color_CorrPoint);  // 対応点
   // シェイプ座標系で見た目１ピクセルになる長さを取得する
   QPointF onePix = m_viewer->getOnePixelLength();
 
-  glColor3d(col[0], col[1], col[2]);
+  m_viewer->setColor(col);
 
   // 対応点の分割点のベジエ座標値を求める
   QList<double> discreteCorrValues1 =
@@ -228,10 +233,7 @@ void IwTool::drawJoinLine(ShapePair* shapePair) {
   QList<double> discreteCorrValues2 =
       shapePair->getDiscreteCorrValues(onePix, frame, 1);
 
-  glEnable(GL_LINE_STIPPLE);
-  glLineStipple(2, 0xCCCC);
-
-  glBegin(GL_LINES);
+  m_viewer->setLineStipple(2, 0xCCCC);
 
   // 各ベジエ座標を繋ぐ
   for (int d = 0; d < discreteCorrValues1.size(); d++) {
@@ -241,14 +243,13 @@ void IwTool::drawJoinLine(ShapePair* shapePair) {
     QPointF tmpPos1 = shapePair->getBezierPosFromValue(frame, 0, value1);
     QPointF tmpPos2 = shapePair->getBezierPosFromValue(frame, 1, value2);
 
-    glColor4d(col[0], col[1], col[2],
-              (d % shapePair->getEdgeDensity() == 0) ? 1. : .5);
-    glVertex3d(tmpPos1.x(), tmpPos1.y(), 0.0);
-    glVertex3d(tmpPos2.x(), tmpPos2.y(), 0.0);
+    col.setAlphaF((d % shapePair->getEdgeDensity() == 0) ? 1. : .5);
+    m_viewer->setColor(col);
+    QVector3D vert[2] = {QVector3D(tmpPos1), QVector3D(tmpPos2)};
+    m_viewer->doDrawLine(GL_LINE_STRIP, vert, 2);
   }
 
-  glEnd();
-  glDisable(GL_LINE_STIPPLE);
+  m_viewer->setLineStipple(1, 0xFFFF);
 }
 
 //-----------------------------------------------------------------------------

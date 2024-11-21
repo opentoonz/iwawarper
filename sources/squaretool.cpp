@@ -126,16 +126,16 @@ void SquareTool::draw() {
   glEnable(GL_BLEND);
   glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
 
-  glPushMatrix();
-  glColor3d(0.8, 1.0, 0.8);
-  // ŽlŠpŒ`‚ð•`‚­
-  glBegin(GL_LINE_LOOP);
-  glVertex3d(rect.bottomRight().x(), rect.bottomRight().y(), 0.0);
-  glVertex3d(rect.topRight().x(), rect.topRight().y(), 0.0);
-  glVertex3d(rect.topLeft().x(), rect.topLeft().y(), 0.0);
-  glVertex3d(rect.bottomLeft().x(), rect.bottomLeft().y(), 0.0);
-  glEnd();
-  glPopMatrix();
+  m_viewer->pushMatrix();
+  m_viewer->setColor(QColor::fromRgbF(0.8, 1.0, 0.8));
+
+  QVector3D vert[4] = {QVector3D(rect.bottomRight()),
+                       QVector3D(rect.topRight()), QVector3D(rect.topLeft()),
+                       QVector3D(rect.bottomLeft())};
+
+  m_viewer->doDrawLine(GL_LINE_LOOP, vert, 4);
+
+  m_viewer->popMatrix();
 
   if (!isEnabled) glDisable(GL_BLEND);
   glBlendFunc(src, dst);
