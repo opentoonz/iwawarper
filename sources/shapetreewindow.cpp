@@ -259,6 +259,9 @@ void ShapeTreeDelegate::paint(QPainter* painter,
       if (m_hoverOn == HoverOnVisibleButton_SelectedShapes) {
         QRect visibleRect(option.rect.left() + 18, option.rect.top(), 18, 18);
         painter->fillRect(visibleRect, hoverColor);
+      } else if (m_hoverOn == HoverOnMatteButton_SelectedShapes) {
+        QRect matteRect(option.rect.right() - 18, option.rect.top(), 18, 18);
+        painter->fillRect(matteRect, hoverColor);
       }
     }
   }
@@ -277,7 +280,11 @@ void ShapeTreeDelegate::paint(QPainter* painter,
       if (m_hoverOn == HoverOnVisibleButton) {
         QRect visibleRect(option.rect.left() + 18, option.rect.top(), 18, 18);
         painter->fillRect(visibleRect, hoverColor);
+      } else if (m_hoverOn == HoverOnMatteButton) {
+        QRect matteRect(option.rect.right() - 18, option.rect.top(), 18, 18);
+        painter->fillRect(matteRect, hoverColor);
       } else if (m_hoverOn != HoverOnVisibleButton_SelectedShapes &&
+                 m_hoverOn != HoverOnMatteButton_SelectedShapes &&
                  !layerIsLocked)
         painter->fillRect(option.rect, hoverColor);
     }
@@ -298,9 +305,20 @@ void ShapeTreeDelegate::paint(QPainter* painter,
 
     QRect textRect = option.rect;
     textRect.setLeft(textRect.left() + 38);
+    textRect.setRight(textRect.right() - 18);
 
     painter->setPen(Qt::white);
     painter->drawText(textRect, shape.shapePairP->getName());
+
+    // Matteî•ñ
+    if (shape.shapePairP->isParent()) {
+      bool hasMatte = !shape.shapePairP->matteInfo().layerName.isEmpty();
+      painter->drawPixmap(option.rect.right() - 18 + 2, option.rect.top() + 2,
+                          14, 14,
+                          (hasMatte) ? QPixmap(":Resources/mask_on.svg")
+                                     : QPixmap(":Resources/mask_of.svg"));
+    }
+
     return;
   }
 
@@ -391,8 +409,12 @@ bool ShapeTreeDelegate::editorEvent(QEvent* event, QAbstractItemModel* model,
         IwShapePairSelection::instance()->togglePins();
       else if (m_hoverOn == HoverOnVisibleButton) {
         ProjectUtils::switchShapeVisibility(shape.shapePairP);
-      } else {  // HoverOnVisibleButton_SelectedShapes
+      } else if (m_hoverOn == HoverOnVisibleButton_SelectedShapes)
         IwShapePairSelection::instance()->toggleVisibility();
+      else {  // matte button
+        ProjectUtils::openMaskInfoPopup();
+        if (!IwShapePairSelection::instance()->isSelected(shape.shapePairP))
+          IGNORERETURN
       }
 
       return true;
@@ -424,11 +446,22 @@ bool ShapeTreeDelegate::editorEvent(QEvent* event, QAbstractItemModel* model,
 
         // shape ‚Ì—ñ
         if (index.column() == 0) {
-          if (pos.x() < 18 || 36 < pos.x()) return HoverOnNone;
-          return (IwShapePairSelection::instance()->isSelected(
-                     shape.shapePairP))
-                     ? HoverOnVisibleButton_SelectedShapes
-                     : HoverOnVisibleButton;
+          if (pos.x() < 18)
+            return HoverOnNone;
+          else if (pos.x() < 36)
+            return (IwShapePairSelection::instance()->isSelected(
+                       shape.shapePairP))
+                       ? HoverOnVisibleButton_SelectedShapes
+                       : HoverOnVisibleButton;
+          else if (pos.x() < option.rect.width() - 18)
+            return HoverOnNone;
+          else if (shape.shapePairP->isParent())
+            return (IwShapePairSelection::instance()->isSelected(
+                       shape.shapePairP))
+                       ? HoverOnMatteButton_SelectedShapes
+                       : HoverOnMatteButton;
+          else
+            return HoverOnNone;
         }
 
         // from to ‚Ì—ñ

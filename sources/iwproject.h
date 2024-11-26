@@ -136,6 +136,7 @@ public:
   // ƒŒƒCƒ„ŠÖŒW
   int getLayerCount() { return m_layers.size(); }
   IwLayer* getLayer(int index) { return m_layers.at(index); }
+  IwLayer* getLayerByName(const QString& name);
   IwLayer* appendLayer();
   void swapLayers(int index1, int index2) {
     if (index1 < 0 || index1 >= m_layers.size() || index2 < 0 ||

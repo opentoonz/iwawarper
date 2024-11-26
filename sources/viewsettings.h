@@ -32,6 +32,8 @@ class ViewSettings {
   std::array<bool, 2> m_fromToVisible;
   // メッシュの表示
   bool m_showMesh;
+  // マットを適用表示
+  bool m_applyMatte;
 
 public:
   struct LAYERIMAGE {
@@ -111,6 +113,10 @@ public:
   // メッシュの表示
   bool isMeshVisible() { return m_showMesh; }
   void setMeshVisible(bool visible) { m_showMesh = visible; }
+
+  // マットを適用表示
+  bool isMatteApplied() { return m_applyMatte; }
+  void setMatteApplied(bool on) { m_applyMatte = on; }
 
   int getOnionRange() { return m_onionRange; }
   void setOnionRange(int onionRange) { m_onionRange = onionRange; }

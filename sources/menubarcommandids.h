@@ -49,6 +49,7 @@
 // Shape Menu
 #define MI_ToggleShapeLock "MI_ToggleShapeLock"
 #define MI_ToggleVisibility "MI_ToggleVisibility"
+#define MI_MatteInfo "MI_MatteInfo"
 
 //---- 上側の表示コントロールツールバーのコマンド
 // #define VMI_MultiFrameMode "VMI_MultiFrameMode"

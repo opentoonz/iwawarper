@@ -68,5 +68,11 @@
     <file>Resources/visible_half.svg</file>
     <file>Resources/visible_off.svg</file>
 	<file>Resources/visible_on.svg</file>
+    <file>Resources/mask_off.svg</file>
+	<file>Resources/mask_on.svg</file>
+	<file>Resources/plus.svg</file>
+	<file>Resources/minus.svg</file>
+	<file>Resources/save.svg</file>
+	<file>Resources/load.svg</file>
   </qresource>
 </RCC>

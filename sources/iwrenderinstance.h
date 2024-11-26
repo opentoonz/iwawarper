@@ -44,6 +44,7 @@ class MapTrianglesToRaster_Worker : public QRunnable {
   QPointF m_sampleOffset, m_outputOffset;
   TRaster64P m_outRas;
   TRaster64P m_srcRas;
+  TRasterGR8P m_matteRas;
   bool* m_subPointOccupation;
   int m_subAmount;
   AlphaMode m_alphaMode;
@@ -57,9 +58,9 @@ public:
                               IwRenderInstance* parentInstance,
                               QPointF sampleOffset, QPointF outputOffset,
                               TRaster64P outRas, TRaster64P srcRas,
-                              bool* subPointOccupation, int subAmount,
-                              AlphaMode alphaMode, ResampleMode resampleMode,
-                              QImage shapeAlphaImg)
+                              TRasterGR8P matteRas, bool* subPointOccupation,
+                              int subAmount, AlphaMode alphaMode,
+                              ResampleMode resampleMode, QImage shapeAlphaImg)
       : m_from(from)
       , m_to(to)
       , m_model(model)
@@ -68,6 +69,7 @@ public:
       , m_outputOffset(outputOffset)
       , m_outRas(outRas)
       , m_srcRas(srcRas)
+      , m_matteRas(matteRas)
       , m_subPointOccupation(subPointOccupation)
       , m_subAmount(subAmount)
       , m_alphaMode(alphaMode)
@@ -140,7 +142,7 @@ class IwRenderInstance : public QObject, public QRunnable {
   //---------------
 
   // 素材ラスタを得る
-  TRasterP getLayerRaster(IwLayer* layer);
+  TRasterP getLayerRaster(IwLayer* layer, bool convertTo16bpc = true);
 
   // ワープ先のCorrVecの長さに合わせ、
   // あまり短いベクトルはまとめながら格納していく
@@ -156,6 +158,7 @@ class IwRenderInstance : public QObject, public QRunnable {
 
   // ゆがんだ形状を描画する_マルチスレッド版
   TRaster64P HEmapTrianglesToRaster_Multi(HEModel& model, TRaster64P srcRas,
+                                          TRasterGR8P matteRas,
                                           ShapePair* shape, QPoint& origin,
                                           const QPolygonF& parentShapePolygon);
 
@@ -163,6 +166,9 @@ class IwRenderInstance : public QObject, public QRunnable {
   void HEcacheTriangles(HEModel& model, ShapePair* shape,
                         const TDimension& srcDim,
                         const QPolygonF& parentShapePolygon);
+
+  // マット画像を作成する
+  TRasterGR8P createMatteRas(ShapePair* shape);
 
   //--------------------------------
   // ファイルに書き出す

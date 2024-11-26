@@ -23,6 +23,7 @@ class SettingsDialog : public IwDialog {
   QComboBox* m_resampleModeCombo;
   MyIntSlider* m_imageShrinkSlider;
   QCheckBox* m_antialiasCheckBox;
+  MyIntSlider* m_matteDilateSlider;
 
 public:
   SettingsDialog();
@@ -44,6 +45,7 @@ protected slots:
   void onResampleModeComboActivated();
   void onImageShrinkChanged(bool isDragging);
   void onAntialiasClicked(bool on);
+  void onMatteDilateValueChanged(bool isDragging);
 };
 
 #endif

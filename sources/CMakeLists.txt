@@ -42,6 +42,7 @@ layeroptionpanel.h
 shapetreewindow.h
 shapeinterpolationpopup.h
 rendershapeimagedialog.h
+matteinfodialog.h
 )
 
 set(HEADERS
@@ -168,6 +169,7 @@ layeroptionpanel.cpp
 shapetreewindow.cpp
 shapeinterpolationpopup.cpp
 rendershapeimagedialog.cpp
+matteinfodialog.cpp
 )
 
 set(SOURCES

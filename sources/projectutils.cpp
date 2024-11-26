@@ -16,6 +16,9 @@
 #include "iwtimelineselection.h"
 #include "iwselectionhandle.h"
 #include "shapeinterpolationpopup.h"
+#include "matteinfodialog.h"
+#include "menubarcommand.h"
+#include "menubarcommandids.h"
 
 #include "iwundomanager.h"
 #include "iwtrianglecache.h"
@@ -590,6 +593,10 @@ void ProjectUtils::openInterpolationPopup(ShapePair* shape, QPoint pos) {
   popup->setShape(shape);
   popup->move(pos);
   popup->show();
+}
+
+void ProjectUtils::openMaskInfoPopup() {
+  CommandManager::instance()->execute(MI_MatteInfo);
 }
 
 //=========================================

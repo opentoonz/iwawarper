@@ -269,6 +269,15 @@ void IwProject::setMultiFrames(int frame, bool on) {
 //---------------------------------------------------
 // ƒŒƒCƒ„ŠÖŒW
 //---------------------------------------------------
+IwLayer* IwProject::getLayerByName(const QString& name) {
+  for (int lay = 0; lay < getLayerCount(); lay++) {
+    IwLayer* layer = getLayer(lay);
+    if (!layer) continue;
+    if (layer->getName() == name) return layer;
+  }
+  return nullptr;
+}
+
 IwLayer* IwProject::appendLayer() {
   IwLayer* newLayer = new IwLayer();
   m_layers.append(newLayer);

@@ -55,6 +55,8 @@ class ShapeTreeDelegate : public QStyledItemDelegate {
     HoverOnPinButton_SelectedShapes,
     HoverOnVisibleButton,
     HoverOnVisibleButton_SelectedShapes,
+    HoverOnMatteButton,
+    HoverOnMatteButton_SelectedShapes,
     HoverOnNone
   } m_hoverOn;
 

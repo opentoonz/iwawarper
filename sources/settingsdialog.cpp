@@ -36,6 +36,7 @@ SettingsDialog::SettingsDialog()
   m_resampleModeCombo   = new QComboBox(this);
   m_imageShrinkSlider   = new MyIntSlider(1, 4, this);
   m_antialiasCheckBox   = new QCheckBox(tr("Shape Antialias"), this);
+  m_matteDilateSlider   = new MyIntSlider(0, 3, this);
 
   //-- プロパティの設定
   m_bezierPrecisionCombo->addItem(tr("Low"), Preferences::LOW);
@@ -75,6 +76,9 @@ SettingsDialog::SettingsDialog()
     mainLay->addSpacing(3);
     mainLay->addWidget(new QLabel(tr("Image Shrink:")), 0);
     mainLay->addWidget(m_imageShrinkSlider, 0);
+    mainLay->addSpacing(3);
+    mainLay->addWidget(new QLabel(tr("Matte Dilate:")), 0);
+    mainLay->addWidget(m_matteDilateSlider, 0);
     mainLay->addStretch(1);
   }
   setLayout(mainLay);
@@ -94,6 +98,8 @@ SettingsDialog::SettingsDialog()
           SLOT(onImageShrinkChanged(bool)));
   connect(m_antialiasCheckBox, SIGNAL(clicked(bool)), this,
           SLOT(onAntialiasClicked(bool)));
+  connect(m_matteDilateSlider, SIGNAL(valueChanged(bool)), this,
+          SLOT(onMatteDilateValueChanged(bool)));
 }
 
 //------------------------------------
@@ -139,6 +145,7 @@ void SettingsDialog::onProjectSwitched() {
         m_resampleModeCombo->findData((int)settings->getResampleMode()));
     m_imageShrinkSlider->setValue(settings->getImageShrink());
     m_antialiasCheckBox->setChecked(settings->getAntialias());
+    m_matteDilateSlider->setValue(settings->getMatteDilate());
   }
   update();
 }
@@ -239,6 +246,21 @@ void SettingsDialog::onAntialiasClicked(bool on) {
   if (on == settings->getAntialias()) return;
 
   settings->setAntialias(on);
+  IwApp::instance()->getCurrentProject()->notifyProjectChanged();
+}
+
+void SettingsDialog::onMatteDilateValueChanged(bool isDragging) {
+  if (isDragging) return;
+  // 現在のプロジェクトのOutputSettingsを取得
+  IwProject* project = IwApp::instance()->getCurrentProject()->getProject();
+  if (!project) return;
+  RenderSettings* settings = project->getRenderSettings();
+  if (!settings) return;
+
+  int val = m_matteDilateSlider->value();
+  if (val == settings->getMatteDilate()) return;
+
+  settings->setMatteDilate(val);
   IwApp::instance()->getCurrentProject()->notifyProjectChanged();
 }
 
