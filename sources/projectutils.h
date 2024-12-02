@@ -84,6 +84,7 @@ void setPreviewRange(int from, int to);
 void toggleOnionSkinFrame(int frame);
 
 void openInterpolationPopup(ShapePair* shape, QPoint pos);
+void openMaskInfoPopup();
 }  // namespace ProjectUtils
 
 //=========================================

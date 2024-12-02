@@ -47,7 +47,7 @@ class MainWindow : public QMainWindow {
   // 表示モード
   QComboBox *m_viewModeCombo;
   // 表示チェックボックス
-  QCheckBox *m_fromShow, *m_toShow, *m_meshShow;
+  QCheckBox *m_fromShow, *m_toShow, *m_meshShow, *m_matteApply;
   // ワークエリアのサイズ
   QLineEdit *m_workAreaWidthEdit, *m_workAreaHeightEdit;
 
@@ -124,6 +124,8 @@ protected slots:
   void onToShowClicked(bool);
   // メッシュの表示
   void onMeshShowClicked(bool);
+  // マットを適用表示
+  void onMatteApplyClicked(bool);
 
   // ワークエリアサイズの値が編集されたとき、プロジェクトの内容を更新する
   void onWorkAreaSizeEdited();

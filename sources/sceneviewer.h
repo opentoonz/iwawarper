@@ -65,9 +65,16 @@ class SceneViewer : public QOpenGLWidget, protected QOpenGLFunctions {
   QOpenGLBuffer *m_line_vbo            = nullptr;
   QOpenGLVertexArrayObject *m_line_vao = nullptr;
 
-  GLint u_tex_matrix  = 0;
-  GLint u_tex_texture = 0;
-  GLint u_tex_alpha   = 0;
+  GLint u_tex_matrix         = 0;
+  GLint u_tex_texture        = 0;
+  GLint u_tex_alpha          = 0;
+  GLint u_tex_matte_sw       = 0;
+  GLint u_tex_matteImgSize   = 0;
+  GLint u_tex_workAreaSize   = 0;
+  GLint u_tex_matteTexture   = 0;
+  GLint u_tex_matteColors    = 0;
+  GLint u_tex_matteTolerance = 0;
+  GLint u_tex_matteDilate    = 0;
 
   GLint u_meshLine_matrix = 0;
   GLint u_meshLine_color  = 0;

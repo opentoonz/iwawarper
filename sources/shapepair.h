@@ -68,6 +68,16 @@ class ShapePair : public QObject {
   QMutex mutex_;
 
 public:
+  struct MatteInfo {
+    QString layerName    = QString();              // レイヤ名
+    QList<QColor> colors = {QColor(Qt::magenta)};  // マスク色
+    int tolerance        = 0;                      // 色の許容誤差
+  };
+
+private:
+  MatteInfo m_matteInfo;
+
+public:
   ShapePair(int frame, bool isClosed, BezierPointList bPointList,
             CorrPointList cPointList, double dstShapeOffset = 0.0);
 
@@ -280,6 +290,11 @@ public:
 
   bool isVisible() { return m_isVisible; }
   void setVisible(bool on) { m_isVisible = on; }
+
+  MatteInfo matteInfo() const { return m_matteInfo; }
+  void setMatteLayerName(const QString name) { m_matteInfo.layerName = name; }
+  void setMatteColors(QList<QColor>& colors) { m_matteInfo.colors = colors; }
+  void setMatteTolerance(int val) { m_matteInfo.tolerance = val; }
 
   // セーブ/ロード
   void saveData(QXmlStreamWriter& writer);

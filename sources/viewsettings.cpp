@@ -13,6 +13,7 @@ ViewSettings::ViewSettings()
     , m_imageMode(ImageMode_Edit)
     , m_zoomStep(0)
     , m_showMesh(false)
+    , m_applyMatte(false)
     , m_fromToVisible({true, true})
     , m_onionRange(0) {}
 

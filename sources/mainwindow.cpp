@@ -136,13 +136,15 @@ QWidget *MainWindow::createMenuBarWidget() {
   menuBar->addMenu(renderMenu);
 
   // その他のパーツ
-  m_viewModeCombo     = new QComboBox(this);
-  QFrame *fromIconFrm = new QFrame(this);
-  m_fromShow          = new QCheckBox(tr("Show From"), this);
-  QFrame *toIconFrm   = new QFrame(this);
-  m_toShow            = new QCheckBox(tr("Show To"), this);
-  QFrame *meshIconFrm = new QFrame(this);
-  m_meshShow          = new QCheckBox(tr("Show Mesh"), this);
+  m_viewModeCombo      = new QComboBox(this);
+  QFrame *fromIconFrm  = new QFrame(this);
+  m_fromShow           = new QCheckBox(tr("Show From"), this);
+  QFrame *toIconFrm    = new QFrame(this);
+  m_toShow             = new QCheckBox(tr("Show To"), this);
+  QFrame *meshIconFrm  = new QFrame(this);
+  m_meshShow           = new QCheckBox(tr("Show Mesh"), this);
+  QFrame *matteIconFrm = new QFrame(this);
+  m_matteApply         = new QCheckBox(tr("Apply Matte"), this);
 
   // ワークエリアのサイズ
   m_workAreaWidthEdit  = new QLineEdit(this);
@@ -151,12 +153,15 @@ QWidget *MainWindow::createMenuBarWidget() {
   fromIconFrm->setFrameStyle(QFrame::StyledPanel);
   toIconFrm->setFrameStyle(QFrame::StyledPanel);
   meshIconFrm->setFrameStyle(QFrame::StyledPanel);
+  matteIconFrm->setFrameStyle(QFrame::StyledPanel);
   fromIconFrm->setFixedSize(8, 17);
   toIconFrm->setFixedSize(8, 17);
   meshIconFrm->setFixedSize(8, 17);
+  matteIconFrm->setFixedSize(8, 17);
   fromIconFrm->setStyleSheet(QString("background:rgba(255,0,0,255);"));
   toIconFrm->setStyleSheet(QString("background:rgba(0,0,255,255);"));
   meshIconFrm->setStyleSheet(QString("background:rgba(128,255,0,255);"));
+  matteIconFrm->setStyleSheet(QString("background:rgba(255,0,255,255);"));
 
   QStringList items;
   items << "Edit"
@@ -190,6 +195,7 @@ QWidget *MainWindow::createMenuBarWidget() {
     m_fromShow->setChecked(prj->getViewSettings()->isFromToVisible(0));
     m_toShow->setChecked(prj->getViewSettings()->isFromToVisible(1));
     m_meshShow->setChecked(prj->getViewSettings()->isMeshVisible());
+    m_matteApply->setChecked(prj->getViewSettings()->isMatteApplied());
     QSize workAreaSize = prj->getWorkAreaSize();
     m_workAreaWidthEdit->setText(QString::number(workAreaSize.width()));
     m_workAreaHeightEdit->setText(QString::number(workAreaSize.height()));
@@ -212,6 +218,9 @@ QWidget *MainWindow::createMenuBarWidget() {
     lay->addSpacing(10);
     lay->addWidget(meshIconFrm, 0);
     lay->addWidget(m_meshShow, 0);
+    lay->addSpacing(10);
+    lay->addWidget(matteIconFrm, 0);
+    lay->addWidget(m_matteApply, 0);
     lay->addSpacing(20);
     lay->addWidget(new Separator(this), 0);
     lay->addWidget(new QLabel(tr("Work Area:")), 0);
@@ -257,6 +266,9 @@ QWidget *MainWindow::createMenuBarWidget() {
   // メッシュの表示
   ret = ret && connect(m_meshShow, SIGNAL(clicked(bool)), this,
                        SLOT(onMeshShowClicked(bool)));
+  // マットを適用表示
+  ret = ret && connect(m_matteApply, SIGNAL(clicked(bool)), this,
+                       SLOT(onMatteApplyClicked(bool)));
 
   // ワークエリアサイズの値が編集されたとき、プロジェクトの内容を更新する
   ret = ret && connect(m_workAreaWidthEdit, SIGNAL(editingFinished()), this,
@@ -808,6 +820,15 @@ void MainWindow::onMeshShowClicked(bool checked) {
   IwProject *prj = IwApp::instance()->getCurrentProject()->getProject();
   if (!prj) return;
   prj->getViewSettings()->setMeshVisible(checked);
+
+  IwApp::instance()->getCurrentProject()->notifyViewSettingsChanged();
+}
+
+//----------------------------------------------
+void MainWindow::onMatteApplyClicked(bool checked) {
+  IwProject *prj = IwApp::instance()->getCurrentProject()->getProject();
+  if (!prj) return;
+  prj->getViewSettings()->setMatteApplied(checked);
 
   IwApp::instance()->getCurrentProject()->notifyViewSettingsChanged();
 }

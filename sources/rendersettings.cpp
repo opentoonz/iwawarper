@@ -25,7 +25,8 @@ RenderSettings::RenderSettings()
     , m_resampleMode(AreaAverage)
     , m_faceSizeThreshold(25.0)
     , m_imageShrink(1)
-    , m_antialias(true) {}
+    , m_antialias(true)
+    , m_matteDilate(0) {}
 
 //---------------------------------------------------
 
@@ -49,6 +50,7 @@ void RenderSettings::saveData(QXmlStreamWriter& writer) {
   writer.writeTextElement("resampleMode", QString::number((int)m_resampleMode));
   writer.writeTextElement("imageShrink", QString::number((int)m_imageShrink));
   writer.writeTextElement("antialias", (m_antialias) ? "1" : "0");
+  writer.writeTextElement("matteDilate", QString::number(m_matteDilate));
   writer.writeEndElement();
 }
 
@@ -69,6 +71,8 @@ void RenderSettings::loadData(QXmlStreamReader& reader) {
           m_imageShrink = (AlphaMode)(reader.readElementText().toInt());
         else if (reader.name() == "antialias")
           m_antialias = (reader.readElementText().toInt() != 0);
+        else if (reader.name() == "matteDilate")
+          m_matteDilate = reader.readElementText().toInt();
         else
           reader.skipCurrentElement();
       }

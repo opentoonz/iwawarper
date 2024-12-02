@@ -27,6 +27,8 @@ class RenderSettings {
 
   bool m_antialias;
 
+  int m_matteDilate;
+
 public:
   RenderSettings();
 
@@ -47,6 +49,9 @@ public:
 
   bool getAntialias() const { return m_antialias; }
   void setAntialias(const bool on) { m_antialias = on; }
+
+  int getMatteDilate() const { return m_matteDilate; }
+  void setMatteDilate(const int dilate) { m_matteDilate = dilate; }
 
   // ï€ë∂/ÉçÅ[Éh
   void saveData(QXmlStreamWriter& writer);

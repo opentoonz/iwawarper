@@ -1541,6 +1541,10 @@ void ShapePair::drawTimeLineHead(QPainter& p, int& vpos, int width,
     // 補間コントロールをハイライト
     if (mouseHPos > rowRect.right() - 20) {
       p.drawRect(rowRect.right() - 20, rowRect.center().y() - 8, 18, 18);
+    }
+    // マスクをハイライト
+    else if (m_isParent && mouseHPos > rowRect.right() - 40) {
+      p.drawRect(rowRect.right() - 40, rowRect.center().y() - 8, 18, 18);
     } else if (mouseHPos >= rowRect.left() + 23 &&
                mouseHPos < rowRect.left() + 43) {
       p.drawRect(rowRect.left() + 23, rowRect.center().y() - 8, 18, 18);
@@ -1559,6 +1563,13 @@ void ShapePair::drawTimeLineHead(QPainter& p, int& vpos, int width,
 
   p.setPen((isSelected) ? Qt::yellow : Qt::white);
   p.drawText(rowRect.adjusted(45, 0, -20, 0), Qt::AlignVCenter, m_name);
+
+  if (m_isParent) {
+    p.drawPixmap(rowRect.right() - 40, rowRect.center().y() - 8, 18, 18,
+                 (m_matteInfo.layerName.isEmpty())
+                     ? QPixmap(":Resources/mask_off.svg")
+                     : QPixmap(":Resources/mask_on.svg"));
+  }
 
   p.drawPixmap(
       rowRect.right() - 20, rowRect.center().y() - 8, 18, 18,
@@ -2029,6 +2040,11 @@ bool ShapePair::onLeftClick(int row, int mouseHPos, QMouseEvent* e) {
     if (mouseHPos >= 180) {
       ProjectUtils::openInterpolationPopup(this, e->globalPos());
       return false;
+    } else if (mouseHPos >= 160) {
+      IwShapePairSelection::instance()->selectOneShape(OneShape(this, 0));
+      IwShapePairSelection::instance()->addShape(OneShape(this, 1));
+      ProjectUtils::openMaskInfoPopup();
+      return false;
     } else if (mouseHPos >= indent + childIndent + 23 &&
                mouseHPos < indent + childIndent + 43) {
       ProjectUtils::switchShapeVisibility(this);
@@ -2188,6 +2204,24 @@ void ShapePair::saveData(QXmlStreamWriter& writer) {
   // シェイプのキー間の補間の度合い
   writer.writeTextElement("AnimationSmoothness",
                           QString::number(m_animationSmoothness));
+
+  // マット情報
+  if (m_isParent) {
+    writer.writeStartElement("MatteInfo");
+    writer.writeTextElement("layerName", m_matteInfo.layerName);
+
+    writer.writeStartElement("MatteColors");
+    {
+      for (auto color : m_matteInfo.colors) {
+        writer.writeTextElement("color", color.name());
+      }
+    }
+    writer.writeEndElement();
+
+    writer.writeTextElement("tolerance",
+                            QString::number(m_matteInfo.tolerance));
+    writer.writeEndElement();
+  }
 }
 
 //--------------------------------------------------------
@@ -2256,6 +2290,28 @@ void ShapePair::loadData(QXmlStreamReader& reader) {
       m_isVisible = (reader.readElementText() == "True") ? true : false;
     else if (reader.name() == "AnimationSmoothness")
       m_animationSmoothness = reader.readElementText().toDouble();
+
+    // マット情報
+    else if (reader.name() == "MatteInfo") {
+      while (reader.readNextStartElement()) {
+        if (reader.name() == "layerName")
+          m_matteInfo.layerName = reader.readElementText();
+        else if (reader.name() == "MatteColors") {
+          m_matteInfo.colors.clear();
+          while (reader.readNextStartElement()) {
+            if (reader.name() == "color") {
+              QColor color;
+              color.setNamedColor(reader.readElementText());
+              m_matteInfo.colors.append(color);
+            } else
+              reader.skipCurrentElement();
+          }
+        } else if (reader.name() == "tolerance")
+          m_matteInfo.tolerance = reader.readElementText().toInt();
+        else
+          reader.skipCurrentElement();
+      }
+    }
 
     else
       reader.skipCurrentElement();

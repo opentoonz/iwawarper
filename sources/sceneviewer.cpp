@@ -121,6 +121,10 @@ void my_gluPickMatrix(QMatrix4x4& mat, GLdouble x, GLdouble y, GLdouble deltax,
   mat.scale(viewport[2] / deltax, viewport[3] / deltay, 1.0);
 }
 
+inline QVector4D colorToVector(QColor col) {
+  return QVector4D(col.redF(), col.greenF(), col.blueF(), col.alphaF());
+}
+
 };  // namespace
 
 Qt::KeyboardModifiers SceneViewer::m_modifiers = Qt::NoModifier;
@@ -212,6 +216,14 @@ void SceneViewer::initializeGL() {
   u_tex_matrix  = m_program_texture->uniformLocation("matrix");
   u_tex_texture = m_program_texture->uniformLocation("texture");
   u_tex_alpha   = m_program_texture->uniformLocation("alpha");
+  // マット関係
+  u_tex_matte_sw       = m_program_texture->uniformLocation("matte_sw");
+  u_tex_matteImgSize   = m_program_texture->uniformLocation("matteImgSize");
+  u_tex_workAreaSize   = m_program_texture->uniformLocation("workAreaSize");
+  u_tex_matteTexture   = m_program_texture->uniformLocation("matteTexture");
+  u_tex_matteColors    = m_program_texture->uniformLocation("matteColors");
+  u_tex_matteTolerance = m_program_texture->uniformLocation("matteTolerance");
+  u_tex_matteDilate    = m_program_texture->uniformLocation("matteDilate");
 
   // 頂点バッファオブジェクト
   if (m_vbo) {
@@ -556,6 +568,7 @@ void SceneViewer::drawImage() {
           (m_project->getLayer(lay)->isVisibleInViewer() == 1) ? 0.5 : 1.0;
       GLfloat chan = modeVal * visibleVal;
       m_program_texture->setUniformValue(u_tex_alpha, chan);
+      m_program_texture->setUniformValue(u_tex_matte_sw, false);
 
       MeshVertex verts[4] = {
           MeshVertex(QVector3D(-texCornerPos.x(), -texCornerPos.y(), 0.),
@@ -604,11 +617,14 @@ void SceneViewer::drawGLPreview() {
   QSize workAreaSize = m_project->getWorkAreaSize();
   QPointF texCornerPos((double)workAreaSize.width() / 2.0,
                        (double)workAreaSize.height() / 2.0);
+  ResampleMode resampleMode = m_project->getRenderSettings()->getResampleMode();
 
   m_modelMatrix.top().translate(-texCornerPos.x(), -texCornerPos.y(), 0.);
 
   m_program_texture->bind();
   m_program_texture->setUniformValue(u_tex_texture, 0);
+  m_program_texture->setUniformValue(u_tex_matteTexture, 1);
+  m_program_texture->setUniformValue(u_tex_workAreaSize, workAreaSize);
 
   m_vao->bind();
   m_vbo->bind();
@@ -636,9 +652,11 @@ void SceneViewer::drawGLPreview() {
 
     m_program_texture->setUniformValue(u_tex_alpha, chan);
 
-    layerImage.texture->bind();
+    layerImage.texture->bind(0);
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    if (resampleMode == AreaAverage)
+      layerImage.texture->setMagnificationFilter(QOpenGLTexture::Linear);
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     // シェイプが無い場合、「参照用」シェイプと判断して描画する
     if (layer->getShapePairCount(true) == 0) {
@@ -665,6 +683,7 @@ void SceneViewer::drawGLPreview() {
       // glTranslated(texCornerPos.x(), texCornerPos.y(), 0);
       m_program_texture->setUniformValue(
           u_tex_matrix, m_viewProjMatrix * m_modelMatrix.top());
+      m_program_texture->setUniformValue(u_tex_matte_sw, false);
 
       MeshVertex verts[4] = {
           MeshVertex(QVector3D(-layerCornerPos.x(), -layerCornerPos.y(), 0.),
@@ -700,6 +719,44 @@ void SceneViewer::drawGLPreview() {
         m_program_texture->setUniformValue(
             u_tex_matrix, m_viewProjMatrix * m_modelMatrix.top());
 
+        //---- マット情報
+        m_program_texture->setUniformValue(u_tex_matte_sw, false);
+        ShapePair::MatteInfo matteInfo = shape->matteInfo();
+        QOpenGLTexture* matteTexture   = nullptr;
+        if (settings->isMatteApplied() && !matteInfo.layerName.isEmpty()) {
+          IwLayer* matteLayer = m_project->getLayerByName(matteInfo.layerName);
+          if (matteLayer) {
+            QString mattePath = matteLayer->getImageFilePath(frame);
+            if (!mattePath.isEmpty()) {
+              ViewSettings::LAYERIMAGE matteLayerImage =
+                  getLayerImage(mattePath, 0, 0);
+              if (!matteLayerImage.size.isEmpty()) {
+                matteLayerImage.texture->bind(1);
+                matteTexture = matteLayerImage.texture;
+                m_program_texture->setUniformValue(u_tex_matte_sw, true);
+                m_program_texture->setUniformValue(u_tex_matteImgSize,
+                                                   matteLayerImage.size);
+                QVector4D colorVec[10];
+                for (int i = 0; i < 10; i++) {
+                  if (i < matteInfo.colors.size())
+                    colorVec[i] = colorToVector(matteInfo.colors[i]);
+                  else
+                    colorVec[i] = colorToVector(QColor(Qt::transparent));
+                }
+                m_program_texture->setUniformValueArray(u_tex_matteColors,
+                                                        colorVec, 10);
+                m_program_texture->setUniformValue(
+                    u_tex_matteTolerance,
+                    (GLfloat)(matteInfo.tolerance) / 255.f);
+                m_program_texture->setUniformValue(
+                    u_tex_matteDilate,
+                    m_project->getRenderSettings()->getMatteDilate());
+              }
+            }
+          }
+        }
+        //----
+
         int vertCount  = IwTriangleCache::instance()->vertexCount(frame, shape);
         int pointCount = IwTriangleCache::instance()->pointCount(frame, shape);
 
@@ -718,6 +775,8 @@ void SceneViewer::drawGLPreview() {
         m_ibo->unmap();
 
         glDrawElements(GL_TRIANGLES, vertCount, GL_UNSIGNED_INT, (void*)0);
+
+        if (matteTexture) matteTexture->release(1);
 
         // メッシュを表示
         if (settings->isMeshVisible()) {
@@ -738,9 +797,11 @@ void SceneViewer::drawGLPreview() {
       }
     }
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    if (resampleMode == AreaAverage)
+      layerImage.texture->setMagnificationFilter(QOpenGLTexture::Nearest);
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-    layerImage.texture->release();
+    layerImage.texture->release(0);
   }
   m_vao->release();
   m_vbo->release();

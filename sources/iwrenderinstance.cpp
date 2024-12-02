@@ -322,9 +322,14 @@ TRaster64P IwRenderInstance::warpLayer(IwLayer* layer,
   // demultiplyする
   if (checkIsPremultiplied(inRas)) TRop::depremultiply(inRas);
 
+  // ここで、Matteに指定したレイヤがある場合、マット画像を作成する
+  // shapes.last()がこのグループの親シェイプ
+  TRasterGR8P matteRas = createMatteRas(shapes.last());
+
   // ゆがんだ形状を描画する
-  TRaster64P outRas = HEmapTrianglesToRaster_Multi(
-      model, inRas, shapes.last(), origin, QPolygonF(parentShapeVerticesTo));
+  TRaster64P outRas =
+      HEmapTrianglesToRaster_Multi(model, inRas, matteRas, shapes.last(),
+                                   origin, QPolygonF(parentShapeVerticesTo));
 
   return outRas;
 }
@@ -334,11 +339,11 @@ TRaster64P IwRenderInstance::warpLayer(IwLayer* layer,
 //---------------------------------------------------
 // 素材ラスタを得る
 //---------------------------------------------------
-TRasterP IwRenderInstance::getLayerRaster(IwLayer* layer) {
+TRasterP IwRenderInstance::getLayerRaster(IwLayer* layer, bool convertTo16bpc) {
   TImageP img = layer->getImage(m_frame);
   if (!img.getPointer()) return 0;
 
-  TRaster64P ras;
+  TRasterP ras;
   TRasterImageP ri = (TRasterImageP)img;
   TToonzImageP ti  = (TToonzImageP)img;
   // 形式が合わなければ 0 を返す
@@ -348,7 +353,7 @@ TRasterP IwRenderInstance::getLayerRaster(IwLayer* layer) {
     TRasterP tmpRas = ri->getRaster();
     // pixelSize = 4 なら 8bpc、8 なら 16bpc
     // 8bitなら16bitに変換
-    if (tmpRas->getPixelSize() == 4) {
+    if (tmpRas->getPixelSize() == 4 && convertTo16bpc) {
       ras = TRaster64P(tmpRas->getWrap(), tmpRas->getLy());
       TRop::convert(ras, tmpRas);
     } else
@@ -358,8 +363,11 @@ TRasterP IwRenderInstance::getLayerRaster(IwLayer* layer) {
     rascm           = ti->getRaster();
     TRasterP tmpRas = TRaster32P(rascm->getWrap(), rascm->getLy());
     TRop::convert(tmpRas, rascm, ti->getPalette());
-    ras = TRaster64P(tmpRas->getWrap(), tmpRas->getLy());
-    TRop::convert(ras, tmpRas);
+    if (convertTo16bpc) {
+      ras = TRaster64P(tmpRas->getWrap(), tmpRas->getLy());
+      TRop::convert(ras, tmpRas);
+    } else
+      ras = tmpRas;
   }
   return ras;
 }
@@ -665,8 +673,14 @@ void MapTrianglesToRaster_Worker::run() {
     yminIndex = std::max(0, yminIndex);
     ymaxIndex = std::min(m_outRas->getLy() / m_subAmount - 1, ymaxIndex);
 
+    bool hasMatte = !!m_matteRas;
+
     // 各スキャンラインについてループ
     for (int y = yminIndex; y <= ymaxIndex; y++) {
+      // マット処理
+      TPixelGR8* mattePix;
+      if (hasMatte) mattePix = m_matteRas->pixels(y);
+
       // Y方向の分割についてループ
       for (int suby = 0; suby < m_subAmount; suby++) {
         // 現在の分割Y座標
@@ -738,6 +752,9 @@ void MapTrianglesToRaster_Worker::run() {
 
         int subIndex = row * m_outRas->getLx() + xminIndex * m_subAmount;
 
+        TPixelGR8* tmpMattePix;
+        if (hasMatte) tmpMattePix = mattePix + xminIndex;
+
         // スキャンラインを横にたどる
         for (int x = xminIndex; x <= xmaxIndex; x++) {
           double tmpXPos = (double)x;
@@ -750,6 +767,10 @@ void MapTrianglesToRaster_Worker::run() {
             if (uv.x() < 0 || uv.x() >= m_srcRas->getLx() || uv.y() < 0 ||
                 uv.y() >= m_srcRas->getLy())
               continue;
+
+            // マスクを抜く
+            if (hasMatte && *tmpMattePix == 0) continue;
+
             // もし、既にアルファ値が１なら、描かない
             if (outpix->m != TPixel64::maxChannelValue && tmpXPos >= xmin &&
                 tmpXPos < xmax && m_subPointOccupation[subIndex] == false) {
@@ -771,6 +792,8 @@ void MapTrianglesToRaster_Worker::run() {
               m_subPointOccupation[subIndex] = true;
             }
           }
+
+          if (hasMatte) tmpMattePix++;
         }
       }
     }
@@ -849,8 +872,8 @@ void ResampleResults_Worker::run() {
 // 　三角形のラスタライズを行う
 //---------------------------------------------------
 TRaster64P IwRenderInstance::HEmapTrianglesToRaster_Multi(
-    HEModel& model, TRaster64P srcRas, ShapePair* shape, QPoint& origin,
-    const QPolygonF& parentShapePolygon) {
+    HEModel& model, TRaster64P srcRas, TRasterGR8P matteRas, ShapePair* shape,
+    QPoint& origin, const QPolygonF& parentShapePolygon) {
   QSize workAreaSize = m_project->getWorkAreaSize();
   // 計算範囲
   QRectF shapeBBox = shape->getBBox(
@@ -931,8 +954,8 @@ TRaster64P IwRenderInstance::HEmapTrianglesToRaster_Multi(
 
       MapTrianglesToRaster_Worker* task = new MapTrianglesToRaster_Worker(
           tmpStart, tmpEnd, &model, this, sampleOffset, outputOffset, outRasT,
-          srcRas, subPointOccupation, subAmount, alphaMode, resampleMode,
-          shapeAlphaImg);
+          srcRas, matteRas, subPointOccupation, subAmount, alphaMode,
+          resampleMode, shapeAlphaImg);
 
       QThreadPool::globalInstance()->start(task);
 
@@ -979,6 +1002,124 @@ TRaster64P IwRenderInstance::HEmapTrianglesToRaster_Multi(
   // 結果を返す
   return retRas;
 }
+
+//---------------------------------------------------
+// マット画像を作成する
+//---------------------------------------------------
+TRasterGR8P IwRenderInstance::createMatteRas(ShapePair* shape) {
+  ShapePair::MatteInfo matteInfo = shape->matteInfo();
+  if (matteInfo.layerName.isEmpty()) return TRasterGR8P();
+  if (matteInfo.colors.isEmpty()) return TRasterGR8P();
+
+  IwLayer* matteLayer = m_project->getLayerByName(matteInfo.layerName);
+  if (!matteLayer) return TRasterGR8P();
+
+  TRaster32P ras = (TRaster32P)getLayerRaster(matteLayer, false);
+  if (!ras) return TRasterGR8P();  // とりあえず 8bpcのマット画像にのみ対応
+
+  // 計算範囲
+  QSize workAreaSize = m_project->getWorkAreaSize();
+  QRectF shapeBBox   = shape->getBBox(
+      m_frame, 1);  // TO のバウンディングボックス（IwaWarper座標系）
+  shapeBBox = QRectF(shapeBBox.left() * (double)workAreaSize.width(),
+                     shapeBBox.top() * (double)workAreaSize.height(),
+                     shapeBBox.width() * (double)workAreaSize.width(),
+                     shapeBBox.height() * (double)workAreaSize.height());
+
+  QRect boundingRect = shapeBBox.toRect()
+                           .marginsAdded(QMargins(5, 5, 5, 5))
+                           .intersected(QRect(QPoint(), workAreaSize));
+
+  // 画面外にTo形状がはみ出しているとき
+  if (boundingRect.isEmpty()) return TRasterGR8P();
+
+  // サンプル点のためのオフセット
+  QPointF sampleOffset(0.5f * (double)(ras->getLx() - workAreaSize.width()) +
+                           boundingRect.left(),
+                       0.5f * (double)(ras->getLy() - workAreaSize.height()) +
+                           boundingRect.top());
+
+  TRasterGR8P matteRas =
+      TRasterGR8P(boundingRect.width(), boundingRect.height());
+  matteRas->clear();
+
+  // 既にチェック済みのピクセル値
+  QList<TPixel32> inPixList, outPixList;
+
+  // matteRasのスキャンラインごとに
+  for (int y = 0; y < matteRas->getLy(); y++) {
+    TPixelGR8* mattePix = matteRas->pixels(y);
+
+    int orgY         = y + (int)std::round(sampleOffset.y());
+    TPixel32* orgPix = ras->pixels(orgY);
+    orgPix += (int)std::round(sampleOffset.x());
+
+    for (int x = 0; x < matteRas->getLx(); x++, mattePix++, orgPix++) {
+      if (inPixList.contains(*orgPix))
+        *mattePix = 1;
+      else if (inPixList.contains(*orgPix))
+        *mattePix = 0;
+      else {  // 判定処理を行う
+        bool found = false;
+        for (auto matteCol : matteInfo.colors) {
+          if (std::abs(matteCol.red() - orgPix->r) <= matteInfo.tolerance &&
+              std::abs(matteCol.green() - orgPix->g) <= matteInfo.tolerance &&
+              std::abs(matteCol.blue() - orgPix->b) <= matteInfo.tolerance) {
+            found = true;
+            break;
+          }
+        }
+        if (found) {
+          *mattePix = 1;
+          inPixList.append(*orgPix);
+        } else {
+          *mattePix = 0;
+          outPixList.append(*orgPix);
+        }
+      }
+    }
+  }
+
+  // マスクを太らせる処理
+  int dilate = m_project->getRenderSettings()->getMatteDilate();
+  for (int d = 1; d <= dilate; d++) {
+    for (int y = 0; y < matteRas->getLy(); y++) {
+      TPixelGR8* mattePix_up   = matteRas->pixels((y == 0) ? 0 : y - 1);
+      TPixelGR8* mattePix      = matteRas->pixels(y);
+      TPixelGR8* mattePix_down = matteRas->pixels(
+          (y == matteRas->getLy() - 1) ? matteRas->getLy() - 1 : y + 1);
+
+      for (int x = 0; x < matteRas->getLx();
+           x++, mattePix++, mattePix_up++, mattePix_down++) {
+        // matte の値が0のものだけ処理をする
+        if (*mattePix != 0) continue;
+
+        // 近傍にdがあったら、d+1を入れる
+        if (x > 0) {
+          if (*(mattePix_up - 1) == d || *(mattePix - 1) == d ||
+              *(mattePix_down - 1) == d) {
+            *mattePix = d + 1;
+            continue;
+          }
+        }
+        if (*(mattePix_up) == d || *(mattePix_down) == d) {
+          *mattePix = d + 1;
+          continue;
+        }
+        if (x < matteRas->getLx() - 1) {
+          if (*(mattePix_up + 1) == d || *(mattePix + 1) == d ||
+              *(mattePix_down + 1) == d) {
+            *mattePix = d + 1;
+            continue;
+          }
+        }
+      }
+    }
+  }
+
+  return matteRas;
+}
+
 //---------------------------------------------------
 // ファイルに書き出す
 //---------------------------------------------------
