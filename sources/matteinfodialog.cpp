@@ -23,8 +23,6 @@
 #include <QFileDialog>
 #include <QSettings>
 
-// —ˆT‚Í‚±‚±‚ÌUI‚ÌŽÀ‘•‚©‚çII
-
 MatteInfoDialog::MatteInfoDialog()
     : IwDialog(IwApp::instance()->getMainWindow(), "MaskInfoDialog", false) {
   setSizeGripEnabled(false);
@@ -50,11 +48,6 @@ MatteInfoDialog::MatteInfoDialog()
   m_removeColorBtn->setFocusPolicy(Qt::NoFocus);
   m_savePresetBtn->setFocusPolicy(Qt::NoFocus);
   m_loadPresetBtn->setFocusPolicy(Qt::NoFocus);
-
-  // m_addColorBtn->setFixedSize(20, 20);
-  // m_removeColorBtn->setFixedSize(20, 20);
-  // m_savePresetBtn->setFixedSize(20, 20);
-  // m_loadPresetBtn->setFixedSize(20, 20);
 
   QGridLayout* mainLay = new QGridLayout();
   mainLay->setHorizontalSpacing(5);
@@ -148,42 +141,6 @@ public:
                 .arg(color.blue()));
   }
 };
-
-/*
-void MatteInfoDialog::setShape(ShapePair* shape) {
-  m_shape = shape;
-
-  IwProject* project = IwApp::instance()->getCurrentProject()->getProject();
-  if (!project) return;
-
-  ShapePair::MatteInfo matteInfo = shape->matteInfo();
-
-  m_layerCombo->clear();
-  m_layerCombo->addItem(tr("-- No Alpha Matting --"), QString());
-  for (int lay = 0; lay < project->getLayerCount(); lay++) {
-    IwLayer* layer = project->getLayer(lay);
-    QString name   = layer->getName();
-    m_layerCombo->addItem(name, name);
-  }
-  int index = m_layerCombo->findData(matteInfo.layerName);
-  m_layerCombo->setCurrentIndex((index == -1) ? 0 : index);
-
-  m_colorListWidget->clear();
-  for (auto color : matteInfo.colors) {
-    m_colorListWidget->addItem(new ColorItem(color));
-  }
-
-  m_toleranceEdit->setText(QString::number(matteInfo.tolerance));
-
-  bool on = !matteInfo.layerName.isEmpty();
-  m_colorListWidget->setEnabled(on);
-  m_toleranceEdit->setEnabled(on);
-  m_addColorBtn->setEnabled(on);
-  m_removeColorBtn->setEnabled(on);
-  m_savePresetBtn->setEnabled(on);
-  m_loadPresetBtn->setEnabled(on);
-}
-*/
 
 void MatteInfoDialog::onLayerComboActivated() {
   QString newLayerName = m_layerCombo->currentData().toString();

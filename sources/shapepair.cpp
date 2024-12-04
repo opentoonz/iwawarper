@@ -405,7 +405,8 @@ ShapePair::ShapePair(ShapePair* src)
     , m_shapeTag({src->getShapeTags(0), src->getShapeTags(1)})
     , m_isParent(src->isParent())
     , m_isVisible(src->isVisible())
-    , m_animationSmoothness(src->getAnimationSmoothness()) {
+    , m_animationSmoothness(src->getAnimationSmoothness())
+    , m_matteInfo(src->matteInfo()) {
   for (int i = 0; i < 2; i++) {
     m_formKeys[i].setData(src->getFormData(i));
     m_formKeys[i].setInterpolation(src->getFormInterpolation(i));
