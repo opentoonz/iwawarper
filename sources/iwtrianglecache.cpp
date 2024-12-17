@@ -96,7 +96,8 @@ bool IwTriangleCache::isFrameValid(int frame) {
   IwProject* prj = IwApp::instance()->getCurrentProject()->getProject();
   if (!prj) return false;
 
-  int targetShapeTag = prj->getOutputSettings()->getShapeTagId();
+  int targetShapeTag =
+      prj->getRenderQueue()->currentOutputSettings()->getShapeTagId();
 
   // ŠeƒŒƒCƒ„‚É‚Â‚¢‚Ä
   for (int i = 0; i < prj->getLayerCount(); i++) {

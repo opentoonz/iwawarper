@@ -460,12 +460,12 @@ Remove its shapes?</source>
 <context>
     <name>IwRenderCommand</name>
     <message>
-        <location filename="../iwrendercommand.cpp" line="102"/>
+        <location filename="../iwrendercommand.cpp" line="122"/>
         <source>Do you want to create folder?</source>
         <translation>フォルダを作成しますか？</translation>
     </message>
     <message>
-        <location filename="../iwrendercommand.cpp" line="112"/>
+        <location filename="../iwrendercommand.cpp" line="132"/>
         <source>Failed to create folder.</source>
         <translation>フォルダの作成に失敗しました。</translation>
     </message>
@@ -895,81 +895,81 @@ Remove its shapes?</source>
 <context>
     <name>MatteInfoDialog</name>
     <message>
-        <location filename="../matteinfodialog.cpp" line="32"/>
+        <location filename="../matteinfodialog.cpp" line="29"/>
         <source>Alpha Matte Settings</source>
         <translation>アルファマット設定</translation>
     </message>
     <message>
-        <location filename="../matteinfodialog.cpp" line="42"/>
+        <location filename="../matteinfodialog.cpp" line="39"/>
         <source>Add Color</source>
         <translation>マット色を追加</translation>
     </message>
     <message>
-        <location filename="../matteinfodialog.cpp" line="44"/>
+        <location filename="../matteinfodialog.cpp" line="41"/>
         <source>Remove Color</source>
         <translation>マット色を削除</translation>
     </message>
     <message>
-        <location filename="../matteinfodialog.cpp" line="46"/>
-        <location filename="../matteinfodialog.cpp" line="302"/>
+        <location filename="../matteinfodialog.cpp" line="43"/>
+        <location filename="../matteinfodialog.cpp" line="249"/>
         <source>Save Preset</source>
         <translation>プリセットを保存</translation>
     </message>
     <message>
-        <location filename="../matteinfodialog.cpp" line="49"/>
-        <location filename="../matteinfodialog.cpp" line="329"/>
+        <location filename="../matteinfodialog.cpp" line="45"/>
+        <location filename="../matteinfodialog.cpp" line="275"/>
         <source>Load Preset</source>
         <translation>プリセットを読み込み</translation>
     </message>
     <message>
-        <location filename="../matteinfodialog.cpp" line="67"/>
+        <location filename="../matteinfodialog.cpp" line="57"/>
         <source>Matte Layer:</source>
         <translation>マットに用いるレイヤー：</translation>
     </message>
     <message>
-        <location filename="../matteinfodialog.cpp" line="71"/>
+        <location filename="../matteinfodialog.cpp" line="61"/>
         <source>Matte Colors:</source>
         <translation>マット色：</translation>
     </message>
     <message>
-        <location filename="../matteinfodialog.cpp" line="94"/>
+        <location filename="../matteinfodialog.cpp" line="84"/>
         <source>Tolerance:</source>
         <translation>許容値：</translation>
     </message>
     <message>
-        <location filename="../matteinfodialog.cpp" line="226"/>
-        <location filename="../matteinfodialog.cpp" line="255"/>
-        <location filename="../matteinfodialog.cpp" line="272"/>
-        <location filename="../matteinfodialog.cpp" line="286"/>
-        <location filename="../matteinfodialog.cpp" line="452"/>
-        <location filename="../matteinfodialog.cpp" line="462"/>
+        <location filename="../matteinfodialog.cpp" line="177"/>
+        <location filename="../matteinfodialog.cpp" line="204"/>
+        <location filename="../matteinfodialog.cpp" line="220"/>
+        <location filename="../matteinfodialog.cpp" line="233"/>
+        <location filename="../matteinfodialog.cpp" line="396"/>
+        <location filename="../matteinfodialog.cpp" line="405"/>
         <source>-- Various Values --</source>
         <translation>-- 複数の値 --</translation>
     </message>
     <message>
-        <location filename="../matteinfodialog.cpp" line="228"/>
-        <location filename="../matteinfodialog.cpp" line="242"/>
+        <location filename="../matteinfodialog.cpp" line="179"/>
+        <location filename="../matteinfodialog.cpp" line="192"/>
         <source>Please select the matte color.</source>
         <translation>マット色を選択してください。</translation>
     </message>
     <message>
-        <location filename="../matteinfodialog.cpp" line="303"/>
-        <location filename="../matteinfodialog.cpp" line="330"/>
+        <location filename="../matteinfodialog.cpp" line="249"/>
+        <location filename="../matteinfodialog.cpp" line="276"/>
         <source>Matte Color File (*.matcol)</source>
         <translation>マット色設定ファイル (*.matcol)</translation>
     </message>
     <message>
-        <location filename="../matteinfodialog.cpp" line="378"/>
+        <location filename="../matteinfodialog.cpp" line="323"/>
         <source>-- No Alpha Matting --</source>
         <translation>-- アルファマットを行わない --</translation>
     </message>
     <message>
-        <location filename="../matteinfodialog.cpp" line="428"/>
+        <location filename="../matteinfodialog.cpp" line="373"/>
         <source>No Parent Shapes Selected</source>
         <translation>シェイプが選択されていません</translation>
     </message>
     <message>
-        <location filename="../matteinfodialog.cpp" line="445"/>
+        <location filename="../matteinfodialog.cpp" line="389"/>
         <source>-- Various Layers --</source>
         <translation>-- 複数のレイヤー --</translation>
     </message>
@@ -977,116 +977,166 @@ Remove its shapes?</source>
 <context>
     <name>OutputSettingsDialog</name>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="47"/>
+        <location filename="../outputsettingsdialog.cpp" line="59"/>
         <source>Parameters...</source>
         <translation>形式オプション ...</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="50"/>
+        <location filename="../outputsettingsdialog.cpp" line="62"/>
         <source>Output folder...</source>
         <translation>保存先 ...</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="52"/>
+        <location filename="../outputsettingsdialog.cpp" line="64"/>
         <source>File Name Control</source>
         <translation>出力ファイル名</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="59"/>
         <source>Use project name</source>
-        <translation>プロジェクト名を用いる</translation>
+        <translation type="vanished">プロジェクト名を用いる</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="60"/>
         <source>Add frame number</source>
-        <translation>フレーム番号を追加する</translation>
+        <translation type="vanished">フレーム番号を追加する</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="61"/>
         <source>Add extension:</source>
-        <translation>拡張子を追加する：</translation>
+        <translation type="vanished">拡張子を追加する：</translation>
     </message>
     <message>
         <source>OK</source>
         <translation type="vanished">OK</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="37"/>
+        <location filename="../outputsettingsdialog.cpp" line="48"/>
         <source>Output Settings</source>
         <translation>出力設定</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="66"/>
+        <location filename="../outputsettingsdialog.cpp" line="78"/>
+        <source>Add Task</source>
+        <translation>タスクを追加</translation>
+    </message>
+    <message>
+        <location filename="../outputsettingsdialog.cpp" line="79"/>
+        <source>Remove Task</source>
+        <translation>タスクを削除</translation>
+    </message>
+    <message>
+        <location filename="../outputsettingsdialog.cpp" line="80"/>
         <source>Render</source>
         <translation>レンダリング</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="107"/>
+        <location filename="../outputsettingsdialog.cpp" line="128"/>
+        <source># Macro Instruction
+
+[dir] : Path specified in the &quot;Output folder&quot; field.
+[base] : Project name.
+[num] : Frame number.
+[ext] : Extension.
+[mattename] : Matte layer name. (*)
+[mattenum] : Frame number in the filename of the image used for the matte layer. (*)
+
+* N.B. If the shapes to be rendered has multiple matte layers, the first one found will be used.</source>
+        <translation># ファイル名テンプレートには、以下のマクロを使用することができます。
+
+[dir] :「保存先」フィールドで指定したパス
+[base] : プロジェクト名
+[num] : フレーム番号
+[ext] : 拡張子
+[mattename] : マットに用いるレイヤー名 ※
+[mattenum] : マットレイヤーの画像のファイル名に含まれるフレーム番号 ※
+
+※ 注： レンダリング対象のシェイプが複数のマットレイヤーを使用している場合、最初に見つかったものが使われます。</translation>
+    </message>
+    <message>
+        <location filename="../outputsettingsdialog.cpp" line="153"/>
         <source>Start:</source>
         <translation>開始：</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="109"/>
+        <location filename="../outputsettingsdialog.cpp" line="155"/>
         <source>End:</source>
         <translation>終了：</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="111"/>
+        <location filename="../outputsettingsdialog.cpp" line="157"/>
         <source>Step:</source>
         <translation>ステップ：</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="118"/>
+        <location filename="../outputsettingsdialog.cpp" line="164"/>
         <source>Target Shape Tag:</source>
         <translation>対象とするシェイプタグ：</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="130"/>
+        <location filename="../outputsettingsdialog.cpp" line="176"/>
         <source>Format:</source>
         <translation>ファイル形式：</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="158"/>
+        <location filename="../outputsettingsdialog.cpp" line="199"/>
         <source>Initial frame number:</source>
         <translation>開始フレーム番号：</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="169"/>
+        <location filename="../outputsettingsdialog.cpp" line="203"/>
         <source>Increment:</source>
         <translation>フレーム番号増分：</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="182"/>
+        <location filename="../outputsettingsdialog.cpp" line="207"/>
         <source>Number of digits:</source>
         <translation>フレーム番号桁数：</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="191"/>
+        <location filename="../outputsettingsdialog.cpp" line="213"/>
         <source>File name template:</source>
         <translation>ファイル名のテンプレート：</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="200"/>
+        <location filename="../outputsettingsdialog.cpp" line="224"/>
         <source>Example file name:</source>
         <translation>例：</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="482"/>
+        <location filename="../outputsettingsdialog.cpp" line="234"/>
+        <source>Render Queue</source>
+        <translation>レンダーキュー</translation>
+    </message>
+    <message>
+        <location filename="../outputsettingsdialog.cpp" line="354"/>
+        <source>Frame %1 - %2 | %3</source>
+        <translation>フレーム %1 - %2 | %3</translation>
+    </message>
+    <message>
+        <location filename="../outputsettingsdialog.cpp" line="407"/>
+        <source>NO MATTE LAYER FOUND!</source>
+        <translation>マットレイヤーが見つかりません！</translation>
+    </message>
+    <message>
+        <location filename="../outputsettingsdialog.cpp" line="410"/>
+        <source>NO NUMBER FOUND IN THE MATTE FILE NAME!</source>
+        <translation>マットレイヤーの画像ファイル名に番号が含まれていません！</translation>
+    </message>
+    <message>
+        <location filename="../outputsettingsdialog.cpp" line="562"/>
         <source>Do you want to create folder?</source>
         <translation>フォルダを作成しますか？</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="492"/>
+        <location filename="../outputsettingsdialog.cpp" line="572"/>
         <source>Failed to create folder.</source>
         <translation>フォルダの作成に失敗しました。</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="523"/>
+        <location filename="../outputsettingsdialog.cpp" line="603"/>
         <source>Choose Folder.</source>
         <translation>フォルダを選択してください。</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="606"/>
+        <location filename="../outputsettingsdialog.cpp" line="671"/>
         <source>None</source>
         <translation>指定なし</translation>
     </message>
@@ -1142,24 +1192,25 @@ Remove its shapes?</source>
         <translation>円形</translation>
     </message>
     <message>
-        <location filename="../sceneviewer.cpp" line="1903"/>
-        <location filename="../iwrendercommand.cpp" line="94"/>
+        <location filename="../sceneviewer.cpp" line="1904"/>
+        <location filename="../iwrendercommand.cpp" line="96"/>
+        <location filename="../iwrendercommand.cpp" line="114"/>
         <source>Output Settings Error</source>
         <translation>出力設定エラー</translation>
     </message>
     <message>
-        <location filename="../sceneviewer.cpp" line="1904"/>
-        <location filename="../iwrendercommand.cpp" line="95"/>
+        <location filename="../sceneviewer.cpp" line="1905"/>
+        <location filename="../iwrendercommand.cpp" line="115"/>
         <source>Output directory is not set.</source>
         <translation>保存先が設定されていません。</translation>
     </message>
     <message>
-        <location filename="../sceneviewer.cpp" line="1911"/>
+        <location filename="../sceneviewer.cpp" line="1912"/>
         <source>Do you want to create folder?</source>
         <translation>フォルダを作成しますか？</translation>
     </message>
     <message>
-        <location filename="../sceneviewer.cpp" line="1921"/>
+        <location filename="../sceneviewer.cpp" line="1922"/>
         <source>Failed to create folder.</source>
         <translation>フォルダの作成に失敗しました。</translation>
     </message>
@@ -1235,28 +1286,37 @@ What would you like to do?</source>
         <source>Cut Timeline Frames</source>
         <translation>タイムラインフレームの切り取り</translation>
     </message>
+    <message>
+        <location filename="../iwrendercommand.cpp" line="97"/>
+        <source>There is no active items in the Render Queue.</source>
+        <translation>レンダーキューにアクティブなアイテムがありません。</translation>
+    </message>
 </context>
 <context>
     <name>RenderProgressPopup</name>
     <message>
-        <location filename="../renderprogresspopup.cpp" line="23"/>
+        <location filename="../renderprogresspopup.cpp" line="24"/>
         <source>Start rendering...</source>
         <translation>レンダリングを開始します...</translation>
     </message>
     <message>
-        <location filename="../renderprogresspopup.cpp" line="26"/>
+        <location filename="../renderprogresspopup.cpp" line="28"/>
         <source>Cancel</source>
         <translation>キャンセル</translation>
     </message>
     <message>
-        <location filename="../renderprogresspopup.cpp" line="62"/>
+        <location filename="../renderprogresspopup.cpp" line="85"/>
         <source>Aborting...</source>
         <translation>中止しています...</translation>
     </message>
     <message>
-        <location filename="../renderprogresspopup.cpp" line="72"/>
+        <location filename="../renderprogresspopup.cpp" line="97"/>
+        <source>Rendered %1 of %2 frames in %3 of %4 queue items.</source>
+        <translation>%4個中%3個目のタスク | %2フレーム中%1フレーム完了。</translation>
+    </message>
+    <message>
         <source>Rendered %1 of %2 frames</source>
-        <translation>%2フレーム中%1フレーム完了</translation>
+        <translation type="vanished">%2フレーム中%1フレーム完了</translation>
     </message>
 </context>
 <context>
@@ -1476,12 +1536,12 @@ What would you like to do?</source>
 <context>
     <name>SceneViewer</name>
     <message>
-        <location filename="../sceneviewer.cpp" line="1342"/>
+        <location filename="../sceneviewer.cpp" line="1343"/>
         <source>Change Current Layer</source>
         <translation>現在のレイヤーを切り替え</translation>
     </message>
     <message>
-        <location filename="../sceneviewer.cpp" line="1364"/>
+        <location filename="../sceneviewer.cpp" line="1365"/>
         <source>Unlock All Shapes</source>
         <translation>全てのシェイプのロックを解除</translation>
     </message>
@@ -1612,22 +1672,22 @@ What would you like to do?</source>
         <translation>シェイプ</translation>
     </message>
     <message>
-        <location filename="../shapepair.cpp" line="1606"/>
+        <location filename="../shapepair.cpp" line="1607"/>
         <source>Form</source>
         <translation>形状</translation>
     </message>
     <message>
-        <location filename="../shapepair.cpp" line="1606"/>
+        <location filename="../shapepair.cpp" line="1607"/>
         <source>Corr</source>
         <translation>対応点</translation>
     </message>
     <message>
-        <location filename="../shapepair.cpp" line="1608"/>
+        <location filename="../shapepair.cpp" line="1609"/>
         <source>From </source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../shapepair.cpp" line="1608"/>
+        <location filename="../shapepair.cpp" line="1609"/>
         <source>To </source>
         <translation></translation>
     </message>
@@ -1635,37 +1695,37 @@ What would you like to do?</source>
 <context>
     <name>ShapeTagEditDialog</name>
     <message>
-        <location filename="../shapetreewindow.cpp" line="1283"/>
+        <location filename="../shapetreewindow.cpp" line="1286"/>
         <source>Edit Tags</source>
         <translation>シェイプタグの編集</translation>
     </message>
     <message>
-        <location filename="../shapetreewindow.cpp" line="1288"/>
+        <location filename="../shapetreewindow.cpp" line="1291"/>
         <source>Remove</source>
         <translation>このタグを消去</translation>
     </message>
     <message>
-        <location filename="../shapetreewindow.cpp" line="1289"/>
+        <location filename="../shapetreewindow.cpp" line="1292"/>
         <source>Add</source>
         <translation>新規タグ</translation>
     </message>
     <message>
-        <location filename="../shapetreewindow.cpp" line="1316"/>
+        <location filename="../shapetreewindow.cpp" line="1319"/>
         <source>Name :</source>
         <translation>名前：</translation>
     </message>
     <message>
-        <location filename="../shapetreewindow.cpp" line="1320"/>
+        <location filename="../shapetreewindow.cpp" line="1323"/>
         <source>Color :</source>
         <translation>アイコンの色：</translation>
     </message>
     <message>
-        <location filename="../shapetreewindow.cpp" line="1324"/>
+        <location filename="../shapetreewindow.cpp" line="1327"/>
         <source>Shape :</source>
         <translation>アイコンの形：</translation>
     </message>
     <message>
-        <location filename="../shapetreewindow.cpp" line="1502"/>
+        <location filename="../shapetreewindow.cpp" line="1505"/>
         <source>New tag</source>
         <translation>新規タグ</translation>
     </message>
@@ -1673,17 +1733,17 @@ What would you like to do?</source>
 <context>
     <name>ShapeTree</name>
     <message>
-        <location filename="../shapetreewindow.cpp" line="582"/>
+        <location filename="../shapetreewindow.cpp" line="585"/>
         <source>Shapes</source>
         <translation>シェイプ</translation>
     </message>
     <message>
-        <location filename="../shapetreewindow.cpp" line="582"/>
+        <location filename="../shapetreewindow.cpp" line="585"/>
         <source>From</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../shapetreewindow.cpp" line="582"/>
+        <location filename="../shapetreewindow.cpp" line="585"/>
         <source>To</source>
         <translation></translation>
     </message>
@@ -1691,17 +1751,17 @@ What would you like to do?</source>
 <context>
     <name>ShapeTreeWindow</name>
     <message>
-        <location filename="../shapetreewindow.cpp" line="1189"/>
+        <location filename="../shapetreewindow.cpp" line="1192"/>
         <source>Shape Tree</source>
         <translation>シェイプツリー</translation>
     </message>
     <message>
-        <location filename="../shapetreewindow.cpp" line="1193"/>
+        <location filename="../shapetreewindow.cpp" line="1196"/>
         <source>Select By Tag</source>
         <translation>タグからシェイプを選択</translation>
     </message>
     <message>
-        <location filename="../shapetreewindow.cpp" line="1194"/>
+        <location filename="../shapetreewindow.cpp" line="1197"/>
         <source>Edit Tags</source>
         <translation>タグの編集</translation>
     </message>

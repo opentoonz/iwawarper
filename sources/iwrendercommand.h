@@ -10,19 +10,24 @@
 #include <QList>
 class IwProject;
 class RenderProgressPopup;
+class OutputSettings;
 //---------------------------------------------------
 
 class RenderInvoke_Worker : public QThread {
   Q_OBJECT
-  QList<int>& m_frames;
+  QList<int> m_frames;
   IwProject* m_project;
-  RenderProgressPopup* m_popup;
+  RenderProgressPopup* m_popup = nullptr;
+  OutputSettings* m_settings;
   void run() override;
 
 public:
-  RenderInvoke_Worker(QList<int>& frames, IwProject* project,
-                      RenderProgressPopup* popup)
-      : m_frames(frames), m_project(project), m_popup(popup) {}
+  RenderInvoke_Worker(QList<int> frames, IwProject* project,
+                      OutputSettings* settings, RenderProgressPopup* popup)
+      : m_frames(frames)
+      , m_project(project)
+      , m_popup(popup)
+      , m_settings(settings) {}
 
 signals:
   void frameFinished();

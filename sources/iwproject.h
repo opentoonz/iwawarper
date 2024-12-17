@@ -18,7 +18,7 @@ class Preferences;
 class QXmlStreamWriter;
 class QXmlStreamReader;
 class RenderSettings;
-class OutputSettings;
+class RenderQueue;
 class ShapeTagSettings;
 
 class IwLayer;
@@ -43,7 +43,8 @@ class IwProject {
   RenderSettings* m_renderSettings;
 
   // 出力設定
-  OutputSettings* m_outputSettings;
+  RenderQueue* m_renderQueue;
+  // OutputSettings* m_outputSettings;
 
   // MultiFrameモードがONのときに編集されるフレームはtrue
   // プロジェクトファイルには保存されない
@@ -109,13 +110,15 @@ public:
   RenderSettings* getRenderSettings() { return m_renderSettings; }
 
   // 出力設定
-  OutputSettings* getOutputSettings() { return m_outputSettings; }
+  // OutputSettings* getOutputSettings() { return m_outputSettings; }
+  RenderQueue* getRenderQueue() { return m_renderQueue; }
 
   // パスからプロジェクト名を抜き出して返す
   QString getProjectName();
 
   // frameに対する保存パスを返す
-  QString getOutputPath(int frame, QString formatStr = QString());
+  QString getOutputPath(int frame, QString formatStr = QString(),
+                        int queueId = -1);
 
   //-------------
   // MultiFrame関係

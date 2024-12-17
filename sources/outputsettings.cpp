@@ -7,28 +7,31 @@
 
 #include "tiio.h"
 #include "mypropertygroup.h"
+#include "iwapp.h"
+#include "iwprojecthandle.h"
+#include "iwproject.h"
+#include "iwlayer.h"
+#include "shapepair.h"
 
 #include <iostream>
 
 #include <QStringList>
 #include <QXmlStreamWriter>
 #include <QXmlStreamReader>
+#include <QList>
+#include <QRegExp>
 
 OutputSettings::OutputSettings()
     : m_saver(Saver_PNG)
     , m_directory("")
-    , m_extension("png")
     , m_format("[dir]/[base]_iwp.[num].[ext]")
     , m_initialFrameNumber(1)
     , m_increment(1)
     , m_numberOfDigits(4)
-    , m_useSource(true)
-    , m_addNumber(true)
-    , m_replaceExt(true)
     , m_shapeTagId(-1)
     , m_shapeImageFileName("shape")
     , m_shapeImageSizeId(-1)  // work area size
-{
+    , m_renderState(On) {
   m_saveRange.startFrame = 0;
   m_saveRange.endFrame   = -1;  // endが-1（初期値の場合は、シーン長に合わせる）
   m_saveRange.stepFrame  = 1;
@@ -37,6 +40,26 @@ OutputSettings::OutputSettings()
   // TEnumProperty* bitPerPixelProp =
   // (TEnumProperty*)(getFileFormatProperties(Saver_TIFF)->getProperty("Bits Per
   // Pixel")); bitPerPixelProp->setValue(L"64(RGBM)");
+}
+
+OutputSettings::OutputSettings(const OutputSettings &os)
+    : m_saver(os.m_saver)
+    , m_directory(os.m_directory)
+    , m_format(os.m_format)
+    , m_initialFrameNumber(os.m_initialFrameNumber)
+    , m_increment(os.m_increment)
+    , m_numberOfDigits(os.m_numberOfDigits)
+    , m_saveRange(os.m_saveRange)
+    , m_shapeTagId(os.m_shapeTagId)
+    , m_shapeImageFileName(os.m_shapeImageFileName)
+    , m_shapeImageSizeId(os.m_shapeImageSizeId)
+    , m_renderState(On) {
+  // m_formatPropertiesはクローンする
+  for (auto key : os.m_formatProperties.keys()) {
+    MyPropertyGroup *pg      = os.m_formatProperties.value(key);
+    MyPropertyGroup *clonePg = new MyPropertyGroup(pg->getProp()->clone());
+    m_formatProperties.insert(key, clonePg);
+  }
 }
 
 //---------------------------------------------------
@@ -59,10 +82,38 @@ QString OutputSettings::getPath(int frame, QString projectName,
   } else
     projectNameCore = projectName;
 
-  str = str.replace("[ext]", m_extension)
+  str = str.replace("[ext]", OutputSettings::getStandardExtension(m_saver))
             .replace("[num]", numStr)
             .replace("[base]", projectNameCore)
             .replace("[dir]", m_directory);
+
+  if (str.contains("[mattename]") || str.contains("[mattenum]")) {
+    if (m_tmp_matteLayerNames.isEmpty()) {
+      str = str.replace("[mattename]", "nomatte").replace("[mattenum]", numStr);
+    } else {
+      // とりあえずリスト1つめのレイヤーを必ず使う
+      QString matteNumStr    = "----";
+      QString matteLayerName = m_tmp_matteLayerNames[0];
+      IwProject *project = IwApp::instance()->getCurrentProject()->getProject();
+      assert(project != nullptr);
+      IwLayer *matteLayer = project->getLayerByName(matteLayerName);
+      assert(matteLayer != nullptr);
+      QString fileName = matteLayer->getImageFileName(frame);
+      if (!fileName.isEmpty()) {
+        // [何かレベル名] [ピリオドまたはアンダーバー]
+        // [any桁数の数字][5文字までの接尾辞] [ピリオド] [3～4文字の拡張子]
+        //                                             ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
+        //                                             ここをキャプチャする
+        QRegExp rx("^.+[._]([0-9]+\\S{,5})\\..{3,4}$");
+        if (rx.indexIn(fileName, 0) != -1) {
+          matteNumStr = rx.cap(1);
+        }
+      }
+
+      str = str.replace("[mattename]", matteLayerName)
+                .replace("[mattenum]", matteNumStr);
+    }
+  }
 
   return str;
 }
@@ -110,6 +161,43 @@ void OutputSettings::setNumberFormat(QString str) {
             << "  m_increment:" << m_increment << std::endl;
 }
 
+// 現在の出力設定でレンダリング対象となるシェイプが用いている
+// アルファマットレイヤーのレイヤー名一覧を一時的に保持する。レンダリング開始時に再取得する
+void OutputSettings::obtainMatteLayerNames() {
+  IwProject *project = IwApp::instance()->getCurrentProject()->getProject();
+  if (!project) return;
+
+  if (!m_format.contains("[mattename]") && m_format.contains("[mattenum]"))
+    return;
+
+  m_tmp_matteLayerNames.clear();
+
+  // 下から、各レイヤについて
+  for (int lay = project->getLayerCount() - 1; lay >= 0; lay--) {
+    IwLayer *layer = project->getLayer(lay);
+    if (!layer) continue;
+    // レイヤにシェイプが無ければスキップ
+    if (layer->getShapePairCount() == 0) continue;
+    // レイヤがレンダリング非表示ならスキップ
+    if (!layer->isVisibleInRender()) continue;
+    // シェイプを下から回収していく
+    for (int s = layer->getShapePairCount() - 1; s >= 0; s--) {
+      ShapePair *shape = layer->getShapePair(s);
+      if (!shape) continue;
+      // 子シェイプのとき、次のシェイプへ
+      if (!shape->isParent()) continue;
+      // 親シェイプがターゲットになっていない場合、次へ
+      if (!shape->isRenderTarget(m_shapeTagId)) continue;
+      // アルファマットが付いているか
+      QString matteLayerName = shape->matteInfo().layerName;
+      if (matteLayerName.isEmpty()) continue;
+
+      if (!m_tmp_matteLayerNames.contains(matteLayerName))
+        m_tmp_matteLayerNames.append(matteLayerName);
+    }
+  }
+}
+
 //---------------------------------------------------
 // プロパティを得る
 //---------------------------------------------------
@@ -140,12 +228,8 @@ void OutputSettings::saveData(QXmlStreamWriter &writer) {
 
   writer.writeTextElement("saver", m_saver);
   writer.writeTextElement("directory", m_directory);
-  writer.writeTextElement("extension", m_extension);
   writer.writeTextElement("format", m_format);
   writer.writeTextElement("number", getNumberFormatString());
-  writer.writeTextElement("useSource", (m_useSource) ? "True" : "False");
-  writer.writeTextElement("addNumber", (m_addNumber) ? "True" : "False");
-  writer.writeTextElement("replaceExt", (m_replaceExt) ? "True" : "False");
 
   if (!m_formatProperties.isEmpty()) {
     writer.writeStartElement("FormatsProperties");
@@ -167,6 +251,8 @@ void OutputSettings::saveData(QXmlStreamWriter &writer) {
   writer.writeTextElement("shapeImageFileName", m_shapeImageFileName);
   writer.writeTextElement("shapeImageSizeId",
                           QString::number(m_shapeImageSizeId));
+
+  writer.writeTextElement("renderState", QString::number((int)m_renderState));
 }
 
 //---------------------------------------------------
@@ -188,18 +274,19 @@ void OutputSettings::loadData(QXmlStreamReader &reader) {
       m_saver = reader.readElementText();
     else if (reader.name() == "directory")
       m_directory = reader.readElementText();
-    else if (reader.name() == "extension")
-      m_extension = reader.readElementText();
+    // else if (reader.name() == "extension")
+    //   m_extension = reader.readElementText();
     else if (reader.name() == "format")
       m_format = reader.readElementText();
     else if (reader.name() == "number")
       setNumberFormat(reader.readElementText());
-    else if (reader.name() == "useSource")
-      m_useSource = (reader.readElementText() == "True") ? true : false;
-    else if (reader.name() == "addNumber")
-      m_addNumber = (reader.readElementText() == "True") ? true : false;
-    else if (reader.name() == "replaceExt")
-      m_replaceExt = (reader.readElementText() == "True") ? true : false;
+    // obsoleted
+    // else if (reader.name() == "useSource")
+    //  m_useSource = (reader.readElementText() == "True") ? true : false;
+    // else if (reader.name() == "addNumber")
+    //  m_addNumber = (reader.readElementText() == "True") ? true : false;
+    // else if (reader.name() == "replaceExt")
+    //  m_replaceExt = (reader.readElementText() == "True") ? true : false;
 
     else if (reader.name() == "FormatsProperties") {
       while (reader.readNextStartElement()) {
@@ -218,7 +305,92 @@ void OutputSettings::loadData(QXmlStreamReader &reader) {
       m_shapeImageFileName = reader.readElementText();
     else if (reader.name() == "shapeImageSizeId")
       m_shapeImageSizeId = reader.readElementText().toInt();
+    else if (reader.name() == "renderState")
+      m_renderState = (RenderState)reader.readElementText().toInt();
     else
       reader.skipCurrentElement();
   }
+}
+
+//------------------------------
+
+RenderQueue::RenderQueue() {
+  m_outputs.append(new OutputSettings());
+  m_currentSettingsId = 0;
+}
+
+// 保存/ロード
+void RenderQueue::saveData(QXmlStreamWriter &writer) {
+  writer.writeStartElement("RenderQueueItems");
+  for (auto os : m_outputs) {
+    writer.writeStartElement("OutputOptions");
+    os->saveData(writer);
+    writer.writeEndElement();
+  }
+  writer.writeEndElement();
+
+  writer.writeTextElement("currentSettingsId",
+                          QString::number(m_currentSettingsId));
+}
+
+void RenderQueue::loadData(QXmlStreamReader &reader) {
+  while (reader.readNextStartElement()) {
+    if (reader.name() == "RenderQueueItems") {
+      m_outputs.clear();
+      while (reader.readNextStartElement()) {
+        if (reader.name() == "OutputOptions") {
+          OutputSettings *os = new OutputSettings();
+          os->loadData(reader);
+          m_outputs.append(os);
+        } else
+          reader.skipCurrentElement();
+      }
+    } else if (reader.name() == "currentSettingsId")
+      m_currentSettingsId = reader.readElementText().toInt();
+    else
+      reader.skipCurrentElement();
+  }
+}
+
+void RenderQueue::loadPrevVersionData(QXmlStreamReader &reader) {
+  m_outputs.clear();
+  OutputSettings *os = new OutputSettings();
+  os->loadData(reader);
+  m_outputs.append(os);
+  m_currentSettingsId = 0;
+}
+
+// frameに対する保存パスを返す
+QString RenderQueue::getPath(int frame, QString projectName, QString formatStr,
+                             int queueId) {
+  if (queueId == -1) queueId = m_currentSettingsId;
+  return m_outputs.at(queueId)->getPath(frame, projectName, formatStr);
+}
+
+// Onになっているアイテムを返す
+QList<OutputSettings *> RenderQueue::activeItems() {
+  QList<OutputSettings *> ret;
+  for (auto os : m_outputs) {
+    if (os->renderState() == OutputSettings::On) ret.append(os);
+  }
+  return ret;
+}
+
+// 現在のアイテムを返す
+OutputSettings *RenderQueue::currentOutputSettings() {
+  return m_outputs[m_currentSettingsId];
+}
+
+void RenderQueue::cloneCurrentItem() {
+  m_outputs.append(new OutputSettings(*currentOutputSettings()));
+
+  m_currentSettingsId = m_outputs.size() - 1;
+}
+
+void RenderQueue::removeCurrentItem() {
+  if (m_outputs.size() == 1) return;
+  OutputSettings *toBeDeleted = currentOutputSettings();
+  m_outputs.removeAt(m_currentSettingsId);
+
+  if (m_currentSettingsId == m_outputs.size()) m_currentSettingsId -= 1;
 }

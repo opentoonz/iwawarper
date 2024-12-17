@@ -7,14 +7,28 @@
 
 #include "iwdialog.h"
 
+#include <QListWidget>
+
 class QComboBox;
 class QLineEdit;
 class QCheckBox;
 class QLabel;
 class OutputSettings;
 
+class RenderQueueListWidget : public QListWidget {
+  Q_OBJECT
+public:
+  RenderQueueListWidget(QWidget* parent = nullptr) : QListWidget(parent) {}
+
+protected:
+  QItemSelectionModel::SelectionFlags selectionCommand(
+      const QModelIndex& index, const QEvent* event = nullptr) const override;
+};
+
 class OutputSettingsDialog : public IwDialog {
   Q_OBJECT
+
+  RenderQueueListWidget* m_itemList;
 
   QLineEdit* m_startFrameEdit;
   QLineEdit* m_endFrameEdit;
@@ -28,14 +42,13 @@ class OutputSettingsDialog : public IwDialog {
   QLineEdit* m_initialFrameNumberEdit;
   QLineEdit* m_incrementEdit;
   QLineEdit* m_numberOfDigitsEdit;
-  QLineEdit* m_extensionEdit;
 
-  QCheckBox* m_useSourceCB;
-  QCheckBox* m_addNumberCB;
-  QCheckBox* m_replaceExtCB;
+  QLabel* m_warningLabel;
 
   QLineEdit* m_formatEdit;
   QLabel* m_exampleLabel;
+
+  QPushButton* m_removeTaskBtn;
 
   OutputSettings* getCurrentSettings();
 
@@ -63,12 +76,14 @@ protected slots:
   void onInitialFrameNumberEditted();
   void onIncrementEditted();
   void onNumberOfDigitsEditted();
-  // チェックボックスは３つまとめて同じSLOTにする
-  void onCheckBoxClicked();
   void onFormatEditted();
 
   void updateShapeTagComboItems();
   void onShapeTagComboActivated();
+
+  void onTaskClicked(QListWidgetItem*);
+  void onAddTaskButtonClicked();
+  void onRemoveTaskButtonClicked();
 
   void onRenderButtonClicked();
 };

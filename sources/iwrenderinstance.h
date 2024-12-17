@@ -14,6 +14,7 @@
 #include <array>
 #include <QRunnable>
 #include <QImage>
+
 #include "trasterimage.h"
 #include "halfedge.h"
 #include "rendersettings.h"
@@ -22,6 +23,7 @@ class IwLayer;
 class ShapePair;
 class RenderProgressPopup;
 class IwRenderInstance;
+class OutputSettings;
 
 enum CorrVecId { CORRVEC_SRC = 0, CORRVEC_DST, CORRVEC_MIDDLE };
 enum WarpStyle { WARP_FIXED = 0, WARP_SLIDING };
@@ -119,6 +121,7 @@ class IwRenderInstance : public QObject, public QRunnable {
 
   int m_frame;
   IwProject* m_project;
+  OutputSettings* m_outputSettings;
   bool m_isPreview;
   RenderProgressPopup* m_popup;
   int m_precision;
@@ -176,8 +179,8 @@ class IwRenderInstance : public QObject, public QRunnable {
   //--------------------------------
 
 public:
-  IwRenderInstance(int frame, IwProject* project, bool isPreview,
-                   RenderProgressPopup* popup = nullptr);
+  IwRenderInstance(int frame, IwProject* project, OutputSettings* settings,
+                   bool isPreview, RenderProgressPopup* popup = nullptr);
   void doPreview();
   void doRender();
 
