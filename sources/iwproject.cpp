@@ -27,7 +27,7 @@ IwProject::IwProject()
     : m_settings(new ViewSettings())
     , m_workAreaSize(0, 0)
     , m_renderSettings(new RenderSettings())
-    , m_outputSettings(new OutputSettings())
+    , m_renderQueue(new RenderQueue())
     , m_shapeTagSettings(new ShapeTagSettings())
     , m_path("Untitled")
     , m_prevFrom(-1)
@@ -127,8 +127,8 @@ void IwProject::saveData(QXmlStreamWriter& writer) {
 
   // OutputOptions
   writer.writeComment("Output Settings");
-  writer.writeStartElement("OutputOptions");
-  m_outputSettings->saveData(writer);
+  writer.writeStartElement("RenderQueue");
+  m_renderQueue->saveData(writer);
   writer.writeEndElement();
 
   // ShapeTagSettings
@@ -193,9 +193,12 @@ void IwProject::loadData(QXmlStreamReader& reader) {
     else if (reader.name() == "MorphOptions")
       m_renderSettings->loadData(reader);
 
-    // OutputOptions
+    // OutputOptions : old version data
     else if (reader.name() == "OutputOptions")
-      m_outputSettings->loadData(reader);
+      m_renderQueue->loadPrevVersionData(reader);
+    // Render Queue
+    else if (reader.name() == "RenderQueue")
+      m_renderQueue->loadData(reader);
 
     // ShapeTag Settings
     else if (reader.name() == "ShapeTags")
@@ -228,8 +231,8 @@ QString IwProject::getProjectName() { return QFileInfo(m_path).baseName(); }
 //---------------------------------------------------
 // frame‚É‘Î‚·‚é•Û‘¶ƒpƒX‚ð•Ô‚·
 //---------------------------------------------------
-QString IwProject::getOutputPath(int frame, QString formatStr) {
-  return m_outputSettings->getPath(frame, getProjectName(), formatStr);
+QString IwProject::getOutputPath(int frame, QString formatStr, int queueId) {
+  return m_renderQueue->getPath(frame, getProjectName(), formatStr, queueId);
 }
 
 //---------------------------------------------------

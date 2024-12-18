@@ -15,6 +15,7 @@
 #define Saver_TGA "TGA"
 
 #include <QString>
+#include <QStringList>
 #include <QMap>
 
 class TPropertyGroup;
@@ -30,13 +31,13 @@ public:
     int stepFrame;
   };
 
+  enum RenderState { Off = 0, On, Done };
+
 private:
   // 保存形式
   QString m_saver;
   // 保存フォルダ
   QString m_directory;
-  // 拡張子
-  QString m_extension;
   // 保存パスのフォーマット
   QString m_format;
 
@@ -46,12 +47,6 @@ private:
   int m_increment;
   // Number of digits フレーム番号の桁数
   int m_numberOfDigits;
-  // Use project name [base]タグを使うかどうか。→クリック時のみ、m_formatを更新
-  bool m_useSource;
-  // Add frame number [num]タグを使うかどうか。→クリック時のみ、m_formatを更新
-  bool m_addNumber;
-  // Add Extension [ext]タグを使うかどうか。→クリック時のみ、m_formatを更新
-  bool m_replaceExt;
 
   // 保存フレーム範囲
   SaveRange m_saveRange;
@@ -66,17 +61,21 @@ private:
   QString m_shapeImageFileName;
   int m_shapeImageSizeId;
 
+  RenderState m_renderState;
+
+  // 現在の出力設定でレンダリング対象となるシェイプが用いている
+  // アルファマットレイヤーのレイヤー名一覧を一時的に保持する。レンダリング開始時に再取得する
+  QStringList m_tmp_matteLayerNames;
+
 public:
   OutputSettings();
+  OutputSettings(const OutputSettings &);
 
   QString getSaver() { return m_saver; }
   void setSaver(QString saver) { m_saver = saver; }
 
   QString getDirectory() { return m_directory; }
   void setDirectory(QString directory) { m_directory = directory; }
-
-  QString getExtension() { return m_extension; }
-  void setExtension(QString extension) { m_extension = extension; }
 
   QString getFormat() { return m_format; }
   void setFormat(QString format) { m_format = format; }
@@ -90,15 +89,6 @@ public:
   int getNumberOfDigits() { return m_numberOfDigits; }
   void setNumberOfDigits(int nod) { m_numberOfDigits = nod; }
 
-  bool isUseSource() { return m_useSource; }
-  void setIsUseSource(bool use) { m_useSource = use; }
-
-  bool isAddNumber() { return m_addNumber; }
-  void setIsAddNumber(bool add) { m_addNumber = add; }
-
-  bool isReplaceExt() { return m_replaceExt; }
-  void setIsReplaceExt(bool replace) { m_replaceExt = replace; }
-
   SaveRange getSaveRange() { return m_saveRange; }
   void setSaveRange(SaveRange saveRange) { m_saveRange = saveRange; }
 
@@ -109,6 +99,9 @@ public:
   void setShapeImageFileName(QString name) { m_shapeImageFileName = name; }
   int getShapeImageSizeId() { return m_shapeImageSizeId; }
   void setShapeImageSizeId(int id) { m_shapeImageSizeId = id; }
+
+  RenderState renderState() { return m_renderState; }
+  void setRenderState(RenderState state) { m_renderState = state; }
 
   // frameに対する保存パスを返す
   QString getPath(int frame, QString projectName,
@@ -126,9 +119,43 @@ public:
   // プロパティを得る
   TPropertyGroup *getFileFormatProperties(QString saver);
 
+  void obtainMatteLayerNames();
+
   // 保存/ロード
   void saveData(QXmlStreamWriter &writer);
   void loadData(QXmlStreamReader &reader);
+};
+
+class RenderQueue {
+  QList<OutputSettings *> m_outputs;
+  int m_currentSettingsId;
+
+public:
+  RenderQueue();
+
+  // 保存/ロード
+  void saveData(QXmlStreamWriter &writer);
+  void loadData(QXmlStreamReader &reader);
+  void loadPrevVersionData(QXmlStreamReader &reader);
+
+  // frameに対する保存パスを返す
+  QString getPath(int frame, QString projectName, QString formatStr = QString(),
+                  int queueId = -1);
+
+  // Onになっているアイテムを返す
+  QList<OutputSettings *> activeItems();
+  QList<OutputSettings *> allItems() { return m_outputs; }
+  // 現在のアイテムを返す
+  OutputSettings *currentOutputSettings();
+  OutputSettings *outputSettings(int index) {
+    assert(index >= 0 && index < m_outputs.size());
+    return m_outputs[index];
+  }
+
+  int currentSettingsId() { return m_currentSettingsId; }
+  void setCurrentSettingsId(int id) { m_currentSettingsId = id; }
+  void cloneCurrentItem();
+  void removeCurrentItem();
 };
 
 #endif

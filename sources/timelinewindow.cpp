@@ -740,7 +740,7 @@ TimeLineHead::TimeLineHead(QWidget* parent)
 void TimeLineHead::paintEvent(QPaintEvent* e) {
   IwProject* prj = IwApp::instance()->getCurrentProject()->getProject();
   if (!prj) return;
-  OutputSettings* settings = prj->getOutputSettings();
+  OutputSettings* settings = prj->getRenderQueue()->currentOutputSettings();
   if (!settings) return;
 
   QSet<int> onionFrames = prj->getOnionFrames();

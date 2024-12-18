@@ -629,7 +629,8 @@ void SceneViewer::drawGLPreview() {
   m_vao->bind();
   m_vbo->bind();
 
-  int targetShapeTag = m_project->getOutputSettings()->getShapeTagId();
+  int targetShapeTag =
+      m_project->getRenderQueue()->currentOutputSettings()->getShapeTagId();
 
   IwTriangleCache::instance()->lock();
   // レイヤを下から順に合成していく
@@ -1893,7 +1894,7 @@ void SceneViewer::doShapeRender() {
 
   // 計算範囲を求める
   // 何フレーム計算するか
-  OutputSettings* settings            = project->getOutputSettings();
+  OutputSettings* settings = project->getRenderQueue()->currentOutputSettings();
   OutputSettings::SaveRange saveRange = settings->getSaveRange();
   QString fileName                    = settings->getShapeImageFileName();
   int sizeId                          = settings->getShapeImageSizeId();

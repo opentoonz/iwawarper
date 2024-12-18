@@ -1740,7 +1740,8 @@ void ShapePair::drawTimeLine(QPainter& p, int& vpos, int /*width*/,
   int frameLength = prj->getProjectFrameLength();
 
   // ƒŒƒCƒ„‚ªƒŒƒ“ƒ_ƒŠƒ“ƒO‘ÎÛ‚©‚Ç‚¤‚©
-  int targetShapeTag = prj->getOutputSettings()->getShapeTagId();
+  int targetShapeTag =
+      prj->getRenderQueue()->currentOutputSettings()->getShapeTagId();
   bool showCacheState =
       m_isParent && layerIsVisibleInRender && isRenderTarget(targetShapeTag);
 

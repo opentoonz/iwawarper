@@ -119,7 +119,7 @@ OutputSettings* RenderShapeImageDialog::getCurrentSettings() {
   IwProject* project = IwApp::instance()->getCurrentProject()->getProject();
   if (!project) return 0;
 
-  return project->getOutputSettings();
+  return project->getRenderQueue()->currentOutputSettings();
 }
 //---------------------------------------------------
 
@@ -144,7 +144,7 @@ void RenderShapeImageDialog::updateGuis() {
   IwProject* project = IwApp::instance()->getCurrentProject()->getProject();
   if (!project) return;
 
-  OutputSettings* settings = project->getOutputSettings();
+  OutputSettings* settings = project->getRenderQueue()->currentOutputSettings();
   if (!settings) return;
 
   int initialFrame = settings->getInitialFrameNumber();
@@ -184,7 +184,7 @@ void RenderShapeImageDialog::onStartFrameEditted() {
   // 現在のプロジェクトのOutputSettingsを取得
   IwProject* project = IwApp::instance()->getCurrentProject()->getProject();
   if (!project) return;
-  OutputSettings* settings = project->getOutputSettings();
+  OutputSettings* settings = project->getRenderQueue()->currentOutputSettings();
   if (!settings) return;
 
   int initialFrame = settings->getInitialFrameNumber();
@@ -217,7 +217,7 @@ void RenderShapeImageDialog::onEndFrameEditted() {
   // 現在のプロジェクトのOutputSettingsを取得
   IwProject* project = IwApp::instance()->getCurrentProject()->getProject();
   if (!project) return;
-  OutputSettings* settings = project->getOutputSettings();
+  OutputSettings* settings = project->getRenderQueue()->currentOutputSettings();
   if (!settings) return;
 
   int initialFrame = settings->getInitialFrameNumber();
@@ -249,7 +249,7 @@ void RenderShapeImageDialog::onFileNameEditted() {
   // 現在のプロジェクトのOutputSettingsを取得
   IwProject* project = IwApp::instance()->getCurrentProject()->getProject();
   if (!project) return;
-  OutputSettings* settings = project->getOutputSettings();
+  OutputSettings* settings = project->getRenderQueue()->currentOutputSettings();
   if (!settings) return;
 
   QString shapeImageFileName = settings->getShapeImageFileName();
@@ -271,7 +271,7 @@ void RenderShapeImageDialog::onSizeComboActivated() {
   // 現在のプロジェクトのOutputSettingsを取得
   IwProject* project = IwApp::instance()->getCurrentProject()->getProject();
   if (!project) return;
-  OutputSettings* settings = project->getOutputSettings();
+  OutputSettings* settings = project->getRenderQueue()->currentOutputSettings();
   if (!settings) return;
 
   int shapeImageSizeId = settings->getShapeImageSizeId();

@@ -121,9 +121,11 @@ unsigned int taskId = 0;
 
 //---------------------------------------------------
 IwRenderInstance::IwRenderInstance(int frame, IwProject* project,
-                                   bool isPreview, RenderProgressPopup* popup)
+                                   OutputSettings* os, bool isPreview,
+                                   RenderProgressPopup* popup)
     : m_frame(frame)
     , m_project(project)
+    , m_outputSettings(os)
     , m_isPreview(isPreview)
     , m_popup(popup)
     , m_warpStyle(WARP_FIXED)
@@ -157,7 +159,7 @@ void IwRenderInstance::doRender() {
   morphedRaster->fill(TPixel64::Transparent);
   if (isCanceled()) return;
 
-  int targetShapeTag = m_project->getOutputSettings()->getShapeTagId();
+  int targetShapeTag = m_outputSettings->getShapeTagId();
   // リサンプル
   ResampleMode resampleMode = m_project->getRenderSettings()->getResampleMode();
 
@@ -223,7 +225,7 @@ void IwRenderInstance::doPreview() {
   // 結果を収めるラスタ
   QSize workAreaSize = m_project->getWorkAreaSize();
 
-  int targetShapeTag = m_project->getOutputSettings()->getShapeTagId();
+  int targetShapeTag = m_outputSettings->getShapeTagId();
 
   // 下から、各レイヤについて
   for (int lay = m_project->getLayerCount() - 1; lay >= 0; lay--) {
@@ -1128,14 +1130,14 @@ void IwRenderInstance::saveImage(TRaster64P ras) {
   TRasterImageP img(ras);
 
   // ファイルパスを得る
-  QString path = m_project->getOutputPath(m_frame);
+  QString path =
+      m_outputSettings->getPath(m_frame, m_project->getProjectName());
 
-  OutputSettings* settings = m_project->getOutputSettings();
-
-  QString ext = OutputSettings::getStandardExtension(settings->getSaver());
+  QString ext =
+      OutputSettings::getStandardExtension(m_outputSettings->getSaver());
 
   TPropertyGroup* prop =
-      settings->getFileFormatProperties(settings->getSaver());
+      m_outputSettings->getFileFormatProperties(m_outputSettings->getSaver());
 
   TImageWriterP writer(TFilePath(path.toStdWString()));
   writer->setProperties(prop);

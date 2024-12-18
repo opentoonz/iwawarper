@@ -29,6 +29,17 @@
 
 #include <QHBoxLayout>
 #include <QVBoxLayout>
+#include <QGridLayout>
+
+QItemSelectionModel::SelectionFlags RenderQueueListWidget::selectionCommand(
+    const QModelIndex& index, const QEvent* event) const {
+  if (selectedIndexes().contains(index))
+    return QItemSelectionModel::NoUpdate;
+  else
+    return QListWidget::selectionCommand(index, event);
+}
+
+//----------------------------------------------------------------------
 
 OutputSettingsDialog::OutputSettingsDialog()
     : IwDialog(IwApp::instance()->getMainWindow(), "OutputSettingsDialog",
@@ -37,6 +48,7 @@ OutputSettingsDialog::OutputSettingsDialog()
   setWindowTitle(tr("Output Settings"));
 
   //--- オブジェクトの宣言
+  m_itemList       = new RenderQueueListWidget(this);
   m_startFrameEdit = new QLineEdit(this);
   m_endFrameEdit   = new QLineEdit(this);
   m_stepFrameEdit  = new QLineEdit(this);
@@ -54,18 +66,30 @@ OutputSettingsDialog::OutputSettingsDialog()
   m_initialFrameNumberEdit = new QLineEdit(this);
   m_incrementEdit          = new QLineEdit(this);
   m_numberOfDigitsEdit     = new QLineEdit(this);
-  m_extensionEdit          = new QLineEdit(this);
 
-  m_useSourceCB  = new QCheckBox(tr("Use project name"), this);
-  m_addNumberCB  = new QCheckBox(tr("Add frame number"), this);
-  m_replaceExtCB = new QCheckBox(tr("Add extension:"), this);
+  m_warningLabel = new QLabel(this);
 
-  m_formatEdit   = new QLineEdit(this);
+  m_formatEdit = new QLineEdit(this);
+
+  QLabel* macroInstruction = new QLabel("?", this);
+
   m_exampleLabel = new QLabel(this);
 
-  QPushButton* renderBtn = new QPushButton(tr("Render"), this);
+  QPushButton* addTaskBtn = new QPushButton(tr("Add Task"), this);
+  m_removeTaskBtn         = new QPushButton(tr("Remove Task"), this);
+  QPushButton* renderBtn  = new QPushButton(tr("Render"), this);
 
   //--- プロパティの設定
+
+  m_itemList->setSelectionMode(QListWidget::SingleSelection);
+  m_itemList->setStyleSheet(
+      "QListWidget::item{\n"
+      "color: white;"
+      "}\n"
+      "QListWidget::item:selected {\n"
+      "background-color: #264f78;\n"
+      "}");
+
   m_startFrameEdit->setValidator(new QIntValidator(1, 9999, this));
   m_endFrameEdit->setValidator(new QIntValidator(1, 9999, this));
   m_stepFrameEdit->setValidator(new QIntValidator(1, 9999, this));
@@ -77,8 +101,9 @@ OutputSettingsDialog::OutputSettingsDialog()
   m_saverCombo->addItems(saverList);
 
   parametersBtn->setFocusPolicy(Qt::NoFocus);
-
   openBrowserBtn->setFocusPolicy(Qt::NoFocus);
+  addTaskBtn->setFocusPolicy(Qt::NoFocus);
+  m_removeTaskBtn->setFocusPolicy(Qt::NoFocus);
 
   QCompleter* completer      = new QCompleter(this);
   QFileSystemModel* tmpModel = new QFileSystemModel(completer);
@@ -87,9 +112,32 @@ OutputSettingsDialog::OutputSettingsDialog()
   completer->setCaseSensitivity(Qt::CaseInsensitive);
   m_directoryEdit->setCompleter(completer);
 
+  m_initialFrameNumberEdit->setFixedWidth(80);
+  m_incrementEdit->setFixedWidth(80);
+  m_numberOfDigitsEdit->setFixedWidth(80);
   m_initialFrameNumberEdit->setValidator(new QIntValidator(0, 999, this));
   m_incrementEdit->setValidator(new QIntValidator(1, 99, this));
   m_numberOfDigitsEdit->setValidator(new QIntValidator(1, 10, this));
+
+  m_warningLabel->setStyleSheet("QLabel{color: red;}");
+  m_warningLabel->hide();
+
+  macroInstruction->setFixedSize(20, 20);
+  macroInstruction->setAlignment(Qt::AlignCenter);
+  macroInstruction->setStyleSheet(
+      "QLabel{border: 1px solid lightgray; border-radius: 2px;}");
+  macroInstruction->setToolTip(
+      tr("# Macro Instruction\n\n"
+         "[dir] : Path specified in the \"Output folder\" field.\n"
+         "[base] : Project name.\n"
+         "[num] : Frame number.\n"
+         "[ext] : Extension.\n"
+         "[mattename] : Matte layer name. (*)\n"
+         "[mattenum] : Frame number in the filename of the image used for the "
+         "matte layer. (*)\n"
+         "\n"
+         "* N.B. If the shapes to be rendered has multiple matte layers, the "
+         "first one found will be used."));
 
   renderBtn->setFocusPolicy(Qt::NoFocus);
   renderBtn->setFixedWidth(200);
@@ -145,69 +193,59 @@ OutputSettingsDialog::OutputSettingsDialog()
     mainLay->addLayout(dirLay, 0);
 
     // ファイル名関係
-    QVBoxLayout* fileNameLay = new QVBoxLayout();
-    fileNameLay->setSpacing(7);
+    QGridLayout* fileNameLay = new QGridLayout();
+    fileNameLay->setVerticalSpacing(7);
+    fileNameLay->setHorizontalSpacing(2);
     fileNameLay->setMargin(5);
     {
-      QHBoxLayout* lay1 = new QHBoxLayout();
-      lay1->setSpacing(2);
-      lay1->setMargin(0);
-      {
-        lay1->addWidget(m_useSourceCB, 0);
-        lay1->addStretch(1);
-        lay1->addWidget(new QLabel(tr("Initial frame number:"), this), 0);
-        lay1->addWidget(m_initialFrameNumberEdit, 0);
-      }
-      fileNameLay->addLayout(lay1, 0);
+      fileNameLay->addWidget(new QLabel(tr("Initial frame number:"), this), 0,
+                             0, Qt::AlignRight | Qt::AlignVCenter);
+      fileNameLay->addWidget(m_initialFrameNumberEdit, 0, 1);
 
-      QHBoxLayout* lay2 = new QHBoxLayout();
-      lay2->setSpacing(2);
-      lay2->setMargin(0);
-      {
-        lay2->addWidget(m_addNumberCB, 0);
-        lay2->addStretch(1);
-        lay2->addWidget(new QLabel(tr("Increment:"), this), 0);
-        lay2->addWidget(m_incrementEdit, 0);
-      }
-      fileNameLay->addLayout(lay2, 0);
+      fileNameLay->addWidget(new QLabel(tr("Increment:"), this), 0, 2,
+                             Qt::AlignRight | Qt::AlignVCenter);
+      fileNameLay->addWidget(m_incrementEdit, 0, 3);
 
-      QHBoxLayout* lay3 = new QHBoxLayout();
-      lay3->setSpacing(2);
-      lay3->setMargin(0);
-      {
-        lay3->addWidget(m_replaceExtCB, 0);
-        lay3->addWidget(m_extensionEdit, 0);
-        lay3->addStretch(1);
-        lay3->addSpacing(10);
-        lay3->addWidget(new QLabel(tr("Number of digits:"), this), 0);
-        lay3->addWidget(m_numberOfDigitsEdit, 0);
-      }
-      fileNameLay->addLayout(lay3, 0);
+      fileNameLay->addWidget(new QLabel(tr("Number of digits:"), this), 1, 0,
+                             Qt::AlignRight | Qt::AlignVCenter);
+      fileNameLay->addWidget(m_numberOfDigitsEdit, 1, 1);
+      fileNameLay->addWidget(m_warningLabel, 1, 2, 1, 2,
+                             Qt::AlignRight | Qt::AlignVCenter);
 
-      QHBoxLayout* lay4 = new QHBoxLayout();
-      lay4->setSpacing(2);
-      lay4->setMargin(0);
+      fileNameLay->addWidget(new QLabel(tr("File name template:"), this), 2, 0,
+                             Qt::AlignRight | Qt::AlignVCenter);
+      QHBoxLayout* templateLay = new QHBoxLayout();
+      templateLay->setSpacing(2);
+      templateLay->setMargin(0);
       {
-        lay4->addWidget(new QLabel(tr("File name template:"), this), 0);
-        lay4->addWidget(m_formatEdit, 1);
+        templateLay->addWidget(m_formatEdit, 1);
+        templateLay->addWidget(macroInstruction, 0);
       }
-      fileNameLay->addLayout(lay4, 0);
+      fileNameLay->addLayout(templateLay, 2, 1, 1, 3);
 
-      QHBoxLayout* lay5 = new QHBoxLayout();
-      lay5->setSpacing(10);
-      lay5->setMargin(0);
-      {
-        lay5->addWidget(new QLabel(tr("Example file name:"), this), 0);
-        lay5->addWidget(m_exampleLabel, 1);
-      }
-      fileNameLay->addLayout(lay5, 0);
+      fileNameLay->addWidget(new QLabel(tr("Example file name:"), this), 3, 0,
+                             Qt::AlignRight | Qt::AlignVCenter);
+      fileNameLay->addWidget(m_exampleLabel, 3, 1, 1, 3);
     }
+    fileNameLay->setColumnStretch(2, 1);
+
     fileNameGroupBox->setLayout(fileNameLay);
     mainLay->addWidget(fileNameGroupBox, 0);
 
-    mainLay->addStretch(1);
+    mainLay->addSpacing(5);
+    mainLay->addWidget(new QLabel(tr("Render Queue"), this), 0);
+    mainLay->addWidget(m_itemList, 1);
 
-    mainLay->addWidget(renderBtn, 0, Qt::AlignCenter);
+    QHBoxLayout* buttonsLay = new QHBoxLayout();
+    buttonsLay->setMargin(0);
+    buttonsLay->setSpacing(10);
+    {
+      buttonsLay->addWidget(addTaskBtn, 0);
+      buttonsLay->addWidget(m_removeTaskBtn, 0);
+      buttonsLay->addStretch(1);
+      buttonsLay->addWidget(renderBtn, 0);
+    }
+    mainLay->addLayout(buttonsLay, 0);
   }
   setLayout(mainLay);
 
@@ -234,14 +272,14 @@ OutputSettingsDialog::OutputSettingsDialog()
   connect(m_numberOfDigitsEdit, SIGNAL(editingFinished()), this,
           SLOT(onNumberOfDigitsEditted()));
 
-  connect(m_useSourceCB, SIGNAL(clicked(bool)), this,
-          SLOT(onCheckBoxClicked()));
-  connect(m_addNumberCB, SIGNAL(clicked(bool)), this,
-          SLOT(onCheckBoxClicked()));
-  connect(m_replaceExtCB, SIGNAL(clicked(bool)), this,
-          SLOT(onCheckBoxClicked()));
   connect(m_formatEdit, SIGNAL(editingFinished()), this,
           SLOT(onFormatEditted()));
+
+  connect(m_itemList, SIGNAL(itemClicked(QListWidgetItem*)), this,
+          SLOT(onTaskClicked(QListWidgetItem*)));
+  connect(addTaskBtn, SIGNAL(clicked()), this, SLOT(onAddTaskButtonClicked()));
+  connect(m_removeTaskBtn, SIGNAL(clicked()), this,
+          SLOT(onRemoveTaskButtonClicked()));
 
   connect(renderBtn, SIGNAL(clicked()), this, SLOT(onRenderButtonClicked()));
 
@@ -289,7 +327,43 @@ void OutputSettingsDialog::updateGuis() {
   IwProject* project = IwApp::instance()->getCurrentProject()->getProject();
   if (!project) return;
 
-  OutputSettings* settings = project->getOutputSettings();
+  // リストを作る
+  m_itemList->clear();
+  QList<OutputSettings*> allSettings = project->getRenderQueue()->allItems();
+  int queueId                        = 0;
+  for (auto os : allSettings) {
+    QListWidgetItem* item = new QListWidgetItem();
+    item->setSizeHint(QSize(30, 30));
+    m_itemList->addItem(item);
+    item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+    item->setCheckState((os->renderState() == OutputSettings::Off)
+                            ? Qt::Unchecked
+                            : Qt::Checked);
+    int shapeTagId = os->getShapeTagId();
+    if (shapeTagId != -1) {
+      item->setIcon(project->getShapeTags()->getTagFromId(shapeTagId).icon);
+    }
+    int tmpInitialFrame                = os->getInitialFrameNumber();
+    int tmpIncrement                   = os->getIncrement();
+    OutputSettings::SaveRange tmpRange = os->getSaveRange();
+    int from = tmpRange.startFrame * tmpIncrement + tmpInitialFrame;
+    int to   = ((tmpRange.endFrame == -1) ? project->getProjectFrameLength() - 1
+                                          : tmpRange.endFrame) *
+                 tmpIncrement +
+             tmpInitialFrame;
+    os->obtainMatteLayerNames();
+    QString outPath = project->getOutputPath(0, QString(), queueId);
+    item->setText(tr("Frame %1 - %2 | %3").arg(from).arg(to).arg(outPath));
+
+    if (project->getRenderQueue()->currentSettingsId() == queueId)
+      m_itemList->setCurrentItem(item);
+
+    // m_itemList->setItemWidget(item, itemFromOutputSetting(setting));
+    queueId++;
+  }
+  m_removeTaskBtn->setEnabled(allSettings.size() > 1);
+
+  OutputSettings* settings = project->getRenderQueue()->currentOutputSettings();
   if (!settings) return;
 
   // startとendは１足す
@@ -317,21 +391,30 @@ void OutputSettingsDialog::updateGuis() {
   m_initialFrameNumberEdit->setText(QString::number(initialFrame));
   m_incrementEdit->setText(QString::number(increment));
   m_numberOfDigitsEdit->setText(QString::number(settings->getNumberOfDigits()));
-  m_extensionEdit->setText(settings->getExtension());
-
-  m_useSourceCB->setChecked(settings->isUseSource());
-  m_addNumberCB->setChecked(settings->isAddNumber());
-  m_replaceExtCB->setChecked(settings->isReplaceExt());
 
   m_formatEdit->setText(settings->getFormat());
 
   // formatからexampleを生成する
   // →１フレーム目のファイルパスを作って、そのファイル名部分を入れる。
+  project->getRenderQueue()->currentOutputSettings()->obtainMatteLayerNames();
   QString exampleStr = project->getOutputPath(0);
   std::cout << exampleStr.toStdString() << std::endl;
   exampleStr =
       exampleStr.remove(0, exampleStr.lastIndexOf(QRegExp("[/\\\\]")) + 1);
   m_exampleLabel->setText(exampleStr);
+
+  if (settings->getFormat().contains("[mattename]") ||
+      settings->getFormat().contains("[mattenum]")) {
+    if (exampleStr.contains("nomatte")) {
+      m_warningLabel->setText(tr("NO MATTE LAYER FOUND!"));
+      m_warningLabel->show();
+    } else if (exampleStr.contains("----")) {
+      m_warningLabel->setText(tr("NO NUMBER FOUND IN THE MATTE FILE NAME!"));
+      m_warningLabel->show();
+    } else
+      m_warningLabel->hide();
+  } else
+    m_warningLabel->hide();
 
   m_shapeTagCombo->setCurrentIndex(
       m_shapeTagCombo->findData(settings->getShapeTagId()));
@@ -345,7 +428,7 @@ OutputSettings* OutputSettingsDialog::getCurrentSettings() {
   IwProject* project = IwApp::instance()->getCurrentProject()->getProject();
   if (!project) return 0;
 
-  return project->getOutputSettings();
+  return project->getRenderQueue()->currentOutputSettings();
 }
 
 //---------------------------------------------------
@@ -354,7 +437,7 @@ void OutputSettingsDialog::onStartFrameEditted() {
   // 現在のプロジェクトのOutputSettingsを取得
   IwProject* project = IwApp::instance()->getCurrentProject()->getProject();
   if (!project) return;
-  OutputSettings* settings = project->getOutputSettings();
+  OutputSettings* settings = project->getRenderQueue()->currentOutputSettings();
   if (!settings) return;
 
   int initialFrame = settings->getInitialFrameNumber();
@@ -389,7 +472,7 @@ void OutputSettingsDialog::onEndFrameEditted() {
   // 現在のプロジェクトのOutputSettingsを取得
   IwProject* project = IwApp::instance()->getCurrentProject()->getProject();
   if (!project) return;
-  OutputSettings* settings = project->getOutputSettings();
+  OutputSettings* settings = project->getRenderQueue()->currentOutputSettings();
   if (!settings) return;
 
   int initialFrame = settings->getInitialFrameNumber();
@@ -423,7 +506,7 @@ void OutputSettingsDialog::onStepFrameEditted() {
   // 現在のプロジェクトのOutputSettingsを取得
   IwProject* project = IwApp::instance()->getCurrentProject()->getProject();
   if (!project) return;
-  OutputSettings* settings = project->getOutputSettings();
+  OutputSettings* settings = project->getRenderQueue()->currentOutputSettings();
   if (!settings) return;
 
   int newStep = m_stepFrameEdit->text().toInt();
@@ -449,7 +532,6 @@ void OutputSettingsDialog::onSaverComboActivated(const QString& text) {
   if (!settings) return;
 
   settings->setSaver(text);
-  settings->setExtension(OutputSettings::getStandardExtension(text));
   updateGuis();
 }
 
@@ -572,21 +654,6 @@ void OutputSettingsDialog::onNumberOfDigitsEditted() {
 }
 
 //---------------------------------------------------
-// チェックボックスは３つまとめて同じSLOTにする
-//---------------------------------------------------
-void OutputSettingsDialog::onCheckBoxClicked() {
-  OutputSettings* settings = getCurrentSettings();
-  if (!settings) return;
-
-  // 全て現在のボタンの状態と同期させる
-  settings->setIsUseSource(m_useSourceCB->isChecked());
-  settings->setIsAddNumber(m_addNumberCB->isChecked());
-  settings->setIsReplaceExt(m_replaceExtCB->isChecked());
-
-  updateGuis();
-}
-
-//---------------------------------------------------
 void OutputSettingsDialog::onFormatEditted() {
   OutputSettings* settings = getCurrentSettings();
   if (!settings) return;
@@ -633,6 +700,40 @@ void OutputSettingsDialog::onShapeTagComboActivated() {
 
   settings->setShapeTagId(newId);
   IwApp::instance()->getCurrentProject()->notifyPreviewCacheInvalidated();
+  updateGuis();
+}
+
+void OutputSettingsDialog::onTaskClicked(QListWidgetItem* clickedItem) {
+  assert(m_itemList->selectedItems().count() == 1);
+  if (m_itemList->selectedItems().isEmpty()) return;
+  IwProject* project = IwApp::instance()->getCurrentProject()->getProject();
+  if (!project) return;
+
+  int row = m_itemList->row(m_itemList->selectedItems()[0]);
+
+  project->getRenderQueue()->setCurrentSettingsId(row);
+
+  int clickedRow = m_itemList->row(clickedItem);
+  bool checked   = (clickedItem->checkState() == Qt::Checked);
+  project->getRenderQueue()
+      ->outputSettings(clickedRow)
+      ->setRenderState((checked) ? OutputSettings::On : OutputSettings::Off);
+
+  IwApp::instance()->getCurrentProject()->notifyPreviewCacheInvalidated();
+  updateGuis();
+}
+
+void OutputSettingsDialog::onAddTaskButtonClicked() {
+  IwProject* project = IwApp::instance()->getCurrentProject()->getProject();
+  if (!project) return;
+  project->getRenderQueue()->cloneCurrentItem();
+  updateGuis();
+}
+
+void OutputSettingsDialog::onRemoveTaskButtonClicked() {
+  IwProject* project = IwApp::instance()->getCurrentProject()->getProject();
+  if (!project) return;
+  project->getRenderQueue()->removeCurrentItem();
   updateGuis();
 }
 

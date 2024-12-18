@@ -884,7 +884,8 @@ void SetShapeTagUndo::setTag(bool isUndo) {
   if (m_project->isCurrent()) {
     IwApp::instance()->getCurrentProject()->notifyProjectChanged();
     // レンダリングに関わるタグの場合シグナルを出す
-    if (m_tagId == m_project->getOutputSettings()->getShapeTagId())
+    if (m_tagId ==
+        m_project->getRenderQueue()->currentOutputSettings()->getShapeTagId())
       IwApp::instance()->getCurrentProject()->notifyPreviewCacheInvalidated();
   }
 }
