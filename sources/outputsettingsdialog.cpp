@@ -331,7 +331,7 @@ void OutputSettingsDialog::updateGuis() {
   m_itemList->clear();
   QList<OutputSettings*> allSettings = project->getRenderQueue()->allItems();
   int queueId                        = 0;
-  for (auto os : allSettings) {
+  for (auto& os : allSettings) {
     QListWidgetItem* item = new QListWidgetItem();
     item->setSizeHint(QSize(30, 30));
     m_itemList->addItem(item);

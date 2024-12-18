@@ -102,7 +102,7 @@ void IwRenderCommand::onRender() {
   RenderProgressPopup progressPopup(project);
   // progressPopup.show();
   std::cout << (void*)(&progressPopup) << std::endl;
-  for (auto settings : activeItems) {
+  for (auto& settings : activeItems) {
     progressPopup.startItem(settings);
 
     // ŒvŽZ”ÍˆÍ‚ð‹‚ß‚é
