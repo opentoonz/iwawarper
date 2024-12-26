@@ -471,6 +471,8 @@ void HEModel::addVertex(HEVertex* p, HEVertex* constrain_pair) {
       edgeSwap(heAB);
       heToBeChecked.push(heAB->pair->next);
       heToBeChecked.push(heAB->pair->prev);
+      heToBeChecked.push(heAB->next);
+      heToBeChecked.push(heAB->prev);
       heAB->setConstrained(true);
     }
     //  else if (ABC‚ÌŠOÚ‰~“à‚ÉD‚ª“ü‚é)
@@ -479,6 +481,8 @@ void HEModel::addVertex(HEVertex* p, HEVertex* constrain_pair) {
       edgeSwap(heAB);
       heToBeChecked.push(heAB->pair->next);
       heToBeChecked.push(heAB->pair->prev);
+      heToBeChecked.push(heAB->next);
+      heToBeChecked.push(heAB->prev);
     }
     //  else ‰½‚à‚µ‚È‚¢
   }
@@ -536,6 +540,8 @@ void HEModel::addVertex(HEVertex* p, HEVertex* constrain_pair) {
         edgeSwap(heAB);
         heToBeChecked.push(heAB->pair->next);
         heToBeChecked.push(heAB->pair->prev);
+        heToBeChecked.push(heAB->next);
+        heToBeChecked.push(heAB->prev);
         heAB->setConstrained(true);
       }
       //  else if (ABC‚ÌŠOÚ‰~“à‚ÉD‚ª“ü‚é)
@@ -544,6 +550,8 @@ void HEModel::addVertex(HEVertex* p, HEVertex* constrain_pair) {
         edgeSwap(heAB);
         heToBeChecked.push(heAB->pair->next);
         heToBeChecked.push(heAB->pair->prev);
+        heToBeChecked.push(heAB->next);
+        heToBeChecked.push(heAB->prev);
       }
       //  else ‰½‚à‚µ‚È‚¢
     }
