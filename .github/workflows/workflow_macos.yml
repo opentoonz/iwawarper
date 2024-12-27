@@ -28,7 +28,7 @@ jobs:
         brew update
         brew install qt@5 ninja ccache
         
-    - uses: actions/cache@v3
+    - uses: actions/cache@v4
       with:
         path: /Users/runner/.ccache
         key: ${{ runner.os }}-${{ github.sha }}
@@ -71,7 +71,7 @@ jobs:
         cd build
         /usr/local/opt/qt@5/bin/macdeployqt IwaWarper.app -dmg -verbose=1
     
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: IwaWarper-${{ runner.os }}-${{ github.sha }}
         path: build/IwaWarper.dmg
