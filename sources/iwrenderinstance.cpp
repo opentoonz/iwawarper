@@ -102,7 +102,7 @@ TPixel64 getInterpolatedPixelVal(TRaster64P srcRas, QPointF& uv) {
 // uv座標を元に、最も近いピクセル値を得る。
 //---------------------------------------------------
 TPixel64 getNearestPixelVal(TRaster64P srcRas, QPointF& uv) {
-  QPoint uvIndex(tround(uv.x()), tround(uv.y()));
+  QPoint uvIndex(tround(uv.x() - 0.5), tround(uv.y() - 0.5));
   return getPixelVal(srcRas, uvIndex);
 }
 
