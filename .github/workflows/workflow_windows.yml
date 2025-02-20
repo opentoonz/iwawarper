@@ -60,7 +60,7 @@ jobs:
         ${{ env.QT_ROOT }}/Qt5.15.2_wintab/5.15.2_wintab/msvc2019_64/bin/windeployqt.exe image.dll
         ${{ env.QT_ROOT }}/Qt5.15.2_wintab/5.15.2_wintab/msvc2019_64/bin/windeployqt.exe toonzlib.dll
 
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: Opentoonz-${{ runner.os }}-${{ github.sha }}
         path: artifact
