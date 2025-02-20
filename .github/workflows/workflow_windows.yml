@@ -12,7 +12,7 @@ jobs:
     - name: checkout with cached LFS
       uses: nschloe/action-cached-lfs-checkout@v1
 
-    - uses: actions/cache@v3
+    - uses: actions/cache@v4
       with:
        path: C:/vcpkg/installed
        key: ${{ runner.os }}-vcpkg-${{ env.vcpkg_ref }}-${{ github.sha }}
@@ -20,7 +20,7 @@ jobs:
 
     - name: Cache Qt
       id: cache-qt
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ${{env.QT_ROOT}}
         key: ${{ runner.os }}-QtCache
