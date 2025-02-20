@@ -1052,32 +1052,52 @@ TRasterGR8P IwRenderInstance::createMatteRas(ShapePair* shape) {
   for (int y = 0; y < matteRas->getLy(); y++) {
     TPixelGR8* mattePix = matteRas->pixels(y);
 
-    int orgY         = y + (int)std::round(sampleOffset.y());
-    TPixel32* orgPix = ras->pixels(orgY);
-    orgPix += (int)std::round(sampleOffset.x());
+    int orgY = y + (int)std::round(sampleOffset.y());
+    // matteLayerの外側の場合、matteは0
+    if (orgY < 0 || orgY >= ras->getLy()) {
+      for (int x = 0; x < matteRas->getLx(); x++, mattePix++) *mattePix = 0;
+      continue;  // 次の行へ
+    }
 
-    for (int x = 0; x < matteRas->getLx(); x++, mattePix++, orgPix++) {
-      if (inPixList.contains(*orgPix))
-        *mattePix = 1;
-      else if (inPixList.contains(*orgPix))
+    TPixel32* orgPix = ras->pixels(orgY);
+    int orgX         = (int)std::round(sampleOffset.x());
+
+    // matteLayerが左にはみ出ている部分、matteは0
+    int x = 0;
+    for (; orgX < 0; orgX++, mattePix++, x++) {
+      *mattePix = 0;
+    }
+
+    orgPix += orgX;
+
+    for (; x < matteRas->getLx(); x++, mattePix++, orgX++) {
+      // matteLayerが右にはみ出ている部分、matteは0
+      if (orgX >= ras->getLy()) {
         *mattePix = 0;
-      else {  // 判定処理を行う
-        bool found = false;
-        for (auto matteCol : matteInfo.colors) {
-          if (std::abs(matteCol.red() - orgPix->r) <= matteInfo.tolerance &&
-              std::abs(matteCol.green() - orgPix->g) <= matteInfo.tolerance &&
-              std::abs(matteCol.blue() - orgPix->b) <= matteInfo.tolerance) {
-            found = true;
-            break;
+      } else {
+        if (inPixList.contains(*orgPix))
+          *mattePix = 1;
+        else if (inPixList.contains(*orgPix))
+          *mattePix = 0;
+        else {  // 判定処理を行う
+          bool found = false;
+          for (auto matteCol : matteInfo.colors) {
+            if (std::abs(matteCol.red() - orgPix->r) <= matteInfo.tolerance &&
+                std::abs(matteCol.green() - orgPix->g) <= matteInfo.tolerance &&
+                std::abs(matteCol.blue() - orgPix->b) <= matteInfo.tolerance) {
+              found = true;
+              break;
+            }
+          }
+          if (found) {
+            *mattePix = 1;
+            inPixList.append(*orgPix);
+          } else {
+            *mattePix = 0;
+            outPixList.append(*orgPix);
           }
         }
-        if (found) {
-          *mattePix = 1;
-          inPixList.append(*orgPix);
-        } else {
-          *mattePix = 0;
-          outPixList.append(*orgPix);
-        }
+        orgPix++;
       }
     }
   }
