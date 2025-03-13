@@ -1072,7 +1072,7 @@ TRasterGR8P IwRenderInstance::createMatteRas(ShapePair* shape) {
 
     for (; x < matteRas->getLx(); x++, mattePix++, orgX++) {
       // matteLayer‚ª‰E‚É‚Í‚Ýo‚Ä‚¢‚é•”•ªAmatte‚Í0
-      if (orgX >= ras->getLy()) {
+      if (orgX >= ras->getLx()) {
         *mattePix = 0;
       } else {
         if (inPixList.contains(*orgPix))
