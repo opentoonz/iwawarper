@@ -51,6 +51,13 @@ SettingsDialog::SettingsDialog()
 
   m_resampleModeCombo->addItem(tr("Area Average"), AreaAverage);
   m_resampleModeCombo->addItem(tr("Nearest Neighbor"), NearestNeighbor);
+  m_resampleModeCombo->addItem(tr("Morphological Supersampling"),
+                               MorphologicalSupersampling);
+  m_resampleModeCombo->setToolTip(tr(
+      "PLEASE NOTE: The \"Morphological Supersampling\" option is intended \n"
+      "to be used when deforming so-called \"color binary images\", \n"
+      "such as those commonly used in the Japanese animation industry \n"
+      "for character Levels."));
 
   //-- レイアウト
   QVBoxLayout* mainLay = new QVBoxLayout();

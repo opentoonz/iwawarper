@@ -47,6 +47,7 @@ class MapTrianglesToRaster_Worker : public QRunnable {
   TRaster64P m_outRas;
   TRaster64P m_srcRas;
   TRasterGR8P m_matteRas;
+  TRaster64P m_mlssRefRas;
   bool* m_subPointOccupation;
   int m_subAmount;
   AlphaMode m_alphaMode;
@@ -60,9 +61,10 @@ public:
                               IwRenderInstance* parentInstance,
                               QPointF sampleOffset, QPointF outputOffset,
                               TRaster64P outRas, TRaster64P srcRas,
-                              TRasterGR8P matteRas, bool* subPointOccupation,
-                              int subAmount, AlphaMode alphaMode,
-                              ResampleMode resampleMode, QImage shapeAlphaImg)
+                              TRasterGR8P matteRas, TRaster64P mlssRefRas,
+                              bool* subPointOccupation, int subAmount,
+                              AlphaMode alphaMode, ResampleMode resampleMode,
+                              QImage shapeAlphaImg)
       : m_from(from)
       , m_to(to)
       , m_model(model)
@@ -72,6 +74,7 @@ public:
       , m_outRas(outRas)
       , m_srcRas(srcRas)
       , m_matteRas(matteRas)
+      , m_mlssRefRas(mlssRefRas)
       , m_subPointOccupation(subPointOccupation)
       , m_subAmount(subAmount)
       , m_alphaMode(alphaMode)
@@ -162,6 +165,7 @@ class IwRenderInstance : public QObject, public QRunnable {
   // ゆがんだ形状を描画する_マルチスレッド版
   TRaster64P HEmapTrianglesToRaster_Multi(HEModel& model, TRaster64P srcRas,
                                           TRasterGR8P matteRas,
+                                          TRaster64P mlssRefRas,
                                           ShapePair* shape, QPoint& origin,
                                           const QPolygonF& parentShapePolygon);
 
@@ -172,6 +176,13 @@ class IwRenderInstance : public QObject, public QRunnable {
 
   // マット画像を作成する
   TRasterGR8P createMatteRas(ShapePair* shape);
+
+  // Morphological
+  // Supersamplingを行う場合、サンプル用の境界線マップ画像を生成する
+  // RGBA各チャンネルにそれぞれ下記の値をhalf-floatで入れる
+  // R:水平メタ境界線の左の切片 G:水平メタ境界線の右の切片
+  // B:垂直メタ境界線の下の切片 A:垂直メタ境界線の上の切片
+  TRaster64P createMLSSRefRas(TRaster64P inRas);
 
   //--------------------------------
   // ファイルに書き出す
