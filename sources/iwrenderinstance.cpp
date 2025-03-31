@@ -139,13 +139,11 @@ TPixel64 getMlssPixelVal(TRaster64P srcRas, TRaster64P mlssRefRas,
     float right = getFloatFromUShort(mlssVal.g);
     // 上ピクセルとのミックス
     if (left > 0.5 || right > 0.5) {
-      if (rv <= lerp(left, right, ru)) return getPixelVal(srcRas, uvIndex);
-      sampleOffset += QPoint(0, 1);
+      if (rv > lerp(left, right, ru)) sampleOffset += QPoint(0, 1);
     }
     // 下ピクセルとのミックス
     else {
-      if (rv >= lerp(left, right, ru)) return getPixelVal(srcRas, uvIndex);
-      sampleOffset += QPoint(0, -1);
+      if (rv < lerp(left, right, ru)) sampleOffset += QPoint(0, -1);
     }
   }
   // 左右方向のサンプル（上下の切片）
@@ -154,13 +152,11 @@ TPixel64 getMlssPixelVal(TRaster64P srcRas, TRaster64P mlssRefRas,
     float top    = getFloatFromUShort(mlssVal.m);
     // 右ピクセルとのミックス
     if (bottom > 0.5 || top > 0.5) {
-      if (ru <= lerp(bottom, top, rv)) return getPixelVal(srcRas, uvIndex);
-      sampleOffset += QPoint(1, 0);
+      if (ru > lerp(bottom, top, rv)) sampleOffset += QPoint(1, 0);
     }
     // 左ピクセルとのミックス
     else {
-      if (ru >= lerp(bottom, top, rv)) return getPixelVal(srcRas, uvIndex);
-      sampleOffset += QPoint(-1, 0);
+      if (ru < lerp(bottom, top, rv)) sampleOffset += QPoint(-1, 0);
     }
   }
 
