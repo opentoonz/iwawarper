@@ -1028,7 +1028,7 @@ Remove its shapes?</source>
         <translation>レンダリング</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="128"/>
+        <location filename="../outputsettingsdialog.cpp" line="130"/>
         <source># Macro Instruction
 
 [dir] : Path specified in the &quot;Output folder&quot; field.
@@ -1051,92 +1051,92 @@ Remove its shapes?</source>
 ※ 注： レンダリング対象のシェイプが複数のマットレイヤーを使用している場合、最初に見つかったものが使われます。</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="153"/>
+        <location filename="../outputsettingsdialog.cpp" line="155"/>
         <source>Start:</source>
         <translation>開始：</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="155"/>
+        <location filename="../outputsettingsdialog.cpp" line="157"/>
         <source>End:</source>
         <translation>終了：</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="157"/>
+        <location filename="../outputsettingsdialog.cpp" line="159"/>
         <source>Step:</source>
         <translation>ステップ：</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="164"/>
+        <location filename="../outputsettingsdialog.cpp" line="166"/>
         <source>Target Shape Tag:</source>
         <translation>対象とするシェイプタグ：</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="176"/>
+        <location filename="../outputsettingsdialog.cpp" line="178"/>
         <source>Format:</source>
         <translation>ファイル形式：</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="199"/>
+        <location filename="../outputsettingsdialog.cpp" line="201"/>
         <source>Initial frame number:</source>
         <translation>開始フレーム番号：</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="203"/>
+        <location filename="../outputsettingsdialog.cpp" line="205"/>
         <source>Increment:</source>
         <translation>フレーム番号増分：</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="207"/>
+        <location filename="../outputsettingsdialog.cpp" line="209"/>
         <source>Number of digits:</source>
         <translation>フレーム番号桁数：</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="213"/>
+        <location filename="../outputsettingsdialog.cpp" line="215"/>
         <source>File name template:</source>
         <translation>ファイル名のテンプレート：</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="224"/>
+        <location filename="../outputsettingsdialog.cpp" line="226"/>
         <source>Example file name:</source>
         <translation>例：</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="234"/>
+        <location filename="../outputsettingsdialog.cpp" line="236"/>
         <source>Render Queue</source>
         <translation>レンダーキュー</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="354"/>
+        <location filename="../outputsettingsdialog.cpp" line="356"/>
         <source>Frame %1 - %2 | %3</source>
         <translation>フレーム %1 - %2 | %3</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="407"/>
+        <location filename="../outputsettingsdialog.cpp" line="409"/>
         <source>NO MATTE LAYER FOUND!</source>
         <translation>マットレイヤーが見つかりません！</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="410"/>
+        <location filename="../outputsettingsdialog.cpp" line="412"/>
         <source>NO NUMBER FOUND IN THE MATTE FILE NAME!</source>
         <translation>マットレイヤーの画像ファイル名に番号が含まれていません！</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="562"/>
+        <location filename="../outputsettingsdialog.cpp" line="564"/>
         <source>Do you want to create folder?</source>
         <translation>フォルダを作成しますか？</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="572"/>
+        <location filename="../outputsettingsdialog.cpp" line="574"/>
         <source>Failed to create folder.</source>
         <translation>フォルダの作成に失敗しました。</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="603"/>
+        <location filename="../outputsettingsdialog.cpp" line="605"/>
         <source>Choose Folder.</source>
         <translation>フォルダを選択してください。</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="671"/>
+        <location filename="../outputsettingsdialog.cpp" line="673"/>
         <source>None</source>
         <translation>指定なし</translation>
     </message>
@@ -1600,32 +1600,47 @@ What would you like to do?</source>
         <translation>ニアレストネイバー</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.cpp" line="60"/>
+        <location filename="../settingsdialog.cpp" line="54"/>
+        <source>Morphological Supersampling</source>
+        <translation>形態学的スーパーサンプリング</translation>
+    </message>
+    <message>
+        <location filename="../settingsdialog.cpp" line="56"/>
+        <source>PLEASE NOTE: The &quot;Morphological Supersampling&quot; option is intended 
+to be used when deforming so-called &quot;color binary images&quot;, 
+such as those commonly used in the Japanese animation industry 
+for character Levels.</source>
+        <translation>【注意】 &quot;形態学的スーパーサンプリング&quot;オプションは、
+日本のアニメ産業においてキャラクターのLevelで一般的に用いられるような、
+いわゆるカラー二値画像を変形するときに用いられることを想定しています。</translation>
+    </message>
+    <message>
+        <location filename="../settingsdialog.cpp" line="67"/>
         <source>Bezier Precision:</source>
         <translation>ベジエ曲線の精度：</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.cpp" line="63"/>
+        <location filename="../settingsdialog.cpp" line="70"/>
         <source>Number of subdivision:</source>
         <translation>メッシュ分割の回数：</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.cpp" line="66"/>
+        <location filename="../settingsdialog.cpp" line="73"/>
         <source>Maximum face size:</source>
         <translation>最大メッシュサイズ：</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.cpp" line="72"/>
+        <location filename="../settingsdialog.cpp" line="79"/>
         <source>Resample Mode:</source>
         <translation>リサンプル方式：</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.cpp" line="77"/>
+        <location filename="../settingsdialog.cpp" line="84"/>
         <source>Image Shrink:</source>
         <translation>画像テクスチャの粗さ：</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.cpp" line="80"/>
+        <location filename="../settingsdialog.cpp" line="87"/>
         <source>Matte Dilate:</source>
         <translation>アルファマットを拡張：</translation>
     </message>
@@ -1634,7 +1649,7 @@ What would you like to do?</source>
         <translation type="vanished">ワープ品質：</translation>
     </message>
     <message>
-        <location filename="../settingsdialog.cpp" line="69"/>
+        <location filename="../settingsdialog.cpp" line="76"/>
         <source>Alpha Mode:</source>
         <translation>アルファチャンネルの操作：</translation>
     </message>

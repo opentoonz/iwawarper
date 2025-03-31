@@ -9,7 +9,11 @@ class QXmlStreamWriter;
 class QXmlStreamReader;
 
 enum AlphaMode { SourceAlpha = 0, ShapeAlpha };
-enum ResampleMode { AreaAverage = 0, NearestNeighbor };
+enum ResampleMode {
+  AreaAverage = 0,
+  NearestNeighbor,
+  MorphologicalSupersampling
+};
 
 class RenderSettings {
   // ƒƒbƒVƒ…Ä‹A•ªŠ„‚Ì‰ñ”

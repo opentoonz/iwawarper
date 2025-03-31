@@ -33,6 +33,8 @@
 #include "tnzimage.h"
 #include "tiio.h"
 
+#include "half.h"
+
 #include <QPolygonF>
 #include <QStack>
 #include <QThreadPool>
@@ -104,6 +106,65 @@ TPixel64 getInterpolatedPixelVal(TRaster64P srcRas, QPointF& uv) {
 TPixel64 getNearestPixelVal(TRaster64P srcRas, QPointF& uv) {
   QPoint uvIndex(tround(uv.x() - 0.5), tround(uv.y() - 0.5));
   return getPixelVal(srcRas, uvIndex);
+}
+
+float getFloatFromUShort(unsigned short val) {
+  FLOAT16 half;
+  half.m_uiFormat = val;
+  return FLOAT16::ToFloat32Fast(half);
+}
+
+inline float lerp(float v1, float v2, float ratio) {
+  return v1 * (1.f - ratio) + v2 * ratio;
+}
+
+//---------------------------------------------------
+// Morphological Supersampling
+//---------------------------------------------------
+TPixel64 getMlssPixelVal(TRaster64P srcRas, TRaster64P mlssRefRas,
+                         QPointF& uv) {
+  QPoint uvIndex(tround(uv.x() - 0.5), tround(uv.y() - 0.5));
+
+  TPixel64 mlssVal = getPixelVal(mlssRefRas, uvIndex);
+
+  if (mlssVal == TPixel64(0, 0, 0, 0)) return getPixelVal(srcRas, uvIndex);
+
+  float ru = uv.x() - (float)uvIndex.x();
+  float rv = uv.y() - (float)uvIndex.y();
+
+  QPoint sampleOffset;
+  // 上下方向のサンプル（左右の切片）
+  if (mlssVal.r != 0 || mlssVal.g != 0) {
+    float left  = getFloatFromUShort(mlssVal.r);
+    float right = getFloatFromUShort(mlssVal.g);
+    // 上ピクセルとのミックス
+    if (left > 0.5 || right > 0.5) {
+      if (rv <= lerp(left, right, ru)) return getPixelVal(srcRas, uvIndex);
+      sampleOffset += QPoint(0, 1);
+    }
+    // 下ピクセルとのミックス
+    else {
+      if (rv >= lerp(left, right, ru)) return getPixelVal(srcRas, uvIndex);
+      sampleOffset += QPoint(0, -1);
+    }
+  }
+  // 左右方向のサンプル（上下の切片）
+  if (mlssVal.b != 0 || mlssVal.m != 0) {
+    float bottom = getFloatFromUShort(mlssVal.b);
+    float top    = getFloatFromUShort(mlssVal.m);
+    // 右ピクセルとのミックス
+    if (bottom > 0.5 || top > 0.5) {
+      if (ru <= lerp(bottom, top, rv)) return getPixelVal(srcRas, uvIndex);
+      sampleOffset += QPoint(1, 0);
+    }
+    // 左ピクセルとのミックス
+    else {
+      if (ru >= lerp(bottom, top, rv)) return getPixelVal(srcRas, uvIndex);
+      sampleOffset += QPoint(-1, 0);
+    }
+  }
+
+  return getPixelVal(srcRas, uvIndex + sampleOffset);
 }
 
 bool checkIsPremultiplied(TRaster64P ras) {
@@ -328,10 +389,14 @@ TRaster64P IwRenderInstance::warpLayer(IwLayer* layer,
   // shapes.last()がこのグループの親シェイプ
   TRasterGR8P matteRas = createMatteRas(shapes.last());
 
+  // ここで、Morphological
+  // Supersamplingを行う場合、サンプル用の境界線マップ画像を生成する
+  TRaster64P mlssRefRas = createMLSSRefRas(inRas);
+
   // ゆがんだ形状を描画する
-  TRaster64P outRas =
-      HEmapTrianglesToRaster_Multi(model, inRas, matteRas, shapes.last(),
-                                   origin, QPolygonF(parentShapeVerticesTo));
+  TRaster64P outRas = HEmapTrianglesToRaster_Multi(
+      model, inRas, matteRas, mlssRefRas, shapes.last(), origin,
+      QPolygonF(parentShapeVerticesTo));
 
   return outRas;
 }
@@ -780,7 +845,10 @@ void MapTrianglesToRaster_Worker::run() {
               // uv座標を元に、ピクセル値をリニア補間で得る。
               TPixel64 pix = (m_resampleMode == AreaAverage)
                                  ? getInterpolatedPixelVal(m_srcRas, uv)
-                                 : getNearestPixelVal(m_srcRas, uv);
+                             : (m_resampleMode == NearestNeighbor)
+                                 ? getNearestPixelVal(m_srcRas, uv)
+                                 : getMlssPixelVal(m_srcRas, m_mlssRefRas,
+                                                   uv);  // MLSS case
 
               // シェイプの形で抜く場合は、アルファは必ずMaxにする
               if (m_alphaMode == ShapeAlpha) pix.m = TPixel64::maxChannelValue;
@@ -874,8 +942,9 @@ void ResampleResults_Worker::run() {
 // 　三角形のラスタライズを行う
 //---------------------------------------------------
 TRaster64P IwRenderInstance::HEmapTrianglesToRaster_Multi(
-    HEModel& model, TRaster64P srcRas, TRasterGR8P matteRas, ShapePair* shape,
-    QPoint& origin, const QPolygonF& parentShapePolygon) {
+    HEModel& model, TRaster64P srcRas, TRasterGR8P matteRas,
+    TRaster64P mlssRefRas, ShapePair* shape, QPoint& origin,
+    const QPolygonF& parentShapePolygon) {
   QSize workAreaSize = m_project->getWorkAreaSize();
   // 計算範囲
   QRectF shapeBBox = shape->getBBox(
@@ -956,8 +1025,8 @@ TRaster64P IwRenderInstance::HEmapTrianglesToRaster_Multi(
 
       MapTrianglesToRaster_Worker* task = new MapTrianglesToRaster_Worker(
           tmpStart, tmpEnd, &model, this, sampleOffset, outputOffset, outRasT,
-          srcRas, matteRas, subPointOccupation, subAmount, alphaMode,
-          resampleMode, shapeAlphaImg);
+          srcRas, matteRas, mlssRefRas, subPointOccupation, subAmount,
+          alphaMode, resampleMode, shapeAlphaImg);
 
       QThreadPool::globalInstance()->start(task);
 

@@ -88,6 +88,7 @@ set(HEADERS
     keydragtool.h
     logger.h
     shapetagsettings.h
+    half.h
 )
 
 set(CONTROL_SOURCES
@@ -97,6 +98,7 @@ iwselectionhandle.cpp
 iwtoolhandle.cpp
 iwrendercommand.cpp
 iwrenderinstance.cpp
+iwrenderinstance_mlss.cpp
 iwselection.cpp
 iwshapepairselection.cpp
 iwtimelinekeyselection.cpp
@@ -141,6 +143,7 @@ iwfolders.cpp
 halfedge.cpp
 shapetagsettings.cpp
 preferences.cpp
+half.cpp
 )
 
 set(VIEW_SOURCES
