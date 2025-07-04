@@ -65,13 +65,13 @@ OutputSettings::OutputSettings(const OutputSettings &os)
 //---------------------------------------------------
 // frameに対する保存パスを返す
 //---------------------------------------------------
-QString OutputSettings::getPath(int frame, QString projectName,
+QString OutputSettings::getPath(int frame, int outputFrame, QString projectName,
                                 QString formatStr) {
   QString str = (formatStr.isEmpty()) ? m_format : formatStr;
 
-  int modFrame = m_initialFrameNumber + frame * m_increment;
+  // int modFrame = m_initialFrameNumber + frame * m_increment;
   QString numStr =
-      QString::number(modFrame).rightJustified(m_numberOfDigits, '0');
+      QString::number(outputFrame).rightJustified(m_numberOfDigits, '0');
 
   // DateTimeが格納されているか確認
   QRegExp rx("(.+)_\\d{6}-\\d{6}$");
@@ -352,6 +352,34 @@ void RenderQueue::loadData(QXmlStreamReader &reader) {
   }
 }
 
+// 0.1.0 以前で、出力設定→レンダリング範囲StartとInitialFrameNumber,
+// incrementが
+// すべて1でないシーンを開いた場合、値を調整した上で警告ダイアログを出す
+// 戻り値は警告ダイアログのメッセージ。何もなければ空Stringを返す
+QString RenderQueue::versionCheck(const Version &loadedVersion) {
+  if (Version(0, 1, 0) < loadedVersion) return QString();
+
+  bool somethingChanged = false;
+  for (auto os : m_outputs) {
+    OutputSettings::SaveRange oldSaveRange = os->getSaveRange();
+    int oldInitial                         = os->getInitialFrameNumber();
+    int oldIncrement                       = os->getIncrement();
+    if (oldSaveRange.startFrame != 0 || oldInitial != 1 || oldIncrement != 1) {
+      somethingChanged = true;
+      os->setInitiaFrameNumber(oldSaveRange.startFrame * oldIncrement +
+                               oldInitial);
+    }
+  }
+
+  if (somethingChanged)
+    return tr(
+        "- In the current version, the ways of specifying the output frame "
+        "range have changed.\n"
+        "  Please check the output settings.\n");
+  else
+    return QString();
+}
+
 void RenderQueue::loadPrevVersionData(QXmlStreamReader &reader) {
   m_outputs.clear();
   OutputSettings *os = new OutputSettings();
@@ -361,10 +389,11 @@ void RenderQueue::loadPrevVersionData(QXmlStreamReader &reader) {
 }
 
 // frameに対する保存パスを返す
-QString RenderQueue::getPath(int frame, QString projectName, QString formatStr,
-                             int queueId) {
+QString RenderQueue::getPath(int frame, int outputFrame, QString projectName,
+                             QString formatStr, int queueId) {
   if (queueId == -1) queueId = m_currentSettingsId;
-  return m_outputs.at(queueId)->getPath(frame, projectName, formatStr);
+  return m_outputs.at(queueId)->getPath(frame, outputFrame, projectName,
+                                        formatStr);
 }
 
 // Onになっているアイテムを返す

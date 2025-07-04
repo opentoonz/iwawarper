@@ -458,6 +458,19 @@ Remove its shapes?</source>
     </message>
 </context>
 <context>
+    <name>IwProject</name>
+    <message>
+        <location filename="../iwproject.cpp" line="235"/>
+        <source>Warning</source>
+        <translation>警告</translation>
+    </message>
+    <message>
+        <location filename="../iwproject.cpp" line="236"/>
+        <source>An older version of the project file was loaded. Please check the following:</source>
+        <translation>古いバージョンのプロジェクトが読み込まれました。下記をご確認ください：</translation>
+    </message>
+</context>
+<context>
     <name>IwRenderCommand</name>
     <message>
         <location filename="../iwrendercommand.cpp" line="122"/>
@@ -1106,37 +1119,42 @@ Remove its shapes?</source>
         <translation>レンダーキュー</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="356"/>
+        <location filename="../outputsettingsdialog.cpp" line="354"/>
         <source>Frame %1 - %2 | %3</source>
         <translation>フレーム %1 - %2 | %3</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="409"/>
+        <location filename="../outputsettingsdialog.cpp" line="424"/>
+        <source>  (%1 frames)</source>
+        <translation>  （%1フレーム）</translation>
+    </message>
+    <message>
+        <location filename="../outputsettingsdialog.cpp" line="432"/>
         <source>NO MATTE LAYER FOUND!</source>
         <translation>マットレイヤーが見つかりません！</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="412"/>
+        <location filename="../outputsettingsdialog.cpp" line="435"/>
         <source>NO NUMBER FOUND IN THE MATTE FILE NAME!</source>
         <translation>マットレイヤーの画像ファイル名に番号が含まれていません！</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="564"/>
+        <location filename="../outputsettingsdialog.cpp" line="599"/>
         <source>Do you want to create folder?</source>
         <translation>フォルダを作成しますか？</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="574"/>
+        <location filename="../outputsettingsdialog.cpp" line="609"/>
         <source>Failed to create folder.</source>
         <translation>フォルダの作成に失敗しました。</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="605"/>
+        <location filename="../outputsettingsdialog.cpp" line="640"/>
         <source>Choose Folder.</source>
         <translation>フォルダを選択してください。</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="673"/>
+        <location filename="../outputsettingsdialog.cpp" line="708"/>
         <source>None</source>
         <translation>指定なし</translation>
     </message>
@@ -1245,27 +1263,27 @@ Remove its shapes?</source>
         <translation>キャンセル</translation>
     </message>
     <message>
-        <location filename="../iocommand.cpp" line="489"/>
+        <location filename="../iocommand.cpp" line="488"/>
         <source>Saved to %1 .</source>
         <translation>%1 に保存しました。</translation>
     </message>
     <message>
-        <location filename="../iocommand.cpp" line="629"/>
+        <location filename="../iocommand.cpp" line="633"/>
         <source>Import Project/Shapes File</source>
         <translation>プロジェクト/シェイプをインポート</translation>
     </message>
     <message>
-        <location filename="../iocommand.cpp" line="638"/>
+        <location filename="../iocommand.cpp" line="642"/>
         <source>Error</source>
         <translation>エラー</translation>
     </message>
     <message>
-        <location filename="../iocommand.cpp" line="638"/>
+        <location filename="../iocommand.cpp" line="642"/>
         <source>No current layer</source>
         <translation>レイヤーが選択されていません</translation>
     </message>
     <message>
-        <location filename="../iocommand.cpp" line="719"/>
+        <location filename="../iocommand.cpp" line="723"/>
         <source>%1 : The current project has been modified.
 What would you like to do?</source>
         <translation>%1 ： 現在のプロジェクトは変更されています。
@@ -1317,6 +1335,18 @@ What would you like to do?</source>
     <message>
         <source>Rendered %1 of %2 frames</source>
         <translation type="vanished">%2フレーム中%1フレーム完了</translation>
+    </message>
+</context>
+<context>
+    <name>RenderQueue</name>
+    <message>
+        <location filename="../outputsettings.cpp" line="373"/>
+        <source>- In the current version, the ways of specifying the output frame range have changed.
+  Please check the output settings.
+</source>
+        <translation type="unfinished">- 現在のバージョンでは出力フレーム範囲の指定方法が変更されています。
+  出力設定をご確認ください。
+</translation>
     </message>
 </context>
 <context>
@@ -1812,27 +1842,27 @@ for character Levels.</source>
 <context>
     <name>TimeLineHead</name>
     <message>
-        <location filename="../timelinewindow.cpp" line="976"/>
+        <location filename="../timelinewindow.cpp" line="978"/>
         <source>Set Start Marker</source>
         <translation>プレビュー開始マーカーをセット</translation>
     </message>
     <message>
-        <location filename="../timelinewindow.cpp" line="981"/>
+        <location filename="../timelinewindow.cpp" line="983"/>
         <source>Set Stop Marker</source>
         <translation>プレビュー停止マーカーをセット</translation>
     </message>
     <message>
-        <location filename="../timelinewindow.cpp" line="986"/>
+        <location filename="../timelinewindow.cpp" line="988"/>
         <source>Remove Markers</source>
         <translation>プレビュー範囲の解除</translation>
     </message>
     <message>
-        <location filename="../timelinewindow.cpp" line="991"/>
+        <location filename="../timelinewindow.cpp" line="993"/>
         <source>Preview This</source>
         <translation>このフレームのみプレビュー</translation>
     </message>
     <message>
-        <location filename="../timelinewindow.cpp" line="997"/>
+        <location filename="../timelinewindow.cpp" line="999"/>
         <source>Toggle Onion Skin Frame</source>
         <translation>固定オニオンスキンのON/OFF</translation>
     </message>
@@ -1840,7 +1870,7 @@ for character Levels.</source>
 <context>
     <name>TimeLinePanel</name>
     <message>
-        <location filename="../timelinewindow.cpp" line="1089"/>
+        <location filename="../timelinewindow.cpp" line="1091"/>
         <source>- No Layers -</source>
         <translation>- レイヤーがありません -</translation>
     </message>
@@ -1848,7 +1878,7 @@ for character Levels.</source>
 <context>
     <name>TimeLineWindow</name>
     <message>
-        <location filename="../timelinewindow.cpp" line="1519"/>
+        <location filename="../timelinewindow.cpp" line="1521"/>
         <source>Timeline</source>
         <translation>タイムライン</translation>
     </message>

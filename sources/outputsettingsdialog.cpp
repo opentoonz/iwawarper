@@ -344,15 +344,14 @@ void OutputSettingsDialog::updateGuis() {
       item->setIcon(project->getShapeTags()->getTagFromId(shapeTagId).icon);
     }
     int tmpInitialFrame                = os->getInitialFrameNumber();
-    int tmpIncrement                   = os->getIncrement();
     OutputSettings::SaveRange tmpRange = os->getSaveRange();
-    int from = tmpRange.startFrame * tmpIncrement + tmpInitialFrame;
-    int to   = ((tmpRange.endFrame == -1) ? project->getProjectFrameLength() - 1
-                                          : tmpRange.endFrame) *
-                 tmpIncrement +
-             tmpInitialFrame;
+    int from                           = tmpRange.startFrame + 1;
+    int to = (tmpRange.endFrame == -1) ? project->getProjectFrameLength()
+                                       : tmpRange.endFrame + 1;
+
     os->obtainMatteLayerNames();
-    QString outPath = project->getOutputPath(0, QString(), queueId);
+    QString outPath = project->getOutputPath(
+        tmpRange.startFrame, tmpInitialFrame, QString(), queueId);
     item->setText(tr("Frame %1 - %2 | %3").arg(from).arg(to).arg(outPath));
 
     if (project->getRenderQueue()->currentSettingsId() == queueId)
@@ -369,18 +368,15 @@ void OutputSettingsDialog::updateGuis() {
   // startとendは１足す
   int initialFrame = settings->getInitialFrameNumber();
   int increment    = settings->getIncrement();
-  m_startFrameEdit->setValidator(new QIntValidator(initialFrame, 9999, this));
-  m_endFrameEdit->setValidator(new QIntValidator(initialFrame, 9999, this));
+  // m_startFrameEdit->setValidator(new QIntValidator(initialFrame, 9999,
+  // this)); m_endFrameEdit->setValidator(new QIntValidator(initialFrame, 9999,
+  // this));
 
   OutputSettings::SaveRange range = settings->getSaveRange();
-  m_startFrameEdit->setText(
-      QString::number(range.startFrame * increment + initialFrame));
   if (range.endFrame == -1)
-    m_endFrameEdit->setText(QString::number(
-        (project->getProjectFrameLength() - 1) * increment + initialFrame));
-  else
-    m_endFrameEdit->setText(
-        QString::number(range.endFrame * increment + initialFrame));
+    range.endFrame = project->getProjectFrameLength() - 1;
+  m_startFrameEdit->setText(QString::number(range.startFrame + 1));
+  m_endFrameEdit->setText(QString::number(range.endFrame + 1));
 
   m_stepFrameEdit->setText(QString::number(range.stepFrame));
 
@@ -397,10 +393,38 @@ void OutputSettingsDialog::updateGuis() {
   // formatからexampleを生成する
   // →１フレーム目のファイルパスを作って、そのファイル名部分を入れる。
   project->getRenderQueue()->currentOutputSettings()->obtainMatteLayerNames();
-  QString exampleStr = project->getOutputPath(0);
-  std::cout << exampleStr.toStdString() << std::endl;
-  exampleStr =
-      exampleStr.remove(0, exampleStr.lastIndexOf(QRegExp("[/\\\\]")) + 1);
+
+  QString exampleStr;
+  int tmpFrame       = range.startFrame;
+  int tmpOutputFrame = initialFrame;
+  int frameAmount =
+      (int)((range.endFrame - range.startFrame) / range.stepFrame) + 1;
+
+  QList<QPair<int, int>> exampleFrames = {{range.startFrame, initialFrame}};
+  if (frameAmount > 1)
+    exampleFrames.append(
+        {range.startFrame + range.stepFrame, initialFrame + increment});
+  if (frameAmount > 2)
+    exampleFrames.append(
+        {range.startFrame + range.stepFrame * (frameAmount - 1),
+         initialFrame + increment * (frameAmount - 1)});
+
+  for (int i = 0; i < exampleFrames.size(); i++) {
+    QPair<int, int> exampleFrame = exampleFrames[i];
+    QString outFileName =
+        project->getOutputPath(exampleFrame.first, exampleFrame.second);
+    // std::cout << outFileName.toStdString() << std::endl;
+    outFileName =
+        outFileName.remove(0, outFileName.lastIndexOf(QRegExp("[/\\\\]")) + 1);
+    exampleStr += outFileName;
+
+    if (i != exampleFrames.size() - 1) exampleStr += ", ";
+    if (i == 1 && frameAmount > 3) exampleStr += "... , ";
+  }
+
+  if (range.stepFrame > 1 || increment > 1)
+    exampleStr += tr("  (%1 frames)").arg(frameAmount);
+
   m_exampleLabel->setText(exampleStr);
 
   if (settings->getFormat().contains("[mattename]") ||
@@ -440,10 +464,10 @@ void OutputSettingsDialog::onStartFrameEditted() {
   OutputSettings* settings = project->getRenderQueue()->currentOutputSettings();
   if (!settings) return;
 
-  int initialFrame = settings->getInitialFrameNumber();
-  int increment    = settings->getIncrement();
+  // int initialFrame = settings->getInitialFrameNumber();
+  // int increment    = settings->getIncrement();
 
-  int newStart = (m_startFrameEdit->text().toInt() - initialFrame) / increment;
+  int newStart = m_startFrameEdit->text().toInt() - 1;
 
   OutputSettings::SaveRange saveRange = settings->getSaveRange();
 
@@ -462,6 +486,10 @@ void OutputSettingsDialog::onStartFrameEditted() {
     saveRange.endFrame = saveRange.startFrame;
 
   settings->setSaveRange(saveRange);
+
+  // initial frame numberをstart frameに一致させる
+  settings->setInitiaFrameNumber(newStart + 1);
+
   // GUIを更新
   updateGuis();
 }
@@ -475,10 +503,10 @@ void OutputSettingsDialog::onEndFrameEditted() {
   OutputSettings* settings = project->getRenderQueue()->currentOutputSettings();
   if (!settings) return;
 
-  int initialFrame = settings->getInitialFrameNumber();
-  int increment    = settings->getIncrement();
+  // int initialFrame = settings->getInitialFrameNumber();
+  // int increment    = settings->getIncrement();
 
-  int newEnd = (m_endFrameEdit->text().toInt() - initialFrame) / increment;
+  int newEnd = m_endFrameEdit->text().toInt() - 1;
 
   OutputSettings::SaveRange saveRange = settings->getSaveRange();
 
@@ -493,9 +521,14 @@ void OutputSettingsDialog::onEndFrameEditted() {
   saveRange.endFrame = newEnd;
 
   // Startを下回った場合は、Start＝Endにする
-  if (newEnd < saveRange.startFrame) saveRange.startFrame = saveRange.endFrame;
+  if (newEnd < saveRange.startFrame) {
+    saveRange.startFrame = saveRange.endFrame;
+    // initial frame numberをstart frameに一致させる
+    settings->setInitiaFrameNumber(saveRange.startFrame + 1);
+  }
 
   settings->setSaveRange(saveRange);
+
   // GUIを更新
   updateGuis();
 }
@@ -519,6 +552,9 @@ void OutputSettingsDialog::onStepFrameEditted() {
   // FrameRangeを変更する
   saveRange.stepFrame = newStep;
   settings->setSaveRange(saveRange);
+
+  // incrementをstepに一致させる
+  settings->setIncrement(newStep);
 
   // GUIを更新
   updateGuis();
@@ -622,7 +658,7 @@ void OutputSettingsDialog::onInitialFrameNumberEditted() {
   settings->setInitiaFrameNumber(newVal);
   updateGuis();
 
-  IwApp::instance()->getCurrentProject()->notifyProjectChanged();
+  // IwApp::instance()->getCurrentProject()->notifyProjectChanged();
 }
 
 //---------------------------------------------------
@@ -637,7 +673,7 @@ void OutputSettingsDialog::onIncrementEditted() {
   settings->setIncrement(newVal);
   updateGuis();
 
-  IwApp::instance()->getCurrentProject()->notifyProjectChanged();
+  // IwApp::instance()->getCurrentProject()->notifyProjectChanged();
 }
 
 //---------------------------------------------------

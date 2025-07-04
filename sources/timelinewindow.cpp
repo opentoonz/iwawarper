@@ -778,8 +778,9 @@ void TimeLineHead::paintEvent(QPaintEvent* e) {
   bool prevRangeSpecified = prj->getPreviewRange(prevFrom, prevTo);
   QColor rangeColor       = (prevRangeSpecified) ? Qt::white : Qt::darkGray;
 
-  int initialFrame = settings->getInitialFrameNumber();
-  int increment    = settings->getIncrement();
+  // now the timeline frame should always start from 1
+  // int initialFrame = settings->getInitialFrameNumber();
+  // int increment    = settings->getIncrement();
 
   p.translate(f0 * m_frameWidth, 0);
   for (int f = f0; f <= f1; f++) {
@@ -821,8 +822,9 @@ void TimeLineHead::paintEvent(QPaintEvent* e) {
     }
     p.setFont(font);
 
-    p.drawText(frameRect, Qt::AlignCenter,
-               QString::number(f * increment + initialFrame));
+    p.drawText(frameRect, Qt::AlignCenter, QString::number(f + 1));
+    // p.drawText(frameRect, Qt::AlignCenter,
+    //   QString::number(f * increment + initialFrame));
 
     // プレビュー完了のバーを表示
     if (f < frameLength) {

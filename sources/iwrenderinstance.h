@@ -123,6 +123,7 @@ class IwRenderInstance : public QObject, public QRunnable {
   Q_OBJECT
 
   int m_frame;
+  int m_outputFrame;
   IwProject* m_project;
   OutputSettings* m_outputSettings;
   bool m_isPreview;
@@ -190,8 +191,9 @@ class IwRenderInstance : public QObject, public QRunnable {
   //--------------------------------
 
 public:
-  IwRenderInstance(int frame, IwProject* project, OutputSettings* settings,
-                   bool isPreview, RenderProgressPopup* popup = nullptr);
+  IwRenderInstance(int frame, int outputFrame, IwProject* project,
+                   OutputSettings* settings, bool isPreview,
+                   RenderProgressPopup* popup = nullptr);
   void doPreview();
   void doRender();
 

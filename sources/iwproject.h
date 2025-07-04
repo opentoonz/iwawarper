@@ -12,6 +12,7 @@
 #include <QSet>
 #include <QSize>
 #include <QString>
+#include <QApplication>
 
 class ViewSettings;
 class Preferences;
@@ -25,7 +26,53 @@ class IwLayer;
 struct OneShape;
 class ShapePair;
 
+class Version {
+  int m_majorVersion, m_minorVersion, m_patchVersion;
+
+public:
+  Version(int major = 0, int minor = 0, int patch = 0)
+      : m_majorVersion(major), m_minorVersion(minor), m_patchVersion(patch) {}
+  Version(const QString& str) { fromString(str); }
+
+  friend bool operator<(const Version& a, const Version& b) {
+    if (a.m_majorVersion != b.m_majorVersion) {
+      return a.m_majorVersion < b.m_majorVersion;
+    }
+    if (a.m_minorVersion != b.m_minorVersion) {
+      return a.m_minorVersion < b.m_minorVersion;
+    }
+    return a.m_patchVersion < b.m_patchVersion;
+  }
+  friend bool operator>(const Version& a, const Version& b) { return b < a; }
+  friend bool operator<=(const Version& a, const Version& b) {
+    return !(b < a);
+  }
+  friend bool operator>=(const Version& a, const Version& b) { return b <= a; }
+  friend bool operator==(const Version& a, const Version& b) {
+    return a <= b && b >= a;
+  }
+  friend bool operator!=(const Version& a, const Version& b) {
+    return !(a == b);
+  }
+
+  QString toString() {
+    return QString("%1.%2.%3")
+        .arg(m_majorVersion)
+        .arg(m_minorVersion)
+        .arg(m_patchVersion);
+  }
+  void fromString(const QString& str) {
+    QStringList list = str.split('.');
+    assert(list.size() == 3);
+    m_majorVersion = list[0].toInt();
+    m_minorVersion = list[1].toInt();
+    m_patchVersion = list[2].toInt();
+  }
+};
+
 class IwProject {
+  Q_DECLARE_TR_FUNCTIONS(IwProject)
+
   // プロジェクトごとに振られる通し番号
   int m_id;
 
@@ -106,6 +153,8 @@ public:
   void saveData(QXmlStreamWriter& writer);
   void loadData(QXmlStreamReader& reader);
 
+  void versionCheck(const Version& loadedVersion);
+
   // レンダリング設定
   RenderSettings* getRenderSettings() { return m_renderSettings; }
 
@@ -117,8 +166,8 @@ public:
   QString getProjectName();
 
   // frameに対する保存パスを返す
-  QString getOutputPath(int frame, QString formatStr = QString(),
-                        int queueId = -1);
+  QString getOutputPath(int frame, int outputFrame,
+                        QString formatStr = QString(), int queueId = -1);
 
   //-------------
   // MultiFrame関係
