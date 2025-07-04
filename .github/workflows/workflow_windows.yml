@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 jobs:
   Windows:
-    runs-on: windows-2019
+    runs-on: windows-2022
     env:
       QT_ROOT: ${{github.workspace}}/3rdparty/qt
       QT_URL: https://github.com/shun-iwasawa/qt5/releases/download/v5.15.2_wintab/Qt5.15.2_wintab.zip
@@ -40,12 +40,12 @@ jobs:
         mkdir build | Out-Null
         cd build
         $env:QT_PATH = '${{ env.QT_ROOT }}/Qt5.15.2_wintab/5.15.2_wintab/msvc2019_64'
-        cmake ../sources -G 'Visual Studio 16 2019' -Ax64 -DQTDIR="$env:QT_PATH"
+        cmake ../sources -G 'Visual Studio 17 2022' -Ax64 -DQTDIR="$env:QT_PATH"
         cmake --build . --config Release
 
     - name: Create Artifact
       env:
-        VCINSTALLDIR: 'C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC'
+        VCINSTALLDIR: 'C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC'
       run: |
         mkdir artifact | Out-Null
         cd artifact
