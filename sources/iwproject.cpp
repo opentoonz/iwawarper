@@ -19,6 +19,7 @@
 #include <QXmlStreamWriter>
 #include <QXmlStreamReader>
 #include <QStringRef>
+#include <QMessageBox>
 
 #include "iwlayer.h"
 
@@ -224,6 +225,21 @@ void IwProject::loadData(QXmlStreamReader& reader) {
 }
 
 //---------------------------------------------------
+
+void IwProject::versionCheck(const Version& loadedVersion) {
+  // 0.1.0 以前で、出力設定→レンダリング範囲StartとInitialFrameNumber,
+  // incrementが
+  // すべて1でないシーンを開いた場合、値を調整した上で警告ダイアログを出す
+  QString msg = m_renderQueue->versionCheck(loadedVersion);
+  if (msg.isEmpty()) return;
+
+  QMessageBox::warning(nullptr, tr("Warning"),
+                       tr("An older version of the project file was loaded. "
+                          "Please check the following:") +
+                           QString("\n\n%1").arg(msg));
+}
+
+//---------------------------------------------------
 // パスからプロジェクト名を抜き出して返す
 //---------------------------------------------------
 QString IwProject::getProjectName() { return QFileInfo(m_path).baseName(); }
@@ -231,8 +247,10 @@ QString IwProject::getProjectName() { return QFileInfo(m_path).baseName(); }
 //---------------------------------------------------
 // frameに対する保存パスを返す
 //---------------------------------------------------
-QString IwProject::getOutputPath(int frame, QString formatStr, int queueId) {
-  return m_renderQueue->getPath(frame, getProjectName(), formatStr, queueId);
+QString IwProject::getOutputPath(int frame, int outputFrame, QString formatStr,
+                                 int queueId) {
+  return m_renderQueue->getPath(frame, outputFrame, getProjectName(), formatStr,
+                                queueId);
 }
 
 //---------------------------------------------------

@@ -177,10 +177,11 @@ unsigned int taskId = 0;
 }  // namespace
 
 //---------------------------------------------------
-IwRenderInstance::IwRenderInstance(int frame, IwProject* project,
-                                   OutputSettings* os, bool isPreview,
-                                   RenderProgressPopup* popup)
+IwRenderInstance::IwRenderInstance(int frame, int outputFrame,
+                                   IwProject* project, OutputSettings* os,
+                                   bool isPreview, RenderProgressPopup* popup)
     : m_frame(frame)
+    , m_outputFrame(outputFrame)
     , m_project(project)
     , m_outputSettings(os)
     , m_isPreview(isPreview)
@@ -1215,8 +1216,8 @@ void IwRenderInstance::saveImage(TRaster64P ras) {
   TRasterImageP img(ras);
 
   // ファイルパスを得る
-  QString path =
-      m_outputSettings->getPath(m_frame, m_project->getProjectName());
+  QString path = m_outputSettings->getPath(m_frame, m_outputFrame,
+                                           m_project->getProjectName());
 
   QString ext =
       OutputSettings::getStandardExtension(m_outputSettings->getSaver());

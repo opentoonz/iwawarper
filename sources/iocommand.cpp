@@ -42,12 +42,17 @@
 #include "logger.h"
 
 #define PRINT_LOG(message)                                                     \
-  { Logger::Write(message); }
+  {                                                                            \
+    Logger::Write(message);                                                    \
+  }
 
 namespace {
-const int majorVersion = 0;
-const int minorVersion = 1;
-const int patchVersion = 0;
+
+// Project file format versions history:
+// 0.1.0 : initial version
+// 0.2.0 : Changed behavior of SaveRange and InitialFrameNumber in
+// OutputSettings
+Version projectVersion(0, 2, 0);
 
 //[ファイル名]#0000 という形式にして返す
 QString getFileNameWithFrameNumber(QString fileName, int frameNumber) {
@@ -450,10 +455,7 @@ void IoCmd::saveProject(QString path) {
 
   writer.writeStartElement("IwaWarper");
   // バージョン
-  writer.writeAttribute("version", QString("%1.%2.%3")
-                                       .arg(majorVersion)
-                                       .arg(minorVersion)
-                                       .arg(patchVersion));
+  writer.writeAttribute("version", projectVersion.toString());
 
   // 情報を書く
   writer.writeStartElement("Info");
@@ -540,6 +542,7 @@ void IoCmd::loadProject(QString path, bool addToRecentFiles) {
   QFile fp(path);
   if (!fp.open(QIODevice::ReadOnly)) return;
 
+  Version loadedVersion;
   //---------------------------
   // まず、"IwaMorph"ヘッダがあることを確認する
   //---------------------------
@@ -554,7 +557,8 @@ void IoCmd::loadProject(QString path, bool addToRecentFiles) {
                            .toString()
                            .toStdString()
                     << std::endl;
-          // 後々、ここにバージョンチェックを入れる
+          loadedVersion.fromString(
+              headerFinder.attributes().value("version").toString());
           find = true;
           break;
         }
@@ -603,6 +607,8 @@ void IoCmd::loadProject(QString path, bool addToRecentFiles) {
   fp.close();
 
   project->setPath(path);
+
+  project->versionCheck(loadedVersion);
 
   if (addToRecentFiles) RecentFiles::instance()->addPath(path);
 
@@ -762,10 +768,7 @@ bool IoCmd::exportShapes(const QList<ShapePair*> shapePairs) {
 
   writer.writeStartElement("IwaWarperShapes");
   // バージョン
-  writer.writeAttribute("version", QString("%1.%2.%3")
-                                       .arg(majorVersion)
-                                       .arg(minorVersion)
-                                       .arg(patchVersion));
+  writer.writeAttribute("version", projectVersion.toString());
 
   // 情報を書く
   writer.writeStartElement("Info");

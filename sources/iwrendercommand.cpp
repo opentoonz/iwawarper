@@ -61,7 +61,7 @@ void IwRenderCommand::onPreview() {
 
   for (auto frame : cuedFrames) {
     IwRenderInstance* previewTask =
-        new IwRenderInstance(frame, project, settings, true);
+        new IwRenderInstance(frame, frame, project, settings, true);
     connect(previewTask, SIGNAL(renderStarted(int, unsigned int)),
             IwApp::instance()->getCurrentProject(),
             SLOT(onPreviewRenderStarted(int, unsigned int)),
@@ -78,8 +78,10 @@ void IwRenderCommand::onPreview() {
 //---------------------------------------------------
 
 void RenderInvoke_Worker::run() {
-  for (int frame : m_frames) {
-    IwRenderInstance(frame, m_project, m_settings, false, m_popup).doRender();
+  for (auto frame : m_frames) {
+    IwRenderInstance(frame.first, frame.second, m_project, m_settings, false,
+                     m_popup)
+        .doRender();
     emit frameFinished();
   }
   // レンダリングが終わったら完了にする
@@ -146,11 +148,15 @@ void IwRenderCommand::onRender() {
                       1;
 
     // 各フレームについて
-    QList<int> frames;
+    QList<QPair<int, int>> frames;
+    int outputFrame = settings->getInitialFrameNumber();
+    int increment   = settings->getIncrement();
     for (int i = 0; i < frameAmount; i++) {
       // フレームを求める
       int frame = saveRange.startFrame + i * saveRange.stepFrame;
-      frames.append(frame);
+      frames.append({frame, outputFrame});
+
+      outputFrame += increment;
     }
 
     // マットレイヤ情報を格納

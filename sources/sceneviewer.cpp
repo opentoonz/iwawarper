@@ -63,7 +63,9 @@
 #include "keydragtool.h"
 
 #define PRINT_LOG(message)                                                     \
-  { Logger::Write(message); }
+  {                                                                            \
+    Logger::Write(message);                                                    \
+  }
 
 namespace {
 bool isPremultiplied(TRaster32P ras) {
@@ -1937,11 +1939,14 @@ void SceneViewer::doShapeRender() {
       1;
 
   // 各フレームについて
-  QList<int> frames;
+  QList<QPair<int, int>> frames;
+  int outputFrame = settings->getInitialFrameNumber();
+  int increment   = settings->getIncrement();
   for (int i = 0; i < frameAmount; i++) {
     // フレームを求める
     int frame = saveRange.startFrame + i * saveRange.stepFrame;
-    frames.append(frame);
+    frames.append({frame, outputFrame});
+    outputFrame += increment;
   }
 
   progressPopup.open();
@@ -1955,7 +1960,7 @@ void SceneViewer::doShapeRender() {
       outputSize = workAreaSize;
     else {
       IwLayer* layer = project->getLayer(sizeId);
-      QString path   = layer->getImageFilePath(frame);
+      QString path   = layer->getImageFilePath(frame.first);
       if (path.isEmpty()) {  // 空のレイヤはスキップする
         progressPopup.onFrameFinished();
         continue;
@@ -2038,7 +2043,7 @@ void SceneViewer::doShapeRender() {
           m_program_line->setUniformValue(
               u_line_color, (fromTo == 0) ? QColor(Qt::red) : QColor(Qt::blue));
 
-          drawOneShape(oneShape, frame);
+          drawOneShape(oneShape, frame.first);
 
           glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
         }
@@ -2055,8 +2060,9 @@ void SceneViewer::doShapeRender() {
     m_line_vbo->release();
     m_program_line->release();
 
-    QString path = project->getOutputPath(
-        frame, QString("[dir]/%1.[num].[ext]").arg(fileName));
+    QString path =
+        project->getOutputPath(frame.first, frame.second,
+                               QString("[dir]/%1.[num].[ext]").arg(fileName));
     path.chop(3);
     path += "png";
 

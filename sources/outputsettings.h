@@ -17,6 +17,8 @@
 #include <QString>
 #include <QStringList>
 #include <QMap>
+#include <QApplication>
+#include "iwproject.h"
 
 class TPropertyGroup;
 class MyPropertyGroup;
@@ -104,7 +106,7 @@ public:
   void setRenderState(RenderState state) { m_renderState = state; }
 
   // frameに対する保存パスを返す
-  QString getPath(int frame, QString projectName,
+  QString getPath(int frame, int outputFrame, QString projectName,
                   QString formatStr = QString());
 
   // 保存形式に対する標準の拡張子を返す
@@ -127,6 +129,8 @@ public:
 };
 
 class RenderQueue {
+  Q_DECLARE_TR_FUNCTIONS(RenderQueue)
+
   QList<OutputSettings *> m_outputs;
   int m_currentSettingsId;
 
@@ -136,11 +140,17 @@ public:
   // 保存/ロード
   void saveData(QXmlStreamWriter &writer);
   void loadData(QXmlStreamReader &reader);
+  // 0.1.0 以前で、出力設定→レンダリング範囲StartとInitialFrameNumber,
+  // incrementが
+  // すべて1でないシーンを開いた場合、値を調整した上で警告ダイアログを出す
+  // 戻り値は警告ダイアログのメッセージ。何もなければ空Stringを返す
+  QString versionCheck(const Version &);
+
   void loadPrevVersionData(QXmlStreamReader &reader);
 
   // frameに対する保存パスを返す
-  QString getPath(int frame, QString projectName, QString formatStr = QString(),
-                  int queueId = -1);
+  QString getPath(int frame, int outputFrame, QString projectName,
+                  QString formatStr = QString(), int queueId = -1);
 
   // Onになっているアイテムを返す
   QList<OutputSettings *> activeItems();
