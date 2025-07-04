@@ -505,11 +505,11 @@ void IwRenderInstance::getCorrVectors(IwLayer* /*layer*/,
           lastWeightTo   = tmpWeightTo;
         }
 
-        // ここで、ワープ先（Toの方）のCorrVecの長さが、５ピクセルより短い場合、
+        // ここで、ワープ先（Toの方）のCorrVecの長さが、1ピクセルより短い場合、
         //  次のCorrVecと連結するようにする
         // さらに、コントロールポイントと一致するCorrPointは残す
         QPointF vec = tmpPosTo - prevPosTo;
-        if (vec.x() * vec.x() + vec.y() * vec.y() < 9.0 &&
+        if (vec.x() * vec.x() + vec.y() * vec.y() < 1.0 &&
             !isDecimal(discreteCorrValuesFrom.at(d)) &&
             !isDecimal(discreteCorrValuesTo.at(d)))
           continue;
