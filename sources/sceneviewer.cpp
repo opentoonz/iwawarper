@@ -67,6 +67,8 @@
     Logger::Write(message);                                                    \
   }
 
+#define MACOSX
+
 namespace {
 bool isPremultiplied(TRaster32P ras) {
   for (int y = 0; y < ras->getLy(); y++) {
@@ -132,7 +134,10 @@ inline QVector4D colorToVector(QColor col) {
 Qt::KeyboardModifiers SceneViewer::m_modifiers = Qt::NoModifier;
 
 SceneViewer::SceneViewer(QWidget* parent)
-    : QOpenGLWidget(parent), m_isPanning(false), m_mouseButton(Qt::NoButton) {
+    : QOpenGLWidget(parent)
+    , m_isPanning(false)
+    , m_mouseButton(Qt::NoButton)
+    , m_isPicking(false) {
   setAutoFillBackground(false);  // これをOFFにすることでQPainterが使用できる
   // マウスの動きを感知する
   setMouseTracking(true);
@@ -332,13 +337,25 @@ void SceneViewer::initializeGL() {
   else
     std::cout << "failed to bind QOpenGLVertexArrayObject" << std::endl;
 
+#ifndef MACOSX
+  glGenBuffers(1, &m_name_ssbo);
+  glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_name_ssbo);
+  glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(pickedNameUB), nullptr,
+               GL_DYNAMIC_READ);
+#endif
+
   m_program_line = new QOpenGLShaderProgram(this);
   m_program_line->addShaderFromSourceFile(QOpenGLShader::Vertex,
                                           ":/line_vert.glsl");
   m_program_line->addShaderFromSourceFile(QOpenGLShader::Geometry,
                                           ":/stipple_line_geom.glsl");
+#ifndef MACOSX
   m_program_line->addShaderFromSourceFile(QOpenGLShader::Fragment,
                                           ":/stipple_line_frag.glsl");
+#else
+  m_program_line->addShaderFromSourceFile(QOpenGLShader::Fragment,
+                                          ":/stipple_line_frag_mac.glsl");
+#endif
   m_program_line->link();
   m_program_line->bind();
 
@@ -350,6 +367,12 @@ void SceneViewer::initializeGL() {
   u_line_viewportSize   = m_program_line->uniformLocation("viewportSize");
   u_line_stippleFactor  = m_program_line->uniformLocation("stippleFactor");
   u_line_stipplePattern = m_program_line->uniformLocation("stipplePattern");
+
+#ifndef MACOSX
+  u_line_mousePos    = m_program_line->uniformLocation("mousePos");
+  u_line_objName     = m_program_line->uniformLocation("objName");
+  u_line_devPixRatio = m_program_line->uniformLocation("devPixRatio");
+#endif
 
   m_program_line->enableAttributeArray(0);
   m_program_line->setAttributeBuffer(0, GL_FLOAT, 0, 3, sizeof(QVector3D));
@@ -478,9 +501,37 @@ void SceneViewer::scale(GLdouble x, GLdouble y, GLdouble z) {
 void SceneViewer::setColor(const QColor& color) {
   m_program_line->setUniformValue(u_line_color, color);
 }
+
+void SceneViewer::pushName(const GLuint name) {
+#ifndef MACOSX
+  m_nameStack.push(name);
+#else
+  glPushName(name);
+#endif
+}
+void SceneViewer::popName() {
+#ifndef MACOSX
+  m_nameStack.pop();
+#else
+  glPopName();
+#endif
+}
+void SceneViewer::clearNames() { m_nameStack.clear(); }
+GLuint SceneViewer::getName() const {
+  if (!m_isPicking) return 0;
+  if (m_nameStack.isEmpty()) return 0;
+  return m_nameStack.top();
+}
+
 void SceneViewer::doDrawLine(GLenum mode, QVector3D* verts, int vertCount) {
   m_program_line->setUniformValue(u_line_matrix,
                                   m_viewProjMatrix * m_modelMatrix.top());
+#ifndef MACOSX
+  m_program_line->setUniformValue(
+      u_line_mousePos, QPoint(m_mousePos.x(), height() - m_mousePos.y()));
+  m_program_line->setUniformValue(u_line_objName, getName());
+#endif
+
   auto ptr = m_line_vbo->map(QOpenGLBuffer::WriteOnly);
   memcpy(ptr, verts, sizeof(QVector3D) * vertCount);
   m_line_vbo->unmap();
@@ -496,6 +547,9 @@ void SceneViewer::doDrawFill(GLenum mode, QVector3D* verts, int vertCount,
 
   m_line_vbo->bind();
   m_line_vao->bind();
+#ifndef MACOSX
+  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_name_ssbo);
+#endif
 
   auto ptr = m_line_vbo->map(QOpenGLBuffer::WriteOnly);
   memcpy(ptr, verts, sizeof(QVector3D) * vertCount);
@@ -509,6 +563,9 @@ void SceneViewer::doDrawFill(GLenum mode, QVector3D* verts, int vertCount,
   m_program_line->bind();
   m_line_vbo->bind();
   m_line_vao->bind();
+#ifndef MACOSX
+  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_name_ssbo);
+#endif
 }
 void SceneViewer::releaseBufferObjects() {
   m_line_vao->release();
@@ -518,6 +575,9 @@ void SceneViewer::releaseBufferObjects() {
 void SceneViewer::bindBufferObjects() {
   m_program_line->bind();
   m_line_vbo->bind();
+#ifndef MACOSX
+  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_name_ssbo);
+#endif
   m_line_vao->bind();
 }
 
@@ -852,6 +912,9 @@ void SceneViewer::drawWorkArea() {
   glGetFloatv(GL_VIEWPORT, viewport);
   m_program_line->setUniformValue(u_line_viewportSize,
                                   QSizeF(viewport[2], viewport[3]));
+#ifndef MACOSX
+  m_program_line->setUniformValue(u_line_objName, 0);
+#endif
 
   ViewSettings* settings = m_project->getViewSettings();
 
@@ -920,6 +983,15 @@ void SceneViewer::drawShapes() {
   m_line_vao->bind();
   m_line_vbo->bind();
 
+#ifndef MACOSX
+  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_name_ssbo);
+
+  m_program_line->setUniformValue(u_line_devPixRatio,
+                                  (float)screen()->devicePixelRatio());
+  m_program_line->setUniformValue(
+      u_line_mousePos, QPoint(m_mousePos.x(), height() - m_mousePos.y()));
+#endif
+
   m_program_line->setUniformValue(u_line_matrix,
                                   m_viewProjMatrix * m_modelMatrix.top());
   GLfloat viewport[4];
@@ -987,7 +1059,7 @@ void SceneViewer::drawShapes() {
 
         // 名前のプッシュ
         if (!shapePair->isLocked(fromTo) && !layer->isLocked())
-          glPushName(layer->getNameFromShapePair(oneShape));
+          pushName(layer->getNameFromShapePair(oneShape));
 
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -1009,13 +1081,14 @@ void SceneViewer::drawShapes() {
           lineColor = QColor::fromRgbF(1.0, 0.0, 1.0);
 
         m_program_line->setUniformValue(u_line_color, lineColor);
+        m_program_line->setUniformValue(u_line_objName, getName());
 
         drawOneShape(oneShape, frame);
 
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
         // 名前のポップ
-        if (!shapePair->isLocked(fromTo) && !layer->isLocked()) glPopName();
+        if (!shapePair->isLocked(fromTo) && !layer->isLocked()) popName();
       }
     }
 
@@ -1029,6 +1102,9 @@ void SceneViewer::drawShapes() {
                         ? QColor::fromRgbF(0.8, 0.7, 0.2, 0.8)
                         : QColor::fromRgbF(0.2, 0.7, 0.8, 0.8);
         m_program_line->setUniformValue(u_line_color, lineColor);
+#ifndef MACOSX
+        m_program_line->setUniformValue(u_line_objName, getName());
+#endif
 
         foreach (const int& onionFrame, onionFrames) {
           if (onionFrame == frame) continue;
@@ -1052,13 +1128,16 @@ void SceneViewer::drawShapes() {
                           ? QColor::fromRgbF(0.8, 0.7, 0.2, alpha)
                           : QColor::fromRgbF(0.2, 0.7, 0.8, alpha);
           m_program_line->setUniformValue(u_line_color, lineColor);
+#ifndef MACOSX
+          m_program_line->setUniformValue(u_line_objName, getName());
+#endif
 
           drawOneShape(oneShape, relativeOf);
         }
       }
 
       if (!oneShape.shapePairP->isLocked(oneShape.fromTo) && !layer->isLocked())
-        glPushName(layer->getNameFromShapePair(oneShape));
+        pushName(layer->getNameFromShapePair(oneShape));
 
       QColor lineColor;
       if (oneShape.fromTo == 0)
@@ -1069,6 +1148,9 @@ void SceneViewer::drawShapes() {
       if (tool && tool->setSpecialShapeColor(oneShape))
         lineColor = QColor::fromRgbF(1.0, 0.0, 1.0);
       m_program_line->setUniformValue(u_line_color, lineColor);
+#ifndef MACOSX
+      m_program_line->setUniformValue(u_line_objName, getName());
+#endif
 
       drawOneShape(oneShape, frame);
 
@@ -1076,7 +1158,7 @@ void SceneViewer::drawShapes() {
 
       // 名前のポップ
       if (!oneShape.shapePairP->isLocked(oneShape.fromTo) && !layer->isLocked())
-        glPopName();
+        popName();
     }
   }
 
@@ -1109,6 +1191,9 @@ void SceneViewer::drawShapes() {
       else
         lineColor = QColor::fromRgbF(0.7, 0.7, 0.7);
       m_program_line->setUniformValue(u_line_color, lineColor);
+#ifndef MACOSX
+      m_program_line->setUniformValue(u_line_objName, getName());
+#endif
       double g = m_hRuler->getGuide(gId);
 
       auto ptr = m_line_vbo->map(QOpenGLBuffer::WriteOnly);
@@ -1126,6 +1211,9 @@ void SceneViewer::drawShapes() {
       else
         lineColor = QColor::fromRgbF(0.7, 0.7, 0.7);
       m_program_line->setUniformValue(u_line_color, lineColor);
+#ifndef MACOSX
+      m_program_line->setUniformValue(u_line_objName, getName());
+#endif
       double g = m_vRuler->getGuide(gId);
 
       auto ptr = m_line_vbo->map(QOpenGLBuffer::WriteOnly);
@@ -1759,6 +1847,70 @@ void SceneViewer::wheelEvent(QWheelEvent* event) {
 //----------------------------------
 // クリック位置の描画アイテム全てのインデックスのリストを返す
 //----------------------------------
+
+#ifndef MACOSX
+
+QList<int> SceneViewer::pickAll(const QPoint& pos) {
+  makeCurrent();
+
+  GLint viewport[4];
+  glGetIntegerv(GL_VIEWPORT, viewport);
+
+  // GLdouble mat[16];
+  QList<int> keepList;
+
+  int devPixRatio = screen()->devicePixelRatio();
+
+  // preparation
+  QRect clipRect(0, 0, 40, 40);
+  clipRect.moveCenter(QPoint(m_mousePos.x(), height() - m_mousePos.y()));
+  glEnable(GL_SCISSOR_TEST);
+  glScissor(clipRect.left(), clipRect.top(), clipRect.width(),
+            clipRect.height());
+  m_program_line->bind();
+  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_name_ssbo);
+  pickedNameUB* nameBuf = (pickedNameUB*)glMapBufferRange(
+      GL_SHADER_STORAGE_BUFFER, 0, sizeof(pickedNameUB), GL_MAP_WRITE_BIT);
+  nameBuf->nameCount[0] = 0;
+  nameBuf->nameCount[1] = 0;
+  nameBuf->nameCount[2] = 0;
+  glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+  m_program_line->release();
+  // initialize name stack
+  m_nameStack.clear();
+
+  m_isPicking = true;
+  paintGL();
+  m_isPicking = false;
+
+  nameBuf = (pickedNameUB*)glMapBufferRange(
+      GL_SHADER_STORAGE_BUFFER, 0, sizeof(pickedNameUB), GL_MAP_READ_BIT);
+
+  for (int r = 0; r < 3; r++) {
+    QList<int> tmpList;
+    bool pointPicked = false;
+    for (unsigned int i = 0; i < nameBuf->nameCount[r]; i++) {
+      GLuint name = nameBuf->names[r][i];
+      if (name % 10000 > 0) pointPicked = true;
+      tmpList.append(name);
+    }
+    if (!tmpList.isEmpty()) {
+      if (pointPicked) {  // 何かポイントが拾えたら即座に返す
+        keepList = tmpList;
+        break;
+      } else if (keepList.isEmpty())  // シェイプのみ拾えた場合はキープしておく
+        keepList = tmpList;
+    }
+  }
+
+  glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+
+  glDisable(GL_SCISSOR_TEST);
+
+  return keepList;
+}
+#else
+
 QList<int> SceneViewer::pickAll(const QPoint& pos) {
   makeCurrent();
 
@@ -1800,6 +1952,7 @@ QList<int> SceneViewer::pickAll(const QPoint& pos) {
     // セレクションモードを抜ける。同時に、セレクションのヒット数が返る。
     int hitCount = glRenderMode(GL_RENDER);
     GLuint* p    = selectBuffer;
+
     QList<int> tmpList;
     bool pointPicked = false;
     for (int i = 0; i < hitCount; ++i) {
@@ -1824,6 +1977,7 @@ QList<int> SceneViewer::pickAll(const QPoint& pos) {
   // シェイプのみ拾えた場合か、何も拾えなかった場合はこちら
   return keepList;
 }
+#endif
 
 //----------------------------------
 // クリック位置の描画アイテムのインデックスを返す
@@ -2008,6 +2162,7 @@ void SceneViewer::doShapeRender() {
 
     m_program_line->setUniformValue(u_line_matrix, projMatrix * modelMatrix);
     m_program_line->setUniformValue(u_line_viewportSize, QSizeF(outputSize));
+    // m_program_line->setUniformValue(u_line_objName, 0);
     setLineStipple(1, 0xFFFF);
 
     //---- ロック情報を得る

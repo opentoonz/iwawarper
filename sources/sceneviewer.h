@@ -9,7 +9,7 @@
 #include "viewsettings.h"
 
 #include <QOpenGLWidget>
-#include <QOpenGLFunctions>
+#include <QOpenGLExtraFunctions>
 #include <QTransform>
 #include <QMouseEvent>
 #include <QStack>
@@ -19,11 +19,17 @@ class IwProject;
 class QMenu;
 class Ruler;
 
+// picking—p UniformBuffer
+struct pickedNameUB {
+  unsigned int nameCount[3];
+  unsigned int names[3][32];
+};
+
 class QOpenGLShaderProgram;
 class QOpenGLBuffer;
 class QOpenGLVertexArrayObject;
 
-class SceneViewer : public QOpenGLWidget, protected QOpenGLFunctions {
+class SceneViewer : public QOpenGLWidget, protected QOpenGLExtraFunctions {
   Q_OBJECT
 
   IwProject *m_project = nullptr;
@@ -62,6 +68,8 @@ class SceneViewer : public QOpenGLWidget, protected QOpenGLFunctions {
   QOpenGLBuffer *m_ibo                     = nullptr;  // index buffer
   QOpenGLVertexArrayObject *m_vao          = nullptr;
 
+  GLuint m_name_ssbo = 0;
+
   QOpenGLBuffer *m_line_vbo            = nullptr;
   QOpenGLVertexArrayObject *m_line_vao = nullptr;
 
@@ -84,6 +92,10 @@ class SceneViewer : public QOpenGLWidget, protected QOpenGLFunctions {
   GLint u_line_viewportSize   = 0;
   GLint u_line_stippleFactor  = 0;
   GLint u_line_stipplePattern = 0;
+  // picking
+  GLint u_line_mousePos    = 0;
+  GLint u_line_objName     = 0;
+  GLint u_line_devPixRatio = 0;
 
   GLint u_fill_matrix = 0;
   GLint u_fill_color  = 0;
@@ -92,6 +104,9 @@ class SceneViewer : public QOpenGLWidget, protected QOpenGLFunctions {
   QStack<QMatrix4x4> m_modelMatrix;
 
   QPainter *m_p = nullptr;
+
+  bool m_isPicking;
+  QStack<GLuint> m_nameStack;
 
 public:
   SceneViewer(QWidget *parent);
@@ -130,6 +145,11 @@ public:
   void translate(GLdouble, GLdouble, GLdouble);
   void scale(GLdouble, GLdouble, GLdouble);
   void setColor(const QColor &);
+  void pushName(const GLuint name);
+  void popName();
+  void clearNames();
+  GLuint getName() const;
+
   QMatrix4x4 modelMatrix() { return m_modelMatrix.top(); }
   void doDrawLine(GLenum mode, QVector3D *verts, int vertCount);
   void doDrawFill(GLenum mode, QVector3D *verts, int vertCount,
