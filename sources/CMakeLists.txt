@@ -190,6 +190,7 @@ line_frag.glsl
 mesh_to_line_geom.glsl
 stipple_line_geom.glsl
 stipple_line_frag.glsl
+stipple_line_frag_mac.glsl
 fill_vert.glsl
 fill_frag.glsl
 )

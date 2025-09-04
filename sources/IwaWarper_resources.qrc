@@ -7,6 +7,7 @@
 	<file>mesh_to_line_geom.glsl</file>
 	<file>stipple_line_geom.glsl</file>
 	<file>stipple_line_frag.glsl</file>
+	<file>stipple_line_frag_mac.glsl</file>
 	<file>fill_frag.glsl</file>
 	<file>fill_vert.glsl</file>
 	<file>Resources/cursors/blackarrow.png</file>
