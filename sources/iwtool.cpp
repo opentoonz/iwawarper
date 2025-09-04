@@ -174,7 +174,7 @@ void IwTool::drawCorrLine(OneShape shape)
 
     m_viewer->pushMatrix();
 
-    glPushName(shapeName + p * 10 + 1);
+    m_viewer->pushName(shapeName + p * 10 + 1);
 
     m_viewer->translate(corrP.x(), corrP.y(), 0.0);
     m_viewer->scale(onePix.x(), onePix.y(), 1.0);
@@ -184,7 +184,7 @@ void IwTool::drawCorrLine(OneShape shape)
         QVector3D(-2.0, 2.0, 0.0), QVector3D(-2.0, -2.0, 0.0)};
 
     m_viewer->doDrawLine(GL_LINE_LOOP, vert, 4);
-    glPopName();
+    m_viewer->popName();
 
     // テキストの描画
     // ウェイトが1じゃない場合に描画する

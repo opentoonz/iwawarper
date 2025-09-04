@@ -255,12 +255,12 @@ void PenTool::draw() {
 
   // 名前付ける
   int name = PenTool::EDITING_SHAPE_ID * 10000;
-  glPushName(name);
+  m_viewer->pushName(name);
 
   m_viewer->doDrawLine(GL_LINE_STRIP, vertexArray,
                        m_editingShape->getVertexAmount(project));
 
-  glPopName();
+  m_viewer->popName();
 
   // データを解放
   delete[] vertexArray;

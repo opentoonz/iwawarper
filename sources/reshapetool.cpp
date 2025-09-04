@@ -28,17 +28,17 @@ namespace {
 
 void drawEdgeForResize(SceneViewer* viewer, TransformHandleId handleId,
                        const QPointF& p1, const QPointF& p2) {
-  glPushName((int)handleId);
+  viewer->pushName((int)handleId);
 
   QVector3D vert[2] = {QVector3D(p1), QVector3D(p2)};
   viewer->doDrawLine(GL_LINE_STRIP, vert, 2);
 
-  glPopName();
+  viewer->popName();
 }
 void drawHandle(SceneViewer* viewer, TransformHandleId handleId,
                 const QPointF& onePix, const QPointF& pos) {
   viewer->pushMatrix();
-  glPushName((int)handleId);
+  viewer->pushName((int)handleId);
   viewer->translate(pos.x(), pos.y(), 0.0);
   viewer->scale(onePix.x(), onePix.y(), 1.0);
 
@@ -47,7 +47,7 @@ void drawHandle(SceneViewer* viewer, TransformHandleId handleId,
       QVector3D(-2.0, 2.0, 0.0), QVector3D(-2.0, -2.0, 0.0)};
   viewer->doDrawLine(GL_LINE_LOOP, vert, 4);
 
-  glPopName();
+  viewer->popName();
   viewer->popMatrix();
 }
 
@@ -706,19 +706,19 @@ void ReshapeTool::drawControlPoint(SceneViewer* viewer, OneShape shape,
 
   // コントロールポイントを描く
   viewer->pushMatrix();
-  glPushName(name);
+  viewer->pushName(name);
 
   viewer->translate(bPoint.pos.x(), bPoint.pos.y(), 0.0);
   viewer->scale(onePix.x(), onePix.y(), 1.0);
 
   QVector3D vert[4] = {QVector3D(2.0, -2.0, 0.0), QVector3D(2.0, 2.0, 0.0),
                        QVector3D(-2.0, 2.0, 0.0), QVector3D(-2.0, -2.0, 0.0)};
-  if (fillPoint)
-    viewer->doDrawFill(GL_POLYGON, vert, 4, fillColor);
-  else
-    viewer->doDrawLine(GL_LINE_LOOP, vert, 4);
+  if (fillPoint) viewer->doDrawFill(GL_POLYGON, vert, 4, fillColor);
 
-  glPopName();
+  // when draw filled point, draw lines as well to enable picking feature
+  viewer->doDrawLine(GL_LINE_LOOP, vert, 4);
+
+  viewer->popName();
   viewer->popMatrix();
 
   if (!drawHandles) return;
@@ -728,27 +728,27 @@ void ReshapeTool::drawControlPoint(SceneViewer* viewer, OneShape shape,
   // firstHandle
   name += 1;
   viewer->pushMatrix();
-  glPushName(name);
+  viewer->pushName(name);
 
   viewer->translate(bPoint.firstHandle.x(), bPoint.firstHandle.y(), 0.0);
   viewer->scale(onePix.x(), onePix.y(), 1.0);
 
   ReshapeTool::drawCircle(viewer);
 
-  glPopName();
+  viewer->popName();
   viewer->popMatrix();
 
   // secondHandle
   name += 1;
   viewer->pushMatrix();
-  glPushName(name);
+  viewer->pushName(name);
 
   viewer->translate(bPoint.secondHandle.x(), bPoint.secondHandle.y(), 0.0);
   viewer->scale(onePix.x(), onePix.y(), 1.0);
 
   ReshapeTool::drawCircle(viewer);
 
-  glPopName();
+  viewer->popName();
   viewer->popMatrix();
   // glPopMatrix();
 }

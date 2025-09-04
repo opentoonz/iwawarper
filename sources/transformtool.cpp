@@ -503,14 +503,14 @@ void TransformTool::draw() {
       drawEdgeForResize(m_viewer, layer, shape, Handle_BottomEdge,
                         bBox.bottomLeft(), bBox.bottomRight());
     } else {
-      glPushName(name);
+      m_viewer->pushName(name);
 
       QVector3D vert[4] = {
           QVector3D(bBox.bottomRight()), QVector3D(bBox.topRight()),
           QVector3D(bBox.topLeft()), QVector3D(bBox.bottomLeft())};
       m_viewer->doDrawLine(GL_LINE_LOOP, vert, 4);
 
-      glPopName();
+      m_viewer->popName();
     }
 
     // “_ü‚ð‰ðœ
@@ -564,7 +564,7 @@ void TransformTool::drawHandle(SceneViewer* viewer, IwLayer* layer,
   handleName += (int)handleId;
 
   viewer->pushMatrix();
-  glPushName(handleName);
+  viewer->pushName(handleName);
 
   viewer->translate(pos.x(), pos.y(), 0.0);
   viewer->scale(onePix.x(), onePix.y(), 1.0);
@@ -574,7 +574,7 @@ void TransformTool::drawHandle(SceneViewer* viewer, IwLayer* layer,
       QVector3D(-2.0, 2.0, 0.0), QVector3D(-2.0, -2.0, 0.0)};
   viewer->doDrawLine(GL_LINE_LOOP, vert, 4);
 
-  glPopName();
+  viewer->popName();
   viewer->popMatrix();
 }
 
@@ -587,12 +587,12 @@ void TransformTool::drawEdgeForResize(SceneViewer* viewer, IwLayer* layer,
                                       const QPointF& p1, const QPointF& p2) {
   int handleName = layer->getNameFromShapePair(shape);
   handleName += (int)handleId;
-  glPushName(handleName);
+  viewer->pushName(handleName);
 
   QVector3D vert[2] = {QVector3D(p1), QVector3D(p2)};
   viewer->doDrawLine(GL_LINE_STRIP, vert, 2);
 
-  glPopName();
+  viewer->popName();
 }
 
 //--------------------------------------------------------
