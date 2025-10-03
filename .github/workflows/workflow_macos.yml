@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 jobs:
   macOS:
-    runs-on: 	macos-13
+    runs-on: 	macos-15-intel
     steps:
     - name: checkout with cached LFS
       uses: nschloe/action-cached-lfs-checkout@v1

@@ -1,5 +1,5 @@
 # Specify the minimum version of CMake 
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.10)
 
 # Specify the project name
 project(IwaWarper VERSION 1.0.0)
