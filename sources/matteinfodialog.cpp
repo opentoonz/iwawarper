@@ -201,7 +201,8 @@ void MatteInfoDialog::onColorItemDoubleClicked(QListWidgetItem* item) {
 
 void MatteInfoDialog::onAddColorClicked() {
   QList<QColor> colors;
-  if (m_colorListWidget->item(0)->text() == tr("-- Various Values --")) {
+  if (m_colorListWidget->count() > 0 &&
+      m_colorListWidget->item(0)->text() == tr("-- Various Values --")) {
     delete m_colorListWidget->takeItem(0);
   } else
     colors = m_shapes[0]->matteInfo().colors;
@@ -230,7 +231,9 @@ void MatteInfoDialog::onRemoveColorClicked() {
 }
 
 void MatteInfoDialog::onSavePresetClicked() {
-  if (m_colorListWidget->item(0)->text() == tr("-- Various Values --")) return;
+  if (m_colorListWidget->count() > 0 &&
+      m_colorListWidget->item(0)->text() == tr("-- Various Values --"))
+    return;
 
   QList<QColor> colors = m_shapes[0]->matteInfo().colors;
   if (colors.isEmpty()) return;
@@ -356,8 +359,8 @@ void MatteInfoDialog::onSelectionChanged(IwSelection* sel) {
         info.layerName = "__VARIOUS_VALUES__";
 
       // F
-      if (info.colors[0] != QColor(Qt::transparent) &&
-          info.colors != newInfo.colors) {
+      if (info.colors != newInfo.colors && !info.colors.isEmpty() &&
+          info.colors[0] != QColor(Qt::transparent)) {
         info.colors.clear();
         info.colors.append(QColor(Qt::transparent));
       }
@@ -392,7 +395,7 @@ void MatteInfoDialog::onSelectionChanged(IwSelection* sel) {
 
   // F
   m_colorListWidget->clear();
-  if (info.colors[0] == QColor(Qt::transparent)) {
+  if (!info.colors.isEmpty() && info.colors[0] == QColor(Qt::transparent)) {
     m_colorListWidget->addItem(tr("-- Various Values --"));
   } else {
     for (auto color : info.colors) {
