@@ -67,8 +67,6 @@
     Logger::Write(message);                                                    \
   }
 
-#define MACOSX
-
 namespace {
 bool isPremultiplied(TRaster32P ras) {
   for (int y = 0; y < ras->getLy(); y++) {
