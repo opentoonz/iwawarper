@@ -38,7 +38,7 @@ enum CommandType {
 class AuxActionsCreator {
 public:
   AuxActionsCreator();
-  virtual ~AuxActionsCreator(){};
+  virtual ~AuxActionsCreator() {};
   virtual void createActions(QObject *parent) = 0;
 };
 
@@ -97,7 +97,15 @@ public:
   void execute(QAction *action);
   void execute(CommandId id);
 
+  void getActions(CommandType type, std::vector<QAction *> &actions);
+  QAction *getActionFromShortcut(std::string shortcutString);
+  std::string getShortcutFromAction(QAction *action);
+  void setShortcut(QAction *action, std::string shortcutString,
+                   bool keepDefault = true);
+
   QAction *getAction(CommandId id, bool createIfNeeded = false);
+  // load user defined shortcuts
+  void loadShortcuts();
 };
 
 //-----------------------------------------------------------------------------
@@ -140,7 +148,7 @@ inline void setCommandHandler(CommandId id, T *target, void (T::*method)()) {
 class MenuItemHandler {
 public:
   MenuItemHandler(CommandId cmdId);
-  virtual ~MenuItemHandler(){};
+  virtual ~MenuItemHandler() {};
   virtual void execute() = 0;
 };
 

@@ -18,6 +18,7 @@
 #define MI_ExportSelectedShapes "MI_ExportSelectedShapes"
 
 #define MI_Preferences "MI_Preferences"
+#define MI_ShortcutPopup "MI_ShortcutPopup"
 #define MI_Exit "MI_Exit"
 // Edit Menu
 #define MI_Undo "MI_Undo"
