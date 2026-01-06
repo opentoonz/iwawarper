@@ -43,6 +43,7 @@ shapetreewindow.h
 shapeinterpolationpopup.h
 rendershapeimagedialog.h
 matteinfodialog.h
+shortcutpopup.h
 )
 
 set(HEADERS
@@ -173,6 +174,7 @@ shapetreewindow.cpp
 shapeinterpolationpopup.cpp
 rendershapeimagedialog.cpp
 matteinfodialog.cpp
+shortcutpopup.cpp
 )
 
 set(SOURCES

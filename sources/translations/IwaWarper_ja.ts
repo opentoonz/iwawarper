@@ -460,12 +460,12 @@ Remove its shapes?</source>
 <context>
     <name>IwProject</name>
     <message>
-        <location filename="../iwproject.cpp" line="235"/>
+        <location filename="../iwproject.cpp" line="236"/>
         <source>Warning</source>
         <translation>警告</translation>
     </message>
     <message>
-        <location filename="../iwproject.cpp" line="236"/>
+        <location filename="../iwproject.cpp" line="237"/>
         <source>An older version of the project file was loaded. Please check the following:</source>
         <translation>古いバージョンのプロジェクトが読み込まれました。下記をご確認ください：</translation>
     </message>
@@ -473,12 +473,12 @@ Remove its shapes?</source>
 <context>
     <name>IwRenderCommand</name>
     <message>
-        <location filename="../iwrendercommand.cpp" line="122"/>
+        <location filename="../iwrendercommand.cpp" line="124"/>
         <source>Do you want to create folder?</source>
         <translation>フォルダを作成しますか？</translation>
     </message>
     <message>
-        <location filename="../iwrendercommand.cpp" line="132"/>
+        <location filename="../iwrendercommand.cpp" line="134"/>
         <source>Failed to create folder.</source>
         <translation>フォルダの作成に失敗しました。</translation>
     </message>
@@ -543,83 +543,83 @@ Remove its shapes?</source>
         <translation>ファイル(&amp;F)</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="99"/>
+        <location filename="../mainwindow.cpp" line="100"/>
         <source>&amp;Edit</source>
         <translation>編集（&amp;E）</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="114"/>
+        <location filename="../mainwindow.cpp" line="115"/>
         <source>&amp;View</source>
         <translation>表示(&amp;V)</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="126"/>
-        <location filename="../mainwindow.cpp" line="383"/>
+        <location filename="../mainwindow.cpp" line="127"/>
+        <location filename="../mainwindow.cpp" line="386"/>
         <source>&amp;Render</source>
         <translation>レンダリング(&amp;R)</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="141"/>
+        <location filename="../mainwindow.cpp" line="142"/>
         <source>Show From</source>
         <translation>Fromを表示</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="143"/>
+        <location filename="../mainwindow.cpp" line="144"/>
         <source>Show To</source>
         <translation>Toを表示</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="145"/>
+        <location filename="../mainwindow.cpp" line="146"/>
         <source>Show Mesh</source>
         <translation>メッシュを表示</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="147"/>
+        <location filename="../mainwindow.cpp" line="148"/>
         <source>Apply Matte</source>
         <translation>アルファマット</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="178"/>
+        <location filename="../mainwindow.cpp" line="179"/>
         <source>About %1</source>
         <translation>%1 について</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="179"/>
+        <location filename="../mainwindow.cpp" line="180"/>
         <source>Misc. Settings</source>
         <translation>その他の設定</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="210"/>
+        <location filename="../mainwindow.cpp" line="211"/>
         <source>Mode:</source>
         <translation>表示モード：</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="226"/>
+        <location filename="../mainwindow.cpp" line="227"/>
         <source>Work Area:</source>
         <translation>ワークエリア：</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="231"/>
+        <location filename="../mainwindow.cpp" line="232"/>
         <source>W:</source>
         <translation>W：</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="234"/>
+        <location filename="../mainwindow.cpp" line="235"/>
         <source>H:</source>
         <translation>H：</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="332"/>
+        <location filename="../mainwindow.cpp" line="333"/>
         <source>&amp;New Project</source>
         <translation>新規プロジェクト(&amp;N)</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="336"/>
+        <location filename="../mainwindow.cpp" line="337"/>
         <source>&amp;Open Recent Project File</source>
         <translation>最近使ったプロジェクト (&amp;O)</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="337"/>
+        <location filename="../mainwindow.cpp" line="338"/>
         <source>&amp;Clear Recent Project File List</source>
         <translation>プロジェクトの履歴を削除 (&amp;C)</translation>
     </message>
@@ -628,102 +628,107 @@ Remove its shapes?</source>
         <translation type="vanished">プロジェクトをインポート(&amp;I)...</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="344"/>
+        <location filename="../mainwindow.cpp" line="345"/>
         <source>Save Project &amp;As...</source>
         <translation>プロジェクトを別名で保存(&amp;A)...</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="347"/>
+        <location filename="../mainwindow.cpp" line="348"/>
         <source>Save Project with &amp;Date &amp;&amp; Time</source>
         <translation>プロジェクト名に日時を付けて別名で保存 (&amp;D)</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="349"/>
+        <location filename="../mainwindow.cpp" line="350"/>
         <source>&amp;Insert Images...</source>
         <translation>画像の挿入(&amp;I)...</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="351"/>
+        <location filename="../mainwindow.cpp" line="352"/>
         <source>&amp;Export Selected Shapes...</source>
         <translation>選択シェイプをエクスポート(&amp;E)...</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="354"/>
+        <location filename="../mainwindow.cpp" line="355"/>
+        <source>Configure Shortcuts...</source>
+        <translation>キーボードショートカット...</translation>
+    </message>
+    <message>
+        <location filename="../mainwindow.cpp" line="357"/>
         <source>E&amp;xit</source>
         <translation>終了(&amp;x)</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="357"/>
+        <location filename="../mainwindow.cpp" line="360"/>
         <source>&amp;Undo</source>
         <translation>元に戻す(&amp;U)</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="358"/>
+        <location filename="../mainwindow.cpp" line="361"/>
         <source>&amp;Redo</source>
         <translation>やり直す(&amp;R)</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="359"/>
+        <location filename="../mainwindow.cpp" line="362"/>
         <source>Cu&amp;t</source>
         <translation>切り取り(&amp;T)</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="360"/>
+        <location filename="../mainwindow.cpp" line="363"/>
         <source>&amp;Copy</source>
         <translation>コピー(&amp;C)</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="361"/>
+        <location filename="../mainwindow.cpp" line="364"/>
         <source>&amp;Paste</source>
         <translation>貼り付け(&amp;P)</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="362"/>
+        <location filename="../mainwindow.cpp" line="365"/>
         <source>&amp;Delete</source>
         <translation>削除(&amp;D)</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="363"/>
+        <location filename="../mainwindow.cpp" line="366"/>
         <source>Select &amp;All</source>
         <translation>すべて選択(&amp;A)</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="364"/>
+        <location filename="../mainwindow.cpp" line="367"/>
         <source>Dup&amp;licate</source>
         <translation>複製(&amp;L)</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="365"/>
+        <location filename="../mainwindow.cpp" line="368"/>
         <source>&amp;Key</source>
         <translation>キーを設定(&amp;K)</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="367"/>
+        <location filename="../mainwindow.cpp" line="370"/>
         <source>&amp;Unkey</source>
         <translation>キーを消去(&amp;U)</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="369"/>
+        <location filename="../mainwindow.cpp" line="372"/>
         <source>Reset &amp;Interpolation to Linear</source>
         <translation>補間をリニアに戻す（&amp;I）</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="374"/>
+        <location filename="../mainwindow.cpp" line="377"/>
         <source>Zoom &amp;Out</source>
         <translation>ズームアウト(&amp;O)</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="375"/>
+        <location filename="../mainwindow.cpp" line="378"/>
         <source>Actual Si&amp;ze</source>
         <translation>ピクセル等倍表示(&amp;Z)</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="871"/>
+        <location filename="../mainwindow.cpp" line="876"/>
         <source>Language</source>
         <translation>言語</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="913"/>
+        <location filename="../mainwindow.cpp" line="918"/>
         <source>Changes will take effect the next time you run IwaWarper.</source>
         <translation>変更は次回 IwaWarper を立ち上げたときに反映されます。</translation>
     </message>
@@ -732,92 +737,92 @@ Remove its shapes?</source>
         <translation type="vanished">色(&amp;L)</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="382"/>
+        <location filename="../mainwindow.cpp" line="385"/>
         <source>&amp;Preview</source>
         <translation>プレビュー(&amp;P)</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="384"/>
+        <location filename="../mainwindow.cpp" line="387"/>
         <source>&amp;Output Options</source>
         <translation>出力設定(&amp;O)</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="387"/>
+        <location filename="../mainwindow.cpp" line="390"/>
         <source>&amp;Render Shape Image</source>
         <translation>シェイプ画像をレンダリング（&amp;R）</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="390"/>
+        <location filename="../mainwindow.cpp" line="393"/>
         <source>&amp;Clear All Mesh Cache </source>
         <translation>メッシュのキャッシュを全て消去 (&amp;C) </translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="393"/>
+        <location filename="../mainwindow.cpp" line="396"/>
         <source>Transform tool</source>
         <translation>選択ツール</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="394"/>
+        <location filename="../mainwindow.cpp" line="397"/>
         <source>Reshape tool</source>
         <translation>シェイプ変形ツール</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="396"/>
+        <location filename="../mainwindow.cpp" line="399"/>
         <source>Correspondence tool</source>
         <translation>対応点ツール</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="397"/>
+        <location filename="../mainwindow.cpp" line="400"/>
         <source>Pen tool</source>
         <translation>ペンツール</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="398"/>
+        <location filename="../mainwindow.cpp" line="401"/>
         <source>Square tool</source>
         <translation>四角形ツール</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="399"/>
+        <location filename="../mainwindow.cpp" line="402"/>
         <source>Circle tool</source>
         <translation>円形ツール</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="400"/>
+        <location filename="../mainwindow.cpp" line="403"/>
         <source>Freehand tool</source>
         <translation>フリーハンドツール</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="410"/>
+        <location filename="../mainwindow.cpp" line="413"/>
         <source>Reload Images</source>
         <translation>画像を再読み込み</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="416"/>
+        <location filename="../mainwindow.cpp" line="419"/>
         <source>Toggle Lock of Selected Shapes</source>
         <translation>選択シェイプのロックを切り替える</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="418"/>
+        <location filename="../mainwindow.cpp" line="421"/>
         <source>Toggle Visibility of Selected Shapes</source>
         <translation>選択シェイプの表示/非表示を切り替える</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="502"/>
+        <location filename="../mainwindow.cpp" line="505"/>
         <source>New Project</source>
         <translation>新規プロジェクト</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="544"/>
+        <location filename="../mainwindow.cpp" line="547"/>
         <source>Open Project</source>
         <translation>プロジェクトを開く</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="704"/>
+        <location filename="../mainwindow.cpp" line="709"/>
         <source>IwaWarper launched.</source>
         <translation>IwaWarperが起動しました。</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="771"/>
+        <location filename="../mainwindow.cpp" line="776"/>
         <source>Exit</source>
         <translation>終了</translation>
     </message>
@@ -826,17 +831,17 @@ Remove its shapes?</source>
         <translation type="vanished">新規プロジェクト(&amp;N) ...</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="334"/>
+        <location filename="../mainwindow.cpp" line="335"/>
         <source>&amp;Open Project...</source>
         <translation>プロジェクトを開く(&amp;O) ...</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="340"/>
+        <location filename="../mainwindow.cpp" line="341"/>
         <source>&amp;Import Project/Shapes...</source>
         <translation>プロジェクト/シェイプをインポート(&amp;I)...</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="342"/>
+        <location filename="../mainwindow.cpp" line="343"/>
         <source>&amp;Save Project</source>
         <translation>プロジェクトを保存(&amp;S)</translation>
     </message>
@@ -845,62 +850,62 @@ Remove its shapes?</source>
         <translation type="vanished">プロジェクトを別名で保存(&amp;A)</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="353"/>
+        <location filename="../mainwindow.cpp" line="354"/>
         <source>Settings...</source>
         <translation>設定 ...</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="373"/>
+        <location filename="../mainwindow.cpp" line="376"/>
         <source>&amp;Zoom In</source>
         <translation>ズームイン(&amp;Z)</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="379"/>
+        <location filename="../mainwindow.cpp" line="382"/>
         <source>File &amp;Info</source>
         <translation>ファイル情報(&amp;I)</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="407"/>
+        <location filename="../mainwindow.cpp" line="410"/>
         <source>Insert Empty Frame</source>
         <translation>空コマを挿入</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="409"/>
+        <location filename="../mainwindow.cpp" line="412"/>
         <source>Replace Images</source>
         <translation>画像を入れ替える</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="412"/>
+        <location filename="../mainwindow.cpp" line="415"/>
         <source>&amp;Next Frame</source>
         <translation>次のフレーム(&amp;N)</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="413"/>
+        <location filename="../mainwindow.cpp" line="416"/>
         <source>&amp;Previous Frame</source>
         <translation>前のフレーム(&amp;P)</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="517"/>
+        <location filename="../mainwindow.cpp" line="520"/>
         <source>Undo</source>
         <translation>元に戻す</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="518"/>
+        <location filename="../mainwindow.cpp" line="521"/>
         <source>No more Undo operations available.</source>
         <translation>もとに戻せる操作がありません。</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="530"/>
+        <location filename="../mainwindow.cpp" line="533"/>
         <source>Redo</source>
         <translation>やり直す</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="531"/>
+        <location filename="../mainwindow.cpp" line="534"/>
         <source>No more Redo operations available.</source>
         <translation>やり直せる動作がありません。</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="726"/>
+        <location filename="../mainwindow.cpp" line="731"/>
         <source>Untitled</source>
         <translation>名称未設定</translation>
     </message>
@@ -924,13 +929,13 @@ Remove its shapes?</source>
     </message>
     <message>
         <location filename="../matteinfodialog.cpp" line="43"/>
-        <location filename="../matteinfodialog.cpp" line="249"/>
+        <location filename="../matteinfodialog.cpp" line="252"/>
         <source>Save Preset</source>
         <translation>プリセットを保存</translation>
     </message>
     <message>
         <location filename="../matteinfodialog.cpp" line="45"/>
-        <location filename="../matteinfodialog.cpp" line="275"/>
+        <location filename="../matteinfodialog.cpp" line="278"/>
         <source>Load Preset</source>
         <translation>プリセットを読み込み</translation>
     </message>
@@ -951,11 +956,11 @@ Remove its shapes?</source>
     </message>
     <message>
         <location filename="../matteinfodialog.cpp" line="177"/>
-        <location filename="../matteinfodialog.cpp" line="204"/>
-        <location filename="../matteinfodialog.cpp" line="220"/>
-        <location filename="../matteinfodialog.cpp" line="233"/>
-        <location filename="../matteinfodialog.cpp" line="396"/>
-        <location filename="../matteinfodialog.cpp" line="405"/>
+        <location filename="../matteinfodialog.cpp" line="205"/>
+        <location filename="../matteinfodialog.cpp" line="221"/>
+        <location filename="../matteinfodialog.cpp" line="235"/>
+        <location filename="../matteinfodialog.cpp" line="399"/>
+        <location filename="../matteinfodialog.cpp" line="408"/>
         <source>-- Various Values --</source>
         <translation>-- 複数の値 --</translation>
     </message>
@@ -966,23 +971,23 @@ Remove its shapes?</source>
         <translation>マット色を選択してください。</translation>
     </message>
     <message>
-        <location filename="../matteinfodialog.cpp" line="249"/>
-        <location filename="../matteinfodialog.cpp" line="276"/>
+        <location filename="../matteinfodialog.cpp" line="252"/>
+        <location filename="../matteinfodialog.cpp" line="279"/>
         <source>Matte Color File (*.matcol)</source>
         <translation>マット色設定ファイル (*.matcol)</translation>
     </message>
     <message>
-        <location filename="../matteinfodialog.cpp" line="323"/>
+        <location filename="../matteinfodialog.cpp" line="326"/>
         <source>-- No Alpha Matting --</source>
         <translation>-- アルファマットを行わない --</translation>
     </message>
     <message>
-        <location filename="../matteinfodialog.cpp" line="373"/>
+        <location filename="../matteinfodialog.cpp" line="376"/>
         <source>No Parent Shapes Selected</source>
         <translation>シェイプが選択されていません</translation>
     </message>
     <message>
-        <location filename="../matteinfodialog.cpp" line="389"/>
+        <location filename="../matteinfodialog.cpp" line="392"/>
         <source>-- Various Layers --</source>
         <translation>-- 複数のレイヤー --</translation>
     </message>
@@ -1119,42 +1124,42 @@ Remove its shapes?</source>
         <translation>レンダーキュー</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="354"/>
+        <location filename="../outputsettingsdialog.cpp" line="355"/>
         <source>Frame %1 - %2 | %3</source>
         <translation>フレーム %1 - %2 | %3</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="424"/>
+        <location filename="../outputsettingsdialog.cpp" line="426"/>
         <source>  (%1 frames)</source>
         <translation>  （%1フレーム）</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="432"/>
+        <location filename="../outputsettingsdialog.cpp" line="433"/>
         <source>NO MATTE LAYER FOUND!</source>
         <translation>マットレイヤーが見つかりません！</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="435"/>
+        <location filename="../outputsettingsdialog.cpp" line="436"/>
         <source>NO NUMBER FOUND IN THE MATTE FILE NAME!</source>
         <translation>マットレイヤーの画像ファイル名に番号が含まれていません！</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="599"/>
+        <location filename="../outputsettingsdialog.cpp" line="600"/>
         <source>Do you want to create folder?</source>
         <translation>フォルダを作成しますか？</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="609"/>
+        <location filename="../outputsettingsdialog.cpp" line="610"/>
         <source>Failed to create folder.</source>
         <translation>フォルダの作成に失敗しました。</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="640"/>
+        <location filename="../outputsettingsdialog.cpp" line="641"/>
         <source>Choose Folder.</source>
         <translation>フォルダを選択してください。</translation>
     </message>
     <message>
-        <location filename="../outputsettingsdialog.cpp" line="708"/>
+        <location filename="../outputsettingsdialog.cpp" line="709"/>
         <source>None</source>
         <translation>指定なし</translation>
     </message>
@@ -1210,25 +1215,25 @@ Remove its shapes?</source>
         <translation>円形</translation>
     </message>
     <message>
-        <location filename="../sceneviewer.cpp" line="1904"/>
-        <location filename="../iwrendercommand.cpp" line="96"/>
-        <location filename="../iwrendercommand.cpp" line="114"/>
+        <location filename="../sceneviewer.cpp" line="2058"/>
+        <location filename="../iwrendercommand.cpp" line="98"/>
+        <location filename="../iwrendercommand.cpp" line="116"/>
         <source>Output Settings Error</source>
         <translation>出力設定エラー</translation>
     </message>
     <message>
-        <location filename="../sceneviewer.cpp" line="1905"/>
-        <location filename="../iwrendercommand.cpp" line="115"/>
+        <location filename="../sceneviewer.cpp" line="2059"/>
+        <location filename="../iwrendercommand.cpp" line="117"/>
         <source>Output directory is not set.</source>
         <translation>保存先が設定されていません。</translation>
     </message>
     <message>
-        <location filename="../sceneviewer.cpp" line="1912"/>
+        <location filename="../sceneviewer.cpp" line="2066"/>
         <source>Do you want to create folder?</source>
         <translation>フォルダを作成しますか？</translation>
     </message>
     <message>
-        <location filename="../sceneviewer.cpp" line="1922"/>
+        <location filename="../sceneviewer.cpp" line="2076"/>
         <source>Failed to create folder.</source>
         <translation>フォルダの作成に失敗しました。</translation>
     </message>
@@ -1263,27 +1268,27 @@ Remove its shapes?</source>
         <translation>キャンセル</translation>
     </message>
     <message>
-        <location filename="../iocommand.cpp" line="488"/>
+        <location filename="../iocommand.cpp" line="491"/>
         <source>Saved to %1 .</source>
         <translation>%1 に保存しました。</translation>
     </message>
     <message>
-        <location filename="../iocommand.cpp" line="633"/>
+        <location filename="../iocommand.cpp" line="635"/>
         <source>Import Project/Shapes File</source>
         <translation>プロジェクト/シェイプをインポート</translation>
     </message>
     <message>
-        <location filename="../iocommand.cpp" line="642"/>
+        <location filename="../iocommand.cpp" line="644"/>
         <source>Error</source>
         <translation>エラー</translation>
     </message>
     <message>
-        <location filename="../iocommand.cpp" line="642"/>
+        <location filename="../iocommand.cpp" line="644"/>
         <source>No current layer</source>
         <translation>レイヤーが選択されていません</translation>
     </message>
     <message>
-        <location filename="../iocommand.cpp" line="723"/>
+        <location filename="../iocommand.cpp" line="725"/>
         <source>%1 : The current project has been modified.
 What would you like to do?</source>
         <translation>%1 ： 現在のプロジェクトは変更されています。
@@ -1305,9 +1310,19 @@ What would you like to do?</source>
         <translation>タイムラインフレームの切り取り</translation>
     </message>
     <message>
-        <location filename="../iwrendercommand.cpp" line="97"/>
+        <location filename="../iwrendercommand.cpp" line="99"/>
         <source>There is no active items in the Render Queue.</source>
         <translation>レンダーキューにアクティブなアイテムがありません。</translation>
+    </message>
+    <message>
+        <location filename="../menubarcommand.cpp" line="205"/>
+        <source>Warning</source>
+        <translation>警告</translation>
+    </message>
+    <message>
+        <location filename="../menubarcommand.cpp" line="206"/>
+        <source>It is not possible to assign a shortcut with modifiers to the visualization commands.</source>
+        <translation>視覚化コマンドには、修飾キーと組み合わせたキーボードショートカットを割り当てできません。</translation>
     </message>
 </context>
 <context>
@@ -1340,11 +1355,11 @@ What would you like to do?</source>
 <context>
     <name>RenderQueue</name>
     <message>
-        <location filename="../outputsettings.cpp" line="373"/>
+        <location filename="../outputsettings.cpp" line="375"/>
         <source>- In the current version, the ways of specifying the output frame range have changed.
   Please check the output settings.
 </source>
-        <translation type="unfinished">- 現在のバージョンでは出力フレーム範囲の指定方法が変更されています。
+        <translation>- 現在のバージョンでは出力フレーム範囲の指定方法が変更されています。
   出力設定をご確認ください。
 </translation>
     </message>
@@ -1566,12 +1581,12 @@ What would you like to do?</source>
 <context>
     <name>SceneViewer</name>
     <message>
-        <location filename="../sceneviewer.cpp" line="1343"/>
+        <location filename="../sceneviewer.cpp" line="1431"/>
         <source>Change Current Layer</source>
         <translation>現在のレイヤーを切り替え</translation>
     </message>
     <message>
-        <location filename="../sceneviewer.cpp" line="1365"/>
+        <location filename="../sceneviewer.cpp" line="1453"/>
         <source>Unlock All Shapes</source>
         <translation>全てのシェイプのロックを解除</translation>
     </message>
@@ -1809,6 +1824,101 @@ for character Levels.</source>
         <location filename="../shapetreewindow.cpp" line="1197"/>
         <source>Edit Tags</source>
         <translation>タグの編集</translation>
+    </message>
+</context>
+<context>
+    <name>ShortcutPopup</name>
+    <message>
+        <location filename="../shortcutpopup.cpp" line="360"/>
+        <source>Configure Shortcuts</source>
+        <translation>キーボードショートカット</translation>
+    </message>
+    <message>
+        <location filename="../shortcutpopup.cpp" line="370"/>
+        <source>Remove</source>
+        <translation>消去</translation>
+    </message>
+    <message>
+        <location filename="../shortcutpopup.cpp" line="372"/>
+        <source>Couldn&apos;t find any matching command.</source>
+        <translation>コマンドが見つかりませんでした。</translation>
+    </message>
+    <message>
+        <location filename="../shortcutpopup.cpp" line="385"/>
+        <source>Search:</source>
+        <translation>検索：</translation>
+    </message>
+    <message>
+        <source>A file named </source>
+        <translation type="vanished">ファイル</translation>
+    </message>
+    <message>
+        <source> already exists.  Do you want to replace it?</source>
+        <translation type="vanished">は、既に存在します。置き換えてもよろしいですか？</translation>
+    </message>
+    <message>
+        <source>Question</source>
+        <translation type="vanished">質問</translation>
+    </message>
+</context>
+<context>
+    <name>ShortcutTree</name>
+    <message>
+        <location filename="../shortcutpopup.cpp" line="225"/>
+        <source>File</source>
+        <translation>メニュー：ファイル</translation>
+    </message>
+    <message>
+        <location filename="../shortcutpopup.cpp" line="226"/>
+        <source>Edit</source>
+        <translation>メニュー：編集</translation>
+    </message>
+    <message>
+        <location filename="../shortcutpopup.cpp" line="227"/>
+        <source>Shape</source>
+        <translation>シェイプ</translation>
+    </message>
+    <message>
+        <location filename="../shortcutpopup.cpp" line="228"/>
+        <source>View</source>
+        <translation>メニュー：表示</translation>
+    </message>
+    <message>
+        <location filename="../shortcutpopup.cpp" line="229"/>
+        <source>Render</source>
+        <translation>メニュー：レンダリング</translation>
+    </message>
+    <message>
+        <location filename="../shortcutpopup.cpp" line="230"/>
+        <source>Tools</source>
+        <translation>ツール</translation>
+    </message>
+    <message>
+        <location filename="../shortcutpopup.cpp" line="231"/>
+        <source>View Toggle</source>
+        <translation>表示切り替え</translation>
+    </message>
+</context>
+<context>
+    <name>ShortcutViewer</name>
+    <message>
+        <location filename="../shortcutpopup.cpp" line="150"/>
+        <source>&apos;%1&apos; is already assigned to &apos;%2&apos;
+Assign to &apos;%3&apos;?</source>
+        <translation>&apos;%1&apos;&#x3000;は既に &apos;%2&apos; に割り当てられています。
+&apos;%3&apos; に割り当てますか？</translation>
+    </message>
+    <message>
+        <location filename="../shortcutpopup.cpp" line="156"/>
+        <source>Initial sequence &apos;%1&apos; is assigned to &apos;%2&apos; which takes priority.
+Assign shortcut sequence anyway?</source>
+        <translation>最初のキーシークエンス &apos;%1&apos; は既に &apos;%2&apos; に割り当てられており、そちらが優先されます。
+それでもショートカットシークエンスを割り当てますか？</translation>
+    </message>
+    <message>
+        <location filename="../shortcutpopup.cpp" line="164"/>
+        <source>Question</source>
+        <translation>質問</translation>
     </message>
 </context>
 <context>

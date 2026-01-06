@@ -91,6 +91,7 @@ QWidget *MainWindow::createMenuBarWidget() {
     addActionToMenu(fileMenu, MI_InsertImages);
     fileMenu->addSeparator();
     addActionToMenu(fileMenu, MI_Preferences);
+    addActionToMenu(fileMenu, MI_ShortcutPopup);
     fileMenu->addSeparator();
     addActionToMenu(fileMenu, MI_Exit);
   }
@@ -351,6 +352,8 @@ void MainWindow::defineActions() {
   createAction(MI_ExportSelectedShapes, tr("&Export Selected Shapes..."), "",
                MenuFileCommandType);
   createAction(MI_Preferences, tr("Settings..."), "", MenuFileCommandType);
+  createAction(MI_ShortcutPopup, tr("Configure Shortcuts..."), "",
+               MenuFileCommandType);
   createAction(MI_Exit, tr("E&xit"), "Ctrl+Q", MenuFileCommandType);
 
   // Edit Menu
@@ -606,6 +609,8 @@ MainWindow::MainWindow(QWidget *parent, Qt::WindowFlags flags)
   m_toolsActionGroup->setExclusive(true);
 
   defineActions();
+  // user defined shortcuts will be loaded here
+  CommandManager::instance()->loadShortcuts();
 
   IwApp::instance()->setMainWindow(this);
 
