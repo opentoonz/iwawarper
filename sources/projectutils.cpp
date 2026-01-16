@@ -314,7 +314,8 @@ void ProjectUtils::deleteFormPoints(QMap<ShapePair*, QList<int>>& pointList) {
             // 補間後、Corr値が０を超えた場合クランプする
             if (newCorr >= remainingPointAmount)
               newCorr -= remainingPointAmount;
-            cpList.replace(cp, {newCorr, cpList.at(cp).weight});
+            cpList.replace(
+                cp, {newCorr, cpList.at(cp).weight, cpList.at(cp).depth});
           }
           // 値を上書きで戻す
           corrData.insert(corrItr.key(), cpList);

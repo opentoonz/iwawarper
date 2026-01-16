@@ -108,6 +108,8 @@ void IwTool::drawCorrLine(OneShape shape)
       Color_InbetweenCorr);  // キーフレームでない対応点
   QColor cNumberCol = ColorSettings::instance()->getQColor(
       Color_CorrNumber);  // 対応点右下の番号
+  QColor cDepthNumberCol =
+      ColorSettings::instance()->getQColor(Color_CorrDepthNumber);  // デプス値
   // シェイプ座標系で見た目１ピクセルになる長さを取得する
   QPointF onePix = m_viewer->getOnePixelLength();
   // 文字用のフォントの指定
@@ -157,6 +159,10 @@ void IwTool::drawCorrLine(OneShape shape)
   // ウェイトのリストも得る
   QList<double> corrWeights =
       shape.shapePairP->getCorrPointWeights(frame, shape.fromTo);
+  // Toシェイプの場合、デプスのリストも得る
+  QList<double> corrDepths;
+  if (shape.fromTo == 1)
+    corrDepths = shape.shapePairP->getCorrPointDepths(frame);
 
   // 名前
   int shapeName = layer->getNameFromShapePair(shape);
@@ -198,6 +204,22 @@ void IwTool::drawCorrLine(OneShape shape)
                            QFont("Helvetica", 10, QFont::Normal));
       m_viewer->bindBufferObjects();
     }
+
+    // TOシェイプの場合、デプスも描画する
+    if (shape.fromTo == 1) {
+      // デプスが1じゃない場合に描画する
+      double depth = corrDepths.at(p);
+      if (depth != 1.) {
+        m_viewer->releaseBufferObjects();
+        QMatrix4x4 mat = m_viewer->modelMatrix();
+        QPointF pos    = mat.map(QPointF(0., 0.));
+        m_viewer->renderText(pos.x() + 5.0, pos.y() + 15.0,
+                             QString::number(depth), cDepthNumberCol,
+                             QFont("Helvetica", 10, QFont::Normal));
+        m_viewer->bindBufferObjects();
+      }
+    }
+
     m_viewer->popMatrix();
   }
 }

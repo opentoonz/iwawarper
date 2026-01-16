@@ -43,7 +43,9 @@
 #include "logger.h"
 
 #define PRINT_LOG(message)                                                     \
-  { Logger::Write(message); }
+  {                                                                            \
+    Logger::Write(message);                                                    \
+  }
 
 namespace {
 
@@ -841,8 +843,14 @@ bool ShapePair::addCorrPoint(const QPointF& pos, int frame, int fromTo) {
       double afterWeight  = cpList.at(afterIndex).weight;
       double insertedWeight =
           beforeWeight + (afterWeight - beforeWeight) * ratio;
+
+      double beforeDepth   = cpList.at(beforeIndex).depth;
+      double afterDepth    = cpList.at(afterIndex).depth;
+      double insertedDepth = beforeDepth + (afterDepth - beforeDepth) * ratio;
+
       // リストに点を挿入
-      cpList.insert(beforeIndex + 1, {insertedPos, insertedWeight});
+      cpList.insert(beforeIndex + 1,
+                    {insertedPos, insertedWeight, insertedDepth});
       // insertコマンドは、既に同じKeyにデータが有った場合、置き換えられる
       corrKeysMap.insert(i.key(), cpList);
       ++i;
@@ -1167,6 +1175,19 @@ QList<double> ShapePair::getCorrPointWeights(int frame, int fromTo) {
 }
 
 //--------------------------------------------------------
+// 対応点のデプスのリストを得る ※Toシェイプのみ
+//--------------------------------------------------------
+QList<double> ShapePair::getCorrPointDepths(int frame) {
+  // 現在の対応点データを得る
+  CorrPointList cPList = getCorrPointList(frame, 1);
+  QList<double> depths;
+  for (auto cp : cPList) {
+    depths.push_back(cp.depth);
+  }
+  return depths;
+}
+
+//--------------------------------------------------------
 // 現在のフレームのCorrenspondence(対応点)間を分割した点の分割値を得る
 // 方針：できるだけ等間隔に分割したい。
 // → 対応点のウェイトに応じて分割点も偏らせる
@@ -1281,6 +1302,35 @@ QList<double> ShapePair::getDiscreteCorrWeights(int frame, int fromTo) {
   if (!m_isClosed) discreteCorrWeights.push_back(cPList.last().weight);
 
   return discreteCorrWeights;
+}
+
+//--------------------------------------------------------
+// 現在のフレームのCorrenspondence(対応点)間を分割した点のデプス値を得る
+// ※ 基本、TOシェイプの値のみ用いる
+//--------------------------------------------------------
+QList<double> ShapePair::getDiscreteCorrDepths(int frame, int fromTo) {
+  QMutexLocker lock(&mutex_);
+  // 結果を収めるやつ
+  QList<double> discreteCorrDepths;
+  CorrPointList cPList = getCorrPointList(frame, fromTo);
+  int corrSegAmount = (m_isClosed) ? m_corrPointAmount : m_corrPointAmount - 1;
+  for (int c = 0; c < corrSegAmount; c++) {
+    double Corr1 = cPList.at(c).depth;
+    double Corr2 =
+        cPList.at((m_isClosed && c == m_corrPointAmount - 1) ? 0 : c + 1).depth;
+
+    // 分割点毎にウェイトを追加していく
+    for (int p = 0; p < m_precision; p++) {
+      double ratio = (double)p / (double)m_precision;
+      // 格納
+      discreteCorrDepths.push_back(Corr1 * (1 - ratio) + Corr2 * ratio);
+    }
+  }
+
+  // Openなシェイプの場合は、最後の端点を追加
+  if (!m_isClosed) discreteCorrDepths.push_back(cPList.last().depth);
+
+  return discreteCorrDepths;
 }
 
 //--------------------------------------------------------

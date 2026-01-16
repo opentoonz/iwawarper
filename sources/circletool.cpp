@@ -218,7 +218,8 @@ CreateCircleShapeUndo::CreateCircleShapeUndo(QRectF& rect, IwProject* prj,
   bpList << p[0] << p[1] << p[2] << p[3];
 
   CorrPointList cpList;
-  CorrPoint c[4] = {{1.5, 1.0}, {2.5, 1.0}, {3.5, 1.0}, {0.5, 1.0}};
+  CorrPoint c[4] = {
+      {1.5, 1.0, 1.0}, {2.5, 1.0, 1.0}, {3.5, 1.0, 1.0}, {0.5, 1.0, 1.0}};
   cpList << c[0] << c[1] << c[2] << c[3];
 
   // Œ»Ý‚ÌƒtƒŒ[ƒ€
