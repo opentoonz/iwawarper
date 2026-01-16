@@ -77,7 +77,8 @@ void CorrDragTool::onDrag(const QPointF& pos, const QMouseEvent* e) {
         if (tmp < 0.0)
           tmp += (double)m_shape.shapePairP->getBezierPointAmount();
 
-        newCorrs.push_back({tmp, m_orgCorrs.at(c).weight});
+        newCorrs.push_back(
+            {tmp, m_orgCorrs.at(c).weight, m_orgCorrs.at(c).depth});
       }
     }
     // 開いたシェイプの場合、端点以外をスライド。端についたらそこでストップ
@@ -95,7 +96,8 @@ void CorrDragTool::onDrag(const QPointF& pos, const QMouseEvent* e) {
       newCorrs.push_back(m_orgCorrs.at(0));
       for (int c = 1; c < m_orgCorrs.size() - 1; c++) {
         double tmp = m_orgCorrs.at(c).value + dc;
-        newCorrs.push_back({tmp, m_orgCorrs.at(c).weight});
+        newCorrs.push_back(
+            {tmp, m_orgCorrs.at(c).weight, m_orgCorrs.at(c).depth});
       }
       newCorrs.push_back(m_orgCorrs.last());
     }

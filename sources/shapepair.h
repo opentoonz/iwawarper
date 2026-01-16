@@ -183,6 +183,8 @@ public:
   QList<QPointF> getCorrPointPositions(int frame, int fromTo);
   // 対応点のウェイトのリストを得る
   QList<double> getCorrPointWeights(int frame, int fromTo);
+  // 対応点のデプスのリストを得る ※Toシェイプのみ
+  QList<double> getCorrPointDepths(int frame);
 
   // 現在のフレームのCorrenspondence(対応点)間を分割した点の分割値を得る
   QList<double> getDiscreteCorrValues(const QPointF& onePix, int frame,
@@ -190,6 +192,10 @@ public:
 
   // 現在のフレームのCorrenspondence(対応点)間を分割した点のウェイト値を得る
   QList<double> getDiscreteCorrWeights(int frame, int fromTo);
+
+  // 現在のフレームのCorrenspondence(対応点)間を分割した点のデプス値を得る
+  // ※ 基本、TOシェイプの値のみ用いる
+  QList<double> getDiscreteCorrDepths(int frame, int fromTo = 1);
 
   // ベジエ値から座標値を計算する
   QPointF getBezierPosFromValue(int frame, int fromTo, double bezierValue);

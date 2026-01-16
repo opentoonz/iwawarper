@@ -32,8 +32,9 @@ enum WarpStyle { WARP_FIXED = 0, WARP_SLIDING };
 struct CorrVector {
   QPointF from_p[2];
   QPointF to_p[2];
-  int stackOrder;  // レイヤインデックス ＝ 重ね順
-  bool isEdge;     // 輪郭ならtrue, シェイプ由来ならtrue
+  // int stackOrder;  // レイヤインデックス ＝ 重ね順
+  double depth;  // 小さいほどカメラに近い＝手前になる
+  bool isEdge;   // 輪郭ならtrue, シェイプ由来ならtrue
   double from_weight[2];
   double to_weight[2];
   // int indices[2];  // samplePointsのインデックス
@@ -48,7 +49,7 @@ class MapTrianglesToRaster_Worker : public QRunnable {
   TRaster64P m_srcRas;
   TRasterGR8P m_matteRas;
   TRaster64P m_mlssRefRas;
-  bool* m_subPointOccupation;
+  double* m_subPointDepth;
   int m_subAmount;
   AlphaMode m_alphaMode;
   ResampleMode m_resampleMode;
@@ -62,7 +63,7 @@ public:
                               QPointF sampleOffset, QPointF outputOffset,
                               TRaster64P outRas, TRaster64P srcRas,
                               TRasterGR8P matteRas, TRaster64P mlssRefRas,
-                              bool* subPointOccupation, int subAmount,
+                              double* subPointDepth, int subAmount,
                               AlphaMode alphaMode, ResampleMode resampleMode,
                               QImage shapeAlphaImg)
       : m_from(from)
@@ -75,7 +76,7 @@ public:
       , m_srcRas(srcRas)
       , m_matteRas(matteRas)
       , m_mlssRefRas(mlssRefRas)
-      , m_subPointOccupation(subPointOccupation)
+      , m_subPointDepth(subPointDepth)
       , m_subAmount(subAmount)
       , m_alphaMode(alphaMode)
       , m_resampleMode(resampleMode)
@@ -85,18 +86,18 @@ public:
 class CombineResults_Worker : public QRunnable {
   int m_from, m_to;
   TRaster64P m_outRas;
-  QList<bool*>& m_subPointOccupationList;
+  QList<double*>& m_subPointDepthList;
   QList<TRaster64P>& m_outRasList;
   void run() override;
 
 public:
   CombineResults_Worker(int from, int to, TRaster64P outRas,
-                        QList<bool*>& subPointOccupationList,
+                        QList<double*>& subPointDepthList,
                         QList<TRaster64P>& outRasList)
       : m_from(from)
       , m_to(to)
       , m_outRas(outRas)
-      , m_subPointOccupationList(subPointOccupationList)
+      , m_subPointDepthList(subPointDepthList)
       , m_outRasList(outRasList) {}
 };
 

@@ -44,20 +44,24 @@
 namespace {
 
 // 三角形をソートする 裏返っているとき、優先的にtrue。
-//  tri1のDepthが遠い（小さい）ときにTrue
+//  tri1のDepthが遠い（大きい）ときにTrue
 bool HEdepthLessThan(const HEFace* tri1, const HEFace* tri2) {
-  // 裏返りチェック
+  // まず、デプスチェック
+  double tri1Depth = tri1->centroidDepth();
+  double tri2Depth = tri2->centroidDepth();
+  if (tri1Depth != tri2Depth) return tri1Depth > tri2Depth;
+
+  // デプスが同じとき、裏返りチェック
   bool tri1IsUra = tri1->size() < 0.0;
   bool tri2IsUra = tri2->size() < 0.0;
   if (tri1IsUra != tri2IsUra) return (tri1IsUra) ? true : false;
 
-  // 同じシェイプ内の分割三角形を優先させる
-  bool tri1IsConstDepth = tri1->hasConstantDepth();
-  bool tri2IsConstDepth = tri2->hasConstantDepth();
-  if (tri1IsConstDepth != tri2IsConstDepth) return tri2IsConstDepth;
+  return false;
 
-  // デプスチェック
-  return tri1->centroidDepth() < tri2->centroidDepth();
+  // 同じシェイプ内の分割三角形を優先させる
+  // bool tri1IsConstDepth = tri1->hasConstantDepth();
+  // bool tri2IsConstDepth = tri2->hasConstantDepth();
+  // if (tri1IsConstDepth != tri2IsConstDepth) return tri2IsConstDepth;
 }
 
 // double値が整数かどうかをチェックする
@@ -174,6 +178,8 @@ bool checkIsPremultiplied(TRaster64P ras) {
 }
 
 unsigned int taskId = 0;
+
+const double FAR_DEPTH = 100.;
 }  // namespace
 
 //---------------------------------------------------
@@ -454,7 +460,7 @@ void IwRenderInstance::getCorrVectors(IwLayer* /*layer*/,
   // 現フレームのシェイプを補間し、対応点ベクトルの集まりを作る
   // 各シェイプについて
   for (int sp = 0; sp < shapes.size(); sp++) {
-    int depth            = sp;
+    // int depth            = sp;
     ShapePair* shapePair = shapes.at(sp);
 
     // 対応点の分割点のベジエ座標値を求める
@@ -467,14 +473,20 @@ void IwRenderInstance::getCorrVectors(IwLayer* /*layer*/,
         shapePair->getDiscreteCorrWeights(m_frame, 0);
     QList<double> discreteCorrWeightsTo =
         shapePair->getDiscreteCorrWeights(m_frame, 1);
+    // 対応点の分割点のデプス値を求める
+    QList<double> discreteCorrDepths =
+        shapePair->getDiscreteCorrDepths(m_frame);
 
     assert(discreteCorrValuesFrom.size() == discreteCorrWeightsFrom.size());
+    assert(discreteCorrValuesFrom.size() == discreteCorrDepths.size());
 
     QPointF firstPosFrom, lastPosFrom, prevPosFrom, firstPosTo, lastPosTo,
         prevPosTo;
 
     double firstWeightFrom, lastWeightFrom, prevWeightFrom, firstWeightTo,
         lastWeightTo, prevWeightTo;
+
+    double firstDepth, lastDepth, prevDepth;
 
     // 各ベジエ座標を格納
     for (int d = 0; d < discreteCorrValuesFrom.size(); d++) {
@@ -491,18 +503,23 @@ void IwRenderInstance::getCorrVectors(IwLayer* /*layer*/,
 
       double tmpWeightFrom = discreteCorrWeightsFrom.at(d);
       double tmpWeightTo   = discreteCorrWeightsTo.at(d);
+
+      double tmpDepth = discreteCorrDepths.at(d);
+
       assert(tmpWeightTo > 0.5);
       if (d == 0) {
         firstPosFrom    = tmpPosFrom;
         firstPosTo      = tmpPosTo;
         firstWeightFrom = tmpWeightFrom;
         firstWeightTo   = tmpWeightTo;
+        firstDepth      = tmpDepth;
       } else {
         if (d == discreteCorrValuesFrom.size() - 1) {
           lastPosFrom    = tmpPosFrom;
           lastPosTo      = tmpPosTo;
           lastWeightFrom = tmpWeightFrom;
           lastWeightTo   = tmpWeightTo;
+          lastDepth      = tmpDepth;
         }
 
         // ここで、ワープ先（Toの方）のCorrVecの長さが、1ピクセルより短い場合、
@@ -516,7 +533,7 @@ void IwRenderInstance::getCorrVectors(IwLayer* /*layer*/,
 
         CorrVector corrVec = {{prevPosFrom, tmpPosFrom},
                               {prevPosTo, tmpPosTo},
-                              depth,
+                              (prevDepth + tmpDepth) * 0.5,  // 両端の平均をとる
                               false,
                               {prevWeightFrom, tmpWeightFrom},
                               {prevWeightTo, tmpWeightTo}};
@@ -527,6 +544,7 @@ void IwRenderInstance::getCorrVectors(IwLayer* /*layer*/,
       prevPosTo      = tmpPosTo;
       prevWeightFrom = tmpWeightFrom;
       prevWeightTo   = tmpWeightTo;
+      prevDepth      = tmpDepth;
 
       if (shapePair->isParent()) {
         parentShapeVerticesFrom.append(tmpPosFrom);
@@ -537,7 +555,7 @@ void IwRenderInstance::getCorrVectors(IwLayer* /*layer*/,
     if (shapePair->isClosed()) {
       CorrVector corrVec = {{lastPosFrom, firstPosFrom},
                             {lastPosTo, firstPosTo},
-                            depth,
+                            (lastDepth + firstDepth) * 0.5,  // 両端の平均をとる
                             false,
                             {lastWeightFrom, firstWeightFrom},
                             {lastWeightTo, firstWeightTo}};
@@ -597,10 +615,10 @@ void IwRenderInstance::HEcreateTriangleMesh(
 
   // ※ IwaWarperの計算に使う座標空間は左下原点なので、Qtとは上下反転している。
   //  　topLeftが左下、bottomRightが右上となる
-  HEVertex* superBL = new HEVertex(superRect.topLeft(), -100);
-  HEVertex* superBR = new HEVertex(superRect.topRight(), -100);
-  HEVertex* superTR = new HEVertex(superRect.bottomRight(), -100);
-  HEVertex* superTL = new HEVertex(superRect.bottomLeft(), -100);
+  HEVertex* superBL = new HEVertex(superRect.topLeft(), -100.);
+  HEVertex* superBR = new HEVertex(superRect.topRight(), -100.);
+  HEVertex* superTR = new HEVertex(superRect.bottomRight(), -100.);
+  HEVertex* superTL = new HEVertex(superRect.bottomLeft(), -100.);
   model.vertices.append(superBL);
   model.vertices.append(superBR);
   model.vertices.append(superTR);
@@ -625,9 +643,8 @@ void IwRenderInstance::HEcreateTriangleMesh(
     // （＝別のストロークのスタート点の）場合、新規に点を追加
 
     if (!start) {
-      start = new HEVertex(corrVec.from_p[0], corrVec.to_p[0],
-                           (double)corrVec.stackOrder, corrVec.from_weight[0],
-                           corrVec.to_weight[0]);
+      start = new HEVertex(corrVec.from_p[0], corrVec.to_p[0], corrVec.depth,
+                           corrVec.from_weight[0], corrVec.to_weight[0]);
       // モデルに点を追加
       //     B2 - 2) piを含む三角形ABCを発見し, この三角形をAB pi, BC pi, CA pi
       //     の3個の三角形に分割． この時, 辺AB, BC, CAをスタックSに積む． B2 -
@@ -647,9 +664,8 @@ void IwRenderInstance::HEcreateTriangleMesh(
     // 二つ目の点を追加する
     HEVertex* end = model.findVertex(corrVec.from_p[1], corrVec.to_p[1]);
     if (!end) {
-      end = new HEVertex(corrVec.from_p[1], corrVec.to_p[1],
-                         (double)corrVec.stackOrder, corrVec.from_weight[1],
-                         corrVec.to_weight[1]);
+      end = new HEVertex(corrVec.from_p[1], corrVec.to_p[1], corrVec.depth,
+                         corrVec.from_weight[1], corrVec.to_weight[1]);
       model.addVertex(end, start);
     } else  // すでに追加済みの点の場合（平曲線の始点に戻ってきたときなど）は、制約のみ付加する
       model.setConstraint(start, end, true);
@@ -692,7 +708,8 @@ void MapTrianglesToRaster_Worker::run() {
     double to_xmax = -10000;
     QPointF sp[3], wp[3];
     QPointF spMin, spMax;  // srcのバウンディングボックス
-    Halfedge* he = face->halfedge;
+    Halfedge* he     = face->halfedge;
+    double faceDepth = 0.0;
     for (int p = 0; p < 3; p++) {
       HEVertex* v = he->vertex;
       // ここでサンプル点のためのオフセットを加える
@@ -708,8 +725,14 @@ void MapTrianglesToRaster_Worker::run() {
       spMax.setX(std::max(spMax.x(), sp[p].x()));
       spMax.setX(std::max(spMax.x(), sp[p].x()));
 
+      // depthを足し込む
+      faceDepth += v->to_pos.z();
+
       he = he->next;
     }
+
+    // 3頂点のデプスの平均を格納
+    faceDepth /= 3.;
 
     /* ここで、m_outRasは出力サイズの m_subAmount 倍されていることに注意！！ */
     // std::cout << "src ras size = (" << m_srcRas->getLx() << ", " <<
@@ -836,8 +859,8 @@ void MapTrianglesToRaster_Worker::run() {
             if (hasMatte && *tmpMattePix == 0) continue;
 
             // もし、既にアルファ値が１なら、描かない
-            if (outpix->m != TPixel64::maxChannelValue && tmpXPos >= xmin &&
-                tmpXPos < xmax && m_subPointOccupation[subIndex] == false) {
+            if (/*outpix->m != TPixel64::maxChannelValue &&*/ tmpXPos >= xmin &&
+                tmpXPos < xmax && m_subPointDepth[subIndex] > faceDepth) {
               // TPixel64 pix = getPixelVal(srcRas, uv.toPoint());
               // uv座標を元に、ピクセル値をリニア補間で得る。
               TPixel64 pix = (m_resampleMode == AreaAverage)
@@ -856,7 +879,7 @@ void MapTrianglesToRaster_Worker::run() {
 
               *outpix = pix;
 
-              m_subPointOccupation[subIndex] = true;
+              m_subPointDepth[subIndex] = faceDepth;
             }
           }
 
@@ -874,7 +897,7 @@ void CombineResults_Worker::run() {
     TPixel64* pix = m_outRas->pixels(y);
     for (int x = 0; x < m_outRas->getLx(); x++, pix++, i++) {
       for (int t = 0; t < m_outRasList.size(); t++) {
-        if (m_subPointOccupationList[t][i]) {
+        if (m_subPointDepthList[t][i] < FAR_DEPTH) {
           *pix = m_outRasList[t]->pixels(y)[x];
           break;
         }
@@ -1003,16 +1026,16 @@ TRaster64P IwRenderInstance::HEmapTrianglesToRaster_Multi(
                                  boundingRect.height() * subAmount);
   outRas->clear();
   {
-    QList<bool*> subPointOccupationList;
+    QList<double*> subPointDepthList;
     QList<TRaster64P> outRasList;
     int tmpStart = 0;
     for (int t = 0; t < 1; t++) {
       int tmpEnd = model.faces.size();
 
-      // サブポイントが既に描画済みかどうか
-      bool* subPointOccupation = new bool[size];
-      std::fill_n(subPointOccupation, size, false);
-      subPointOccupationList.push_back(subPointOccupation);
+      // サブポイントに描画されたデプス
+      double* subPointDepth = new double[size];
+      std::fill_n(subPointDepth, size, FAR_DEPTH);  // デプス100で初期化
+      subPointDepthList.push_back(subPointDepth);
 
       // 結果を収めるラスタを準備する
       TRaster64P outRasT = TRaster64P(boundingRect.width() * subAmount,
@@ -1022,8 +1045,8 @@ TRaster64P IwRenderInstance::HEmapTrianglesToRaster_Multi(
 
       MapTrianglesToRaster_Worker* task = new MapTrianglesToRaster_Worker(
           tmpStart, tmpEnd, &model, this, sampleOffset, outputOffset, outRasT,
-          srcRas, matteRas, mlssRefRas, subPointOccupation, subAmount,
-          alphaMode, resampleMode, shapeAlphaImg);
+          srcRas, matteRas, mlssRefRas, subPointDepth, subAmount, alphaMode,
+          resampleMode, shapeAlphaImg);
 
       QThreadPool::globalInstance()->start(task);
 
@@ -1038,7 +1061,7 @@ TRaster64P IwRenderInstance::HEmapTrianglesToRaster_Multi(
       if (tmpStart == tmpEnd) continue;
 
       CombineResults_Worker* task = new CombineResults_Worker(
-          tmpStart, tmpEnd, outRas, subPointOccupationList, outRasList);
+          tmpStart, tmpEnd, outRas, subPointDepthList, outRasList);
 
       QThreadPool::globalInstance()->start(task);
 
@@ -1046,7 +1069,7 @@ TRaster64P IwRenderInstance::HEmapTrianglesToRaster_Multi(
     }
     QThreadPool::globalInstance()->waitForDone();
 
-    for (bool* p : subPointOccupationList) delete[] p;
+    for (double* p : subPointDepthList) delete[] p;
   }
 
   TRaster64P retRas = TRaster64P(boundingRect.width(), boundingRect.height());

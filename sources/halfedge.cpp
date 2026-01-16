@@ -141,7 +141,7 @@ HEVertex* HEFace::createCentroidVertex() {
                  (A->to_weight + B->to_weight + C->to_weight);
   double to_weight = (A->to_weight + B->to_weight + C->to_weight) / 3.0;
 
-  return new HEVertex(from.toPointF(), to.toPointF(), from.z(), from_weight,
+  return new HEVertex(from.toPointF(), to.toPointF(), to.z(), from_weight,
                       to_weight);
 }
 
@@ -638,13 +638,13 @@ void HEModel::checkFaceVisibility(const QPolygonF& parentShapePolygon) {
       continue;
     }
     // 重心がポリゴン内に含まれていなければ不可視にする
-    HEVertex* A            = he->vertex;
-    HEVertex* B            = he->next->vertex;
-    HEVertex* C            = he->prev->vertex;
-    QVector3D fromCentroid = (A->from_pos + B->from_pos + C->from_pos) / 3.0;
-    if (!parentShapePolygon.containsPoint(fromCentroid.toPointF(),
-                                          Qt::WindingFill))
-      face->isVisible = false;
+    // HEVertex* A            = he->vertex;
+    // HEVertex* B            = he->next->vertex;
+    // HEVertex* C            = he->prev->vertex;
+    // QVector3D fromCentroid = (A->from_pos + B->from_pos + C->from_pos) / 3.0;
+    // if (!parentShapePolygon.containsPoint(fromCentroid.toPointF(),
+    //                                      Qt::WindingFill))
+    //  face->isVisible = false;
   }
 }
 

@@ -50,12 +50,12 @@
 <context>
     <name>CorrespondenceTool</name>
     <message>
-        <location filename="../correspondencetool.cpp" line="646"/>
+        <location filename="../correspondencetool.cpp" line="648"/>
         <source>[Click shape] to select.</source>
         <translation>【シェイプをクリック】 選択。</translation>
     </message>
     <message>
-        <location filename="../correspondencetool.cpp" line="651"/>
+        <location filename="../correspondencetool.cpp" line="653"/>
         <source>[Drag corr point] to move. [+Shift] to move all points. [+Ctrl] with snapping. [Alt + Click] to insert a new corr point.</source>
         <translation>【対応点をドラッグ】 移動。 【+Shift】 全ての対応点を移動。 【+Ctrl】 スナップ。【Alt+クリック】 新規対応点を挿入。</translation>
     </message>
@@ -1210,7 +1210,7 @@ Remove its shapes?</source>
         <translation>四角形</translation>
     </message>
     <message>
-        <location filename="../circletool.cpp" line="228"/>
+        <location filename="../circletool.cpp" line="229"/>
         <source>Circle</source>
         <translation>円形</translation>
     </message>
@@ -1238,32 +1238,32 @@ Remove its shapes?</source>
         <translation>フォルダの作成に失敗しました。</translation>
     </message>
     <message>
-        <location filename="../projectutils.cpp" line="426"/>
-        <location filename="../projectutils.cpp" line="534"/>
+        <location filename="../projectutils.cpp" line="427"/>
+        <location filename="../projectutils.cpp" line="535"/>
         <source>Resizing work area : Question</source>
         <translation>ワークエリアのリサイズ： 質問</translation>
     </message>
     <message>
-        <location filename="../projectutils.cpp" line="427"/>
-        <location filename="../projectutils.cpp" line="535"/>
+        <location filename="../projectutils.cpp" line="428"/>
+        <location filename="../projectutils.cpp" line="536"/>
         <source>Do you want to shrink the shapes fitting with the work area?</source>
         <translation>ワークエリアに合わせて全てのシェイプの形状を伸縮させますか？</translation>
     </message>
     <message>
-        <location filename="../projectutils.cpp" line="429"/>
-        <location filename="../projectutils.cpp" line="537"/>
+        <location filename="../projectutils.cpp" line="430"/>
+        <location filename="../projectutils.cpp" line="538"/>
         <source>Shrink the shapes</source>
         <translation>シェイプの形状を伸縮する</translation>
     </message>
     <message>
-        <location filename="../projectutils.cpp" line="432"/>
-        <location filename="../projectutils.cpp" line="539"/>
+        <location filename="../projectutils.cpp" line="433"/>
+        <location filename="../projectutils.cpp" line="540"/>
         <source>Keep the shapes unchanged</source>
         <translation>シェイプの形状を維持する</translation>
     </message>
     <message>
-        <location filename="../projectutils.cpp" line="434"/>
-        <location filename="../projectutils.cpp" line="541"/>
+        <location filename="../projectutils.cpp" line="435"/>
+        <location filename="../projectutils.cpp" line="542"/>
         <source>Cancel</source>
         <translation>キャンセル</translation>
     </message>
@@ -1714,40 +1714,45 @@ for character Levels.</source>
 <context>
     <name>ShapeOptionsDialog</name>
     <message>
-        <location filename="../shapeoptionsdialog.cpp" line="60"/>
+        <location filename="../shapeoptionsdialog.cpp" line="68"/>
         <source>Edge Density</source>
         <translation>分割数</translation>
     </message>
     <message>
-        <location filename="../shapeoptionsdialog.cpp" line="66"/>
+        <location filename="../shapeoptionsdialog.cpp" line="74"/>
         <source>Weight</source>
         <translation>重み</translation>
+    </message>
+    <message>
+        <location filename="../shapeoptionsdialog.cpp" line="80"/>
+        <source>Depth</source>
+        <translation>奥行き</translation>
     </message>
 </context>
 <context>
     <name>ShapePair</name>
     <message>
-        <location filename="../shapepair.cpp" line="354"/>
+        <location filename="../shapepair.cpp" line="356"/>
         <source>Shape</source>
         <translation>シェイプ</translation>
     </message>
     <message>
-        <location filename="../shapepair.cpp" line="1607"/>
+        <location filename="../shapepair.cpp" line="1657"/>
         <source>Form</source>
         <translation>形状</translation>
     </message>
     <message>
-        <location filename="../shapepair.cpp" line="1607"/>
+        <location filename="../shapepair.cpp" line="1657"/>
         <source>Corr</source>
         <translation>対応点</translation>
     </message>
     <message>
-        <location filename="../shapepair.cpp" line="1609"/>
+        <location filename="../shapepair.cpp" line="1659"/>
         <source>From </source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../shapepair.cpp" line="1609"/>
+        <location filename="../shapepair.cpp" line="1659"/>
         <source>To </source>
         <translation></translation>
     </message>
@@ -1834,17 +1839,17 @@ for character Levels.</source>
         <translation>キーボードショートカット</translation>
     </message>
     <message>
-        <location filename="../shortcutpopup.cpp" line="370"/>
+        <location filename="../shortcutpopup.cpp" line="367"/>
         <source>Remove</source>
         <translation>消去</translation>
     </message>
     <message>
-        <location filename="../shortcutpopup.cpp" line="372"/>
+        <location filename="../shortcutpopup.cpp" line="369"/>
         <source>Couldn&apos;t find any matching command.</source>
         <translation>コマンドが見つかりませんでした。</translation>
     </message>
     <message>
-        <location filename="../shortcutpopup.cpp" line="385"/>
+        <location filename="../shortcutpopup.cpp" line="382"/>
         <source>Search:</source>
         <translation>検索：</translation>
     </message>
@@ -1894,9 +1899,8 @@ for character Levels.</source>
         <translation>ツール</translation>
     </message>
     <message>
-        <location filename="../shortcutpopup.cpp" line="231"/>
         <source>View Toggle</source>
-        <translation>表示切り替え</translation>
+        <translation type="vanished">表示切り替え</translation>
     </message>
 </context>
 <context>

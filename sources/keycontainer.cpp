@@ -125,6 +125,8 @@ void simple_InterPolate(CorrPointList &beforeKey, CorrPointList &afterKey,
     double afterVal     = afterKey.at(c).value;
     double beforeWeight = beforeKey.at(c).weight;
     double afterWeight  = afterKey.at(c).weight;
+    double beforeDepth  = beforeKey.at(c).depth;
+    double afterDepth   = afterKey.at(c).depth;
 
     // •âŠÔ
     double tmpVal = (beforeVal == afterVal)
@@ -135,7 +137,11 @@ void simple_InterPolate(CorrPointList &beforeKey, CorrPointList &afterKey,
             ? beforeWeight
             : beforeRatio * beforeWeight + afterRatio * afterWeight;
 
-    result.push_back({tmpVal, tmpWeight});
+    double tmpDepth = (beforeDepth == afterDepth)
+                          ? beforeDepth
+                          : beforeRatio * beforeDepth + afterRatio * afterDepth;
+
+    result.push_back({tmpVal, tmpWeight, tmpDepth});
   }
 }
 
@@ -279,7 +285,11 @@ void interPolate(CorrPointList &beforeKey, CorrPointList &afterKey,
     double afterWeight  = afterKey[c].weight;
     double tmpWeight    = beforeWeight * beforeRatio + afterWeight * afterRatio;
 
-    result.push_back({tmpVal, tmpWeight});
+    double beforeDepth = beforeKey[c].depth;
+    double afterDepth  = afterKey[c].depth;
+    double tmpDepth    = beforeDepth * beforeRatio + afterDepth * afterRatio;
+
+    result.push_back({tmpVal, tmpWeight, tmpDepth});
   }
 }
 
@@ -596,6 +606,15 @@ void KeyContainer<CorrPointList>::saveData(QXmlStreamWriter &writer) {
     }
     writer.writeTextElement("corrWeights", str);
 
+    // ƒfƒvƒX‚ð•Û‘¶
+    str.clear();
+    for (int cp = 0; cp < cpList.size(); cp++) {
+      if (cp != 0) str.append(", ");
+
+      str.append(QString::number(cpList.at(cp).depth));
+    }
+    writer.writeTextElement("corrDepths", str);
+
     writer.writeEndElement();
     ++i;
   }
@@ -628,6 +647,11 @@ void KeyContainer<CorrPointList>::loadData(QXmlStreamReader &reader) {
           QStringList list = reader.readElementText().split(", ");
           for (int c = 0; c < list.size(); c++)
             cpList[c].weight = list.at(c).toDouble();
+        } else if (reader.name() == "corrDepths") {
+          assert(!cpList.isEmpty());
+          QStringList list = reader.readElementText().split(", ");
+          for (int c = 0; c < list.size(); c++)
+            cpList[c].depth = list.at(c).toDouble();
         } else
           reader.skipCurrentElement();
       }

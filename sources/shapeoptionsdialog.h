@@ -35,11 +35,16 @@ class ShapeOptionsDialog : public IwDialog {
   QSlider* m_weightSlider;
   QLineEdit* m_weightEdit;
 
+  // デプスのスライダ(大きいほどカメラから遠い＝後ろになる)
+  QSlider* m_depthSlider;
+  QLineEdit* m_depthEdit;
+
 public:
   ShapeOptionsDialog();
 
   void setDensity(int value);
   void setWeight(double weight);
+  void setDepth(double depth);
 
 protected:
   void showEvent(QShowEvent*);
@@ -55,6 +60,8 @@ protected slots:
   void onEdgeDensityEditEdited();
   void onWeightSliderMoved(int val);
   void onWeightEditEdited();
+  void onDepthSliderMoved(int val);
+  void onDepthEditEdited();
 };
 
 //-------------------------------------
@@ -97,4 +104,22 @@ public:
   void undo();
   void redo();
 };
+
+class ChangeDepthUndo : public QUndoCommand {
+  IwProject* m_project;
+  QList<QPair<OneShape, int>>
+      m_targetCorrs;  // シェイプ全体の場合はsecondに-1を入れる
+  QList<double> m_beforeDepths;
+  double m_afterDepth;
+  int m_frame;
+  QList<OneShape> m_wasKeyShapes;
+
+public:
+  ChangeDepthUndo(QList<QPair<OneShape, int>>& targets, double afterDepth,
+                  IwProject* project);
+
+  void undo();
+  void redo();
+};
+
 #endif

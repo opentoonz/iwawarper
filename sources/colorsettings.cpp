@@ -45,6 +45,7 @@ ColorSettings::ColorSettings() {
   m_colors.insert(QString(Color_CtrlPoint), QColor(255, 255, 255));
   m_colors.insert(QString(Color_ActiveCtrl), QColor(0, 255, 0));
   m_colors.insert(QString(Color_CorrNumber), QColor(255, 255, 255));
+  m_colors.insert(QString(Color_CorrDepthNumber), QColor(128, 255, 0));
   m_colors.insert(QString(Color_Background), QColor(102, 102, 102));
   m_colors.insert(QString(Color_FreeHandToolTracedLine), QColor(0, 255, 0));
   m_colors.insert(QString(Color_InbetweenCtrl), QColor(255, 0, 0));

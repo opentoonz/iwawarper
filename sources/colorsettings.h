@@ -15,6 +15,7 @@
 #define Color_CtrlPoint "CtrlPoint"
 #define Color_ActiveCtrl "ActiveCtrl"
 #define Color_CorrNumber "CorrNumber"
+#define Color_CorrDepthNumber "CorrDepthNumber"
 #define Color_Background "Background"
 #define Color_FreeHandToolTracedLine "FreeHandToolTracedLine"
 #define Color_InbetweenCtrl "InbetweenCtrl"
