@@ -194,7 +194,7 @@ void CorrDragTool::doSnap(double& bezierPos, int frame, double rangeBefore,
     for (int sp = 0; sp < layer->getShapePairCount(); sp++) {
       ShapePair* shapePair = layer->getShapePair(sp);
       if (!shapePair) continue;
-      if (!shapePair->isVisible()) continue;
+      if (!shapePair->isVisible() || !shapePair->isEffective(frame)) continue;
       for (int fromTo = 0; fromTo < 2; fromTo++) {
         // ロックされていて非表示ならスキップ
         if (!fromToVisible[fromTo]) continue;

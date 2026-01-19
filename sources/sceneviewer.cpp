@@ -792,6 +792,7 @@ void SceneViewer::drawGLPreview() {
               ViewSettings::LAYERIMAGE matteLayerImage =
                   getLayerImage(mattePath, 0, 0);
               if (!matteLayerImage.size.isEmpty()) {
+                layerImage.texture->bind(0);  // 仮に
                 matteLayerImage.texture->bind(1);
                 matteTexture = matteLayerImage.texture;
                 m_program_texture->setUniformValue(u_tex_matte_sw, true);
@@ -837,7 +838,7 @@ void SceneViewer::drawGLPreview() {
 
         glDrawElements(GL_TRIANGLES, vertCount, GL_UNSIGNED_INT, (void*)0);
 
-        if (matteTexture) matteTexture->release(1);
+        if (matteTexture) matteTexture->release();
 
         // メッシュを表示
         if (settings->isMeshVisible()) {
@@ -862,7 +863,7 @@ void SceneViewer::drawGLPreview() {
       layerImage.texture->setMagnificationFilter(QOpenGLTexture::Nearest);
     // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-    layerImage.texture->release(0);
+    layerImage.texture->release();
   }
   m_vao->release();
   m_vbo->release();
@@ -1040,6 +1041,12 @@ void SceneViewer::drawShapes() {
 
       // 非表示ならconitnue
       if (!shapePair->isVisible()) continue;
+      // 無効シェイプならconitnue
+      if (!shapePair->isEffective(frame)) continue;
+      // 子シェイプの場合、親シェイプが無効でもconitnue
+      if (!shapePair->isParent() && layer->getParentShape(shapePair) &&
+          !layer->getParentShape(shapePair)->isEffective(frame))
+        continue;
 
       for (int fromTo = 0; fromTo < 2; fromTo++) {
         // 140128 ロックされていたら非表示にする
@@ -2183,7 +2190,8 @@ void SceneViewer::doShapeRender() {
         if (!shapePair) continue;
 
         // 非表示ならconitnue
-        if (!shapePair->isVisible()) continue;
+        if (!shapePair->isVisible() || !shapePair->isEffective(frame.first))
+          continue;
 
         for (int fromTo = 0; fromTo < 2; fromTo++) {
           // 140128 ロックされていたら非表示にする

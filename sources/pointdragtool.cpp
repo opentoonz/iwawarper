@@ -186,7 +186,7 @@ int TranslatePointDragTool::calculateSnap(QPointF& pos) {
     for (int sp = 0; sp < layer->getShapePairCount(); sp++) {
       ShapePair* shapePair = layer->getShapePair(sp);
       if (!shapePair) continue;
-      if (!shapePair->isVisible()) continue;
+      if (!shapePair->isVisible() || !shapePair->isEffective(frame)) continue;
 
       for (int fromTo = 0; fromTo < 2; fromTo++) {
         // ロックされていて非表示ならスキップ
@@ -769,7 +769,7 @@ void TranslateHandleDragTool::calculateHandleSnap(const QPointF pointPos,
     for (int sp = 0; sp < layer->getShapePairCount(); sp++) {
       ShapePair* shapePair = layer->getShapePair(sp);
       if (!shapePair) continue;
-      if (!shapePair->isVisible()) continue;
+      if (!shapePair->isVisible() || !shapePair->isEffective(frame)) continue;
 
       for (int fromTo = 0; fromTo < 2; fromTo++) {
         // ロックされていて非表示ならスキップ

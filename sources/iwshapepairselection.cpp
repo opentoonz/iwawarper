@@ -527,7 +527,7 @@ void IwShapePairSelection::onDeleteCorrPoint() {
 void IwShapePairSelection::selectAllShapes() {
   IwProject* project = IwApp::instance()->getCurrentProject()->getProject();
   if (!project) return;
-
+  int currentFrame      = project->getViewFrame();
   IwLayer* currentLayer = IwApp::instance()->getCurrentLayer()->getLayer();
 
   // いったん選択解除
@@ -552,7 +552,8 @@ void IwShapePairSelection::selectAllShapes() {
     for (int sp = 0; sp < layer->getShapePairCount(); sp++) {
       ShapePair* shapePair = layer->getShapePair(sp);
       if (!shapePair) continue;
-      if (!shapePair->isVisible()) continue;
+      if (!shapePair->isVisible() || !shapePair->isEffective(currentFrame))
+        continue;
 
       for (int fromTo = 0; fromTo < 2; fromTo++) {
         // ロックされていて非表示ならスキップ

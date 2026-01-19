@@ -448,7 +448,7 @@ void ShapeOptionsDialog::setDepth(double depth) {
     }
   } else {
     for (auto shape : m_selectedShapes) {
-      if (shape.fromTo == true) {
+      if (shape.fromTo == 1) {
         targetCorrList.append({shape, -1});
         foundToShape = true;
       }

@@ -17,6 +17,7 @@
 #include <QObject>
 
 class IwProject;
+class IwLayer;
 class QPainter;
 class QXmlStreamWriter;
 class QXmlStreamReader;
@@ -38,6 +39,10 @@ class ShapePair : public QObject {
   KeyContainer<BezierPointList> m_formKeys[2];
   // Correspondence(対応点)データ - from, to の２つ
   KeyContainer<CorrPointList> m_corrKeys[2];
+
+  // シェイプを使用するか／しないかをフレーム毎に管理する
+  // trueのとき使用、falseのとき不使用
+  KeyContainer<bool> m_effectiveKeys;
 
   // 以下タイムライン用
   // 表示が開いているかどうか = 選択されているかどうか
@@ -229,6 +234,14 @@ public:
 
   void getFormKeyRange(int& start, int& end, int frame, int fromTo);
   void getCorrKeyRange(int& start, int& end, int frame, int fromTo);
+
+  void setEffectiveKey(int frame, bool effective);
+  void removeEffectiveKey(int frame);
+  QMap<int, bool> getEffectiveKeyData();
+  bool isEffective(int frame);
+  // 引数のフレームが、Effectiveキーフレームかどうかを返す
+  bool isEffectiveKey(int frame) { return m_effectiveKeys.isKey(frame); }
+
   //----------------------------------
   // 以下、タイムラインでの表示用
   //----------------------------------
@@ -242,9 +255,9 @@ public:
                         ShapePair* nextShape,  // ← 親子関係の線を引くため
                         bool layerIsLocked);
   // 描画(本体)
-  void drawTimeLine(QPainter& p, int& vpos, int width, int fromFrame,
-                    int toFrame, int frameWidth, int rowHeight, int& currentRow,
-                    int mouseOverRow, double mouseOverFrameD,
+  void drawTimeLine(QPainter& p, IwLayer* layer, int& vpos, int width,
+                    int fromFrame, int toFrame, int frameWidth, int rowHeight,
+                    int& currentRow, int mouseOverRow, double mouseOverFrameD,
                     bool layerIsLocked, bool layerIsVisibleInRender);
 
   // タイムラインクリック時

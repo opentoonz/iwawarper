@@ -693,7 +693,7 @@ void IwLayer::drawTimeLine(QPainter& p, int vpos, int width, int fromFrame,
     ShapePair* shapePair = m_shapepairs.at(sp);
     if (shapePair && shapePair->isAtLeastOneShapeExpanded()) {
       // currentVpos‚ÍŠÖ”drawTimeLineHead“à‚Å•`‚«‚È‚ª‚çƒCƒ“ƒNƒŠƒƒ“ƒg
-      shapePair->drawTimeLine(p, currentVpos, width, fromFrame, toFrame,
+      shapePair->drawTimeLine(p, this, currentVpos, width, fromFrame, toFrame,
                               frameWidth, rowHeight, currentRow, mouseOverRow,
                               mouseOverFrameD, m_isLocked, m_isVisibleInRender);
     }

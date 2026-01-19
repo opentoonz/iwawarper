@@ -9,12 +9,11 @@
 #include "preferences.h"
 #include "iwapp.h"
 #include "iwprojecthandle.h"
-#include "iwproject.h"
+#include "iwlayer.h"
 
 #include "iwselectionhandle.h"
 #include "iwtimelinekeyselection.h"
 
-#include "iwselectionhandle.h"
 #include "iwshapepairselection.h"
 
 #include "viewsettings.h"
@@ -415,6 +414,7 @@ ShapePair::ShapePair(ShapePair* src)
     m_corrKeys[i].setData(src->getCorrData(i));
     m_corrKeys[i].setInterpolation(src->getCorrInterpolation(i));
   }
+  m_effectiveKeys.setData(src->getEffectiveKeyData());
 
   m_name = src->getName();
 }
@@ -436,6 +436,13 @@ BezierPointList ShapePair::getBezierPointList(int frame, int fromTo) {
 CorrPointList ShapePair::getCorrPointList(int frame, int fromTo) {
   return m_corrKeys[fromTo].getData(
       frame, (m_isClosed) ? m_bezierPointAmount : m_bezierPointAmount - 1);
+}
+
+//-----------------------------------------------------------------------------
+// あるフレームでEffectiveかどうか
+//-----------------------------------------------------------------------------
+bool ShapePair::isEffective(int frame) {
+  return m_effectiveKeys.getData(frame, 0);
 }
 
 double ShapePair::getBezierInterpolation(int frame, int fromTo) {
@@ -651,6 +658,19 @@ void ShapePair::removeCorrKey(int frame, int fromTo, bool enableRemoveLastKey) {
 
   // 消去
   m_corrKeys[fromTo].removeKeyData(frame);
+}
+
+//-----------------------------------------------------------------------------
+// Effectiveキーフレームのセット
+//-----------------------------------------------------------------------------
+void ShapePair::setEffectiveKey(int frame, bool effective) {
+  m_effectiveKeys.setKeyData(frame, effective);
+}
+void ShapePair::removeEffectiveKey(int frame) {
+  // frame が キーフレームじゃなければreturn
+  if (!isEffectiveKey(frame)) return;
+  // 消去
+  m_effectiveKeys.removeKeyData(frame);
 }
 
 //-----------------------------------------------------------------------------
@@ -1131,6 +1151,13 @@ void ShapePair::setCorrData(QMap<int, CorrPointList> data, int fromTo) {
   m_corrKeys[fromTo].setData(data);
   // 対応点の数を更新
   m_corrPointAmount = data.values().first().size();
+}
+
+//--------------------------------------------------------
+// Effectiveデータを返す
+//--------------------------------------------------------
+QMap<int, bool> ShapePair::getEffectiveKeyData() {
+  return m_effectiveKeys.getData();
 }
 
 //--------------------------------------------------------
@@ -1774,11 +1801,11 @@ void ShapePair::drawTimeLineHead(QPainter& p, int& vpos, int width,
   }
 }
 
-void ShapePair::drawTimeLine(QPainter& p, int& vpos, int /*width*/,
-                             int fromFrame, int toFrame, int frameWidth,
-                             int rowHeight, int& currentRow, int mouseOverRow,
-                             double mouseOverFrameD, bool layerIsLocked,
-                             bool layerIsVisibleInRender) {
+void ShapePair::drawTimeLine(QPainter& p, IwLayer* layer, int& vpos,
+                             int /*width*/, int fromFrame, int toFrame,
+                             int frameWidth, int rowHeight, int& currentRow,
+                             int mouseOverRow, double mouseOverFrameD,
+                             bool layerIsLocked, bool layerIsVisibleInRender) {
   bool isHighlightRow = (mouseOverRow == currentRow) && !layerIsLocked;
 
   // まずは自分自身
@@ -1795,20 +1822,80 @@ void ShapePair::drawTimeLine(QPainter& p, int& vpos, int /*width*/,
   bool showCacheState =
       m_isParent && layerIsVisibleInRender && isRenderTarget(targetShapeTag);
 
+  // Effectiveキー列が選択されているかどうか
+  bool isEffectiveRowSelected = false;
+  if (IwApp::instance()->getCurrentSelection()->getSelection() ==
+      IwTimeLineEffectiveKeySelection::instance()) {
+    ShapePair* selectedShapePair =
+        IwTimeLineEffectiveKeySelection::instance()->getShapePair();
+    if (selectedShapePair == this) {
+      isEffectiveRowSelected = true;
+    }
+  }
+
   // 各フレームで、中身のあるものだけ描画
+
   for (int f = fromFrame; f <= toFrame; f++) {
     QRect tmpRect = frameRect.translated(frameWidth * f, 0);
     p.setPen(Qt::black);
-    if (f < frameLength)
+    if (f >= frameLength) p.setBrush(QColor(255, 255, 255, 5));
+    // 有効かどうか
+    else if (isEffective(f))
       p.setBrush(rowColor);
     else
-      p.setBrush(QColor(255, 255, 255, 5));
+      p.setBrush(QColor(64, 64, 64));
+
     p.drawRect(tmpRect);
+
+    // 有効な子シェイプかつ、親シェイプが無効の場合
+    if (!m_isParent && layer->getParentShape(this) &&
+        !layer->getParentShape(this)->isEffective(f)) {
+      // 斜めにグレーにする
+      QPolygon halfTriangle;
+      halfTriangle << tmpRect.topLeft() + QPoint(1, 1)
+                   << tmpRect.topRight() + QPoint(1, 1)
+                   << tmpRect.bottomLeft() + QPoint(1, 1);
+      p.setPen(Qt::NoPen);
+      p.setBrush(QColor(64, 64, 64));
+      p.drawPolygon(halfTriangle);
+    }
 
     if (isHighlightRow && (int)mouseOverFrameD == f)
       p.fillRect(tmpRect, QColor(255, 255, 220, 100));
     else if (layerIsLocked) {
       p.fillRect(tmpRect, QBrush(QColor(128, 128, 128, 128), Qt::BDiagPattern));
+    }
+
+    //----- 選択のとき青い背景にする
+    if (isEffectiveRowSelected &&
+        IwTimeLineEffectiveKeySelection::instance()->isFrameSelected(f)) {
+      p.setBrush(QColor(100, 153, 176, 128));
+      p.setPen(Qt::NoPen);
+      p.drawRect(tmpRect);
+    }
+    //-----
+
+    bool isEffectiveKey = m_effectiveKeys.isKey(f);
+    if (isEffectiveKey) {
+      p.save();
+      p.translate(f * frameWidth + frameWidth / 2, rowHeight / 2 + vpos);
+      p.setPen(Qt::lightGray);
+      if (isHighlightRow && (int)mouseOverFrameD == f) {
+        p.setBrush(Qt::yellow);
+        p.setPen(Qt::yellow);
+      } else if (layerIsLocked)
+        p.setBrush(Qt::lightGray);
+      else
+        p.setBrush(Qt::transparent);
+
+      if (isEffective(f))
+        p.drawEllipse(-5, -5, 10, 10);
+      else {
+        QVector<QPoint> crossPoints = {QPoint(-5, -5), QPoint(5, 5),
+                                       QPoint(-5, 5), QPoint(5, -5)};
+        p.drawLines(crossPoints);
+      }
+      p.restore();
     }
 
     // show render cache state if the shape is render target
@@ -1843,12 +1930,14 @@ void ShapePair::drawTimeLine(QPainter& p, int& vpos, int /*width*/,
     int selFromTo   = 0;
     bool isForm     = true;
     if (IwApp::instance()->getCurrentSelection()->getSelection() ==
-        IwTimeLineKeySelection::instance()) {
-      OneShape selectedShape = IwTimeLineKeySelection::instance()->getShape();
+        IwTimeLineFormCorrKeySelection::instance()) {
+      OneShape selectedShape =
+          IwTimeLineFormCorrKeySelection::instance()->getShape();
       if (selectedShape.shapePairP == this) {
         isSelected = true;
         selFromTo  = selectedShape.fromTo;
-        isForm     = IwTimeLineKeySelection::instance()->isFormKeySelected();
+        isForm =
+            IwTimeLineFormCorrKeySelection::instance()->isFormKeySelected();
       }
     }
 
@@ -1895,7 +1984,7 @@ void ShapePair::drawTimeLine(QPainter& p, int& vpos, int /*width*/,
         bool isSelectedCell = false;
         //----- キーフレーム選択のとき青い背景にする
         if (rowSelected &&
-            IwTimeLineKeySelection::instance()->isFrameSelected(f)) {
+            IwTimeLineFormCorrKeySelection::instance()->isFrameSelected(f)) {
           p.setBrush(QColor(100, 153, 176, 128));
           p.setPen(Qt::NoPen);
           p.drawRect(tmpFrameRect);
@@ -1993,17 +2082,54 @@ void ShapePair::drawTimeLine(QPainter& p, int& vpos, int /*width*/,
 //--------------------------------------------------------
 bool ShapePair::onTimeLineClick(int rowInShape, double frameD, bool ctrlPressed,
                                 bool shiftPressed, Qt::MouseButton /*button*/) {
-  // 最初の行はシェイプの行で、これはとりあえずムシ
-  if (rowInShape == 0) return false;
+  int frame = (int)frameD;
+
+  // 最初の行はシェイプの行
+  if (rowInShape == 0) {
+    IwTimeLineEffectiveKeySelection::instance()->setShapePair(this);
+
+    if (!shiftPressed) {
+      // 通常クリック
+      if (!ctrlPressed) {
+        // セルの単独選択　未選択のセル：Press時　選択済のセル：Release時
+        if (!IwTimeLineEffectiveKeySelection::instance()->isFrameSelected(
+                frame)) {
+          IwTimeLineEffectiveKeySelection::instance()->selectNone();
+          IwTimeLineEffectiveKeySelection::instance()->selectFrame(frame);
+        }
+      }
+      // ＋Ctrl
+      else {
+        // そのセルが未選択なら追加 選択済なら選択からはずす
+        if (IwTimeLineEffectiveKeySelection::instance()->isFrameSelected(frame))
+          IwTimeLineEffectiveKeySelection::instance()->unselectFrame(frame);
+        else
+          IwTimeLineEffectiveKeySelection::instance()->selectFrame(frame);
+      }
+      IwTimeLineEffectiveKeySelection::instance()->setRangeSelectionStartPos(
+          frame);
+    } else {
+      IwTimeLineEffectiveKeySelection::instance()->doRangeSelect(frame,
+                                                                 ctrlPressed);
+    }
+
+    IwTimeLineEffectiveKeySelection::instance()->makeCurrent();
+
+    KeyDragTool::instance()->onClick(frame);
+
+    IwApp::instance()->getCurrentSelection()->notifySelectionChanged();
+    return true;
+  }
+
   bool fromShapeIsShown =
       (!Preferences::instance()->isShowSelectedShapesOnly() || m_isExpanded[0]);
   int fromTo  = (fromShapeIsShown && rowInShape <= 2) ? 0 : 1;
   bool isForm = (rowInShape % 2 == 1) ? true : false;
-  int frame   = (double)frameD;
 
   if (m_isLocked[fromTo]) return false;
 
-  IwTimeLineKeySelection::instance()->setShape(OneShape(this, fromTo), isForm);
+  IwTimeLineFormCorrKeySelection::instance()->setShape(OneShape(this, fromTo),
+                                                       isForm);
   // シェイプも単独選択にする
   IwShapePairSelection::instance()->selectOneShape(OneShape(this, fromTo));
 
@@ -2029,7 +2155,7 @@ bool ShapePair::onTimeLineClick(int rowInShape, double frameD, bool ctrlPressed,
         double handleFramePos =
             (double)(prevKey + 1) + interp * (double)(key - prevKey - 1);
         if (std::abs(frameD - handleFramePos) < 0.1) {
-          IwTimeLineKeySelection::instance()->makeCurrent();
+          IwTimeLineFormCorrKeySelection::instance()->makeCurrent();
           InterpHandleDragTool::instance()->onClick(
               OneShape(this, fromTo), isForm, frameD - handleFramePos, prevKey,
               key);
@@ -2046,25 +2172,27 @@ bool ShapePair::onTimeLineClick(int rowInShape, double frameD, bool ctrlPressed,
     // 通常クリック
     if (!ctrlPressed) {
       // セルの単独選択　未選択のセル：Press時　選択済のセル：Release時
-      if (!IwTimeLineKeySelection::instance()->isFrameSelected(frame)) {
-        IwTimeLineKeySelection::instance()->selectNone();
-        IwTimeLineKeySelection::instance()->selectFrame(frame);
+      if (!IwTimeLineFormCorrKeySelection::instance()->isFrameSelected(frame)) {
+        IwTimeLineFormCorrKeySelection::instance()->selectNone();
+        IwTimeLineFormCorrKeySelection::instance()->selectFrame(frame);
       }
     }
     // ＋Ctrl
     else {
       // そのセルが未選択なら追加 選択済なら選択からはずす
-      if (IwTimeLineKeySelection::instance()->isFrameSelected(frame))
-        IwTimeLineKeySelection::instance()->unselectFrame(frame);
+      if (IwTimeLineFormCorrKeySelection::instance()->isFrameSelected(frame))
+        IwTimeLineFormCorrKeySelection::instance()->unselectFrame(frame);
       else
-        IwTimeLineKeySelection::instance()->selectFrame(frame);
+        IwTimeLineFormCorrKeySelection::instance()->selectFrame(frame);
     }
-    IwTimeLineKeySelection::instance()->setRangeSelectionStartPos(frame);
+    IwTimeLineFormCorrKeySelection::instance()->setRangeSelectionStartPos(
+        frame);
   } else {
-    IwTimeLineKeySelection::instance()->doRangeSelect(frame, ctrlPressed);
+    IwTimeLineFormCorrKeySelection::instance()->doRangeSelect(frame,
+                                                              ctrlPressed);
   }
 
-  IwTimeLineKeySelection::instance()->makeCurrent();
+  IwTimeLineFormCorrKeySelection::instance()->makeCurrent();
 
   KeyDragTool::instance()->onClick(frame);
 
@@ -2228,6 +2356,11 @@ void ShapePair::saveData(QXmlStreamWriter& writer) {
   m_corrKeys[1].saveData(writer);
   writer.writeEndElement();
 
+  // Effectiveデータ
+  writer.writeStartElement("EffectiveKeys");
+  m_effectiveKeys.saveData(writer);
+  writer.writeEndElement();
+
   // ロック
   writer.writeTextElement("LockFrom", (m_isLocked[0]) ? "True" : "False");
   writer.writeTextElement("LockTo", (m_isLocked[1]) ? "True" : "False");
@@ -2315,6 +2448,10 @@ void ShapePair::loadData(QXmlStreamReader& reader) {
       m_corrKeys[0].loadData(reader);
     else if (reader.name() == "CorrKeysTo")
       m_corrKeys[1].loadData(reader);
+
+    // Effectiveデータ
+    else if (reader.name() == "EffectiveKeys")
+      m_effectiveKeys.loadData(reader);
 
     // ロック
     else if (reader.name() == "LockFrom")
