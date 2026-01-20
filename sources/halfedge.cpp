@@ -638,13 +638,13 @@ void HEModel::checkFaceVisibility(const QPolygonF& parentShapePolygon) {
       continue;
     }
     // 重心がポリゴン内に含まれていなければ不可視にする
-    // HEVertex* A            = he->vertex;
-    // HEVertex* B            = he->next->vertex;
-    // HEVertex* C            = he->prev->vertex;
-    // QVector3D fromCentroid = (A->from_pos + B->from_pos + C->from_pos) / 3.0;
-    // if (!parentShapePolygon.containsPoint(fromCentroid.toPointF(),
-    //                                      Qt::WindingFill))
-    //  face->isVisible = false;
+    HEVertex* A            = he->vertex;
+    HEVertex* B            = he->next->vertex;
+    HEVertex* C            = he->prev->vertex;
+    QVector3D fromCentroid = (A->from_pos + B->from_pos + C->from_pos) / 3.0;
+    if (!parentShapePolygon.containsPoint(fromCentroid.toPointF(),
+                                         Qt::WindingFill))
+     face->isVisible = false;
   }
 }
 
