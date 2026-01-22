@@ -1183,6 +1183,7 @@ void SceneViewer::drawShapes() {
   }
 
   PRINT_LOG("  Draw Guides")
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   // ƒKƒCƒh‚ð•`‚­
   if (m_hRuler->getGuideCount() > 0 || m_vRuler->getGuideCount() > 0) {
     setLineStipple(1, 0xAAAA);
@@ -1239,6 +1240,7 @@ void SceneViewer::drawShapes() {
     // ƒc[ƒ‹‚Ì•`‰æ
     tool->draw();
   }
+  glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
   m_line_vao->release();
   m_line_vbo->release();
