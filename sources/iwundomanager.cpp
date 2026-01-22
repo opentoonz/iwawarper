@@ -5,7 +5,7 @@
 
 #include "iwundomanager.h"
 
-IwUndoManager::IwUndoManager() {}
+IwUndoManager::IwUndoManager() { setUndoLimit(100); }
 
 //---------------------------------------------------
 
