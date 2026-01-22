@@ -33,7 +33,8 @@ bool KeyDragTool::isDragging() { return m_dragStart >= 0; }
 
 // 現在のキー選択を登録、isDraggingオン
 void KeyDragTool::onClick(int frame) {
-  IwTimeLineKeySelection* selection = IwTimeLineKeySelection::instance();
+  IwTimeLineFormCorrKeySelection* selection =
+      IwTimeLineFormCorrKeySelection::instance();
   if (selection->isEmpty()) return;
 
   m_shape             = selection->getShape();

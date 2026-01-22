@@ -1398,13 +1398,19 @@ void TimeLinePanel::contextMenuEvent(QContextMenuEvent* e) {
   IwProject* project = IwApp::instance()->getCurrentProject()->getProject();
   if (!project) return;
 
-  IwTimeLineKeySelection* keySelection = dynamic_cast<IwTimeLineKeySelection*>(
-      IwApp::instance()->getCurrentSelection()->getSelection());
+  IwTimeLineEffectiveKeySelection* effectiveKeySelection =
+      dynamic_cast<IwTimeLineEffectiveKeySelection*>(
+          IwApp::instance()->getCurrentSelection()->getSelection());
+  IwTimeLineFormCorrKeySelection* formCorrkeySelection =
+      dynamic_cast<IwTimeLineFormCorrKeySelection*>(
+          IwApp::instance()->getCurrentSelection()->getSelection());
   IwTimeLineSelection* frameSelection = dynamic_cast<IwTimeLineSelection*>(
       IwApp::instance()->getCurrentSelection()->getSelection());
 
-  if (!keySelection && !frameSelection) return;
-  if (keySelection && keySelection->isEmpty()) return;
+  if (!effectiveKeySelection && !formCorrkeySelection && !frameSelection)
+    return;
+  if (formCorrkeySelection && formCorrkeySelection->isEmpty()) return;
+  if (effectiveKeySelection && effectiveKeySelection->isEmpty()) return;
   if (frameSelection && frameSelection->isEmpty()) return;
 
   int row        = posToRow(m_mousePos);
@@ -1418,8 +1424,10 @@ void TimeLinePanel::contextMenuEvent(QContextMenuEvent* e) {
   }
 
   QMenu menu(this);  // マウスがある行
-
-  if (keySelection) {
+  if (effectiveKeySelection) {
+    menu.addAction(CommandManager::instance()->getAction(MI_Key));
+    menu.addAction(CommandManager::instance()->getAction(MI_Unkey));
+  } else if (formCorrkeySelection) {
     menu.addAction(CommandManager::instance()->getAction(MI_Key));
     menu.addAction(CommandManager::instance()->getAction(MI_Unkey));
     menu.addAction(

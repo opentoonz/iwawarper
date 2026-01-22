@@ -634,8 +634,8 @@ void ChangeLayerProperyUndo::doChange(bool isUndo) {
     if (m_layer->isLocked()) {
       IwSelection* selection =
           IwApp::instance()->getCurrentSelection()->getSelection();
-      IwTimeLineKeySelection* keySelection =
-          dynamic_cast<IwTimeLineKeySelection*>(selection);
+      IwTimeLineFormCorrKeySelection* keySelection =
+          dynamic_cast<IwTimeLineFormCorrKeySelection*>(selection);
       IwTimeLineSelection* frameSelection =
           dynamic_cast<IwTimeLineSelection*>(selection);
       IwShapePairSelection* shapeSelection =

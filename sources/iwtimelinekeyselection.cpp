@@ -21,48 +21,7 @@
 #include <QApplication>
 
 IwTimeLineKeySelection::IwTimeLineKeySelection()
-    : m_shape(0, 0), m_rangeSelectionStartPos(-1) {}
-
-//-----------------------------------------------------------------------------
-
-IwTimeLineKeySelection* IwTimeLineKeySelection::instance() {
-  static IwTimeLineKeySelection _instance;
-  return &_instance;
-}
-
-//------------------------------------------------
-
-void IwTimeLineKeySelection::enableCommands() {
-  enableCommand(this, MI_Copy, &IwTimeLineKeySelection::copyKeyFrames);
-  enableCommand(this, MI_Paste, &IwTimeLineKeySelection::pasteKeyFrames);
-  enableCommand(this, MI_Cut, &IwTimeLineKeySelection::cutKeyFrames);
-  enableCommand(this, MI_Delete, &IwTimeLineKeySelection::removeKey);
-
-  enableCommand(this, MI_Key, &IwTimeLineKeySelection::setKey);
-  enableCommand(this, MI_Unkey, &IwTimeLineKeySelection::removeKey);
-  enableCommand(this, MI_ResetInterpolation,
-                &IwTimeLineKeySelection::resetInterpolation);
-}
-
-//------------------------------------------------
-
-bool IwTimeLineKeySelection::isEmpty() const {
-  return m_shape.shapePairP == 0 || m_selectedFrames.isEmpty();
-}
-
-//------------------------------------------------
-// これまでの選択を解除して、現在のシェイプを切り替える。
-//------------------------------------------------
-
-void IwTimeLineKeySelection::setShape(OneShape shape, bool isForm) {
-  if (shape == m_shape && isForm == m_isFormKeySelected) return;
-
-  // 以下、新規キーフレームの行に切り替わった場合
-  selectNone();
-  m_shape                  = shape;
-  m_isFormKeySelected      = isForm;
-  m_rangeSelectionStartPos = -1;
-}
+    : m_rangeSelectionStartPos(-1) {}
 
 //------------------------------------------------
 // 単に選択フレームの追加
@@ -129,11 +88,206 @@ bool IwTimeLineKeySelection::isFrameSelected(int frame) {
   return m_selectedFrames.contains(frame);
 }
 
+//---------------------------------------------------
+
+IwTimeLineFormCorrKeySelection::IwTimeLineFormCorrKeySelection()
+    : IwTimeLineKeySelection(), m_shape(0, 0) {}
+
+//-----------------------------------------------------------------------------
+
+IwTimeLineFormCorrKeySelection* IwTimeLineFormCorrKeySelection::instance() {
+  static IwTimeLineFormCorrKeySelection _instance;
+  return &_instance;
+}
+
+//------------------------------------------------
+
+void IwTimeLineFormCorrKeySelection::enableCommands() {
+  enableCommand(this, MI_Copy, &IwTimeLineFormCorrKeySelection::copyKeyFrames);
+  enableCommand(this, MI_Paste,
+                &IwTimeLineFormCorrKeySelection::pasteKeyFrames);
+  enableCommand(this, MI_Cut, &IwTimeLineFormCorrKeySelection::cutKeyFrames);
+  enableCommand(this, MI_Delete, &IwTimeLineFormCorrKeySelection::removeKey);
+  enableCommand(this, MI_Key, &IwTimeLineFormCorrKeySelection::setKey);
+  enableCommand(this, MI_Unkey, &IwTimeLineFormCorrKeySelection::removeKey);
+  enableCommand(this, MI_ResetInterpolation,
+                &IwTimeLineFormCorrKeySelection::resetInterpolation);
+}
+
+//------------------------------------------------
+
+bool IwTimeLineFormCorrKeySelection::isEmpty() const {
+  return m_shape.shapePairP == 0 || m_selectedFrames.isEmpty();
+}
+
+//------------------------------------------------
+// 選択セルをキーフレームにする
+//------------------------------------------------
+void IwTimeLineFormCorrKeySelection::setKey() {
+  // プロジェクト無ければreturn
+  IwProject* project = IwApp::instance()->getCurrentProject()->getProject();
+  if (!project) return;
+
+  // シェイプ選択が無ければreturn
+  if (!m_shape.shapePairP) return;
+  // セル選択範囲が無ければreturn
+  if (m_selectedFrames.isEmpty()) return;
+
+  // 何かキーを追加した場合のフラグ
+  bool somethingChanged = false;
+
+  // Undoに格納するデータ
+  // QList<SetTimeLineKeyUndo::SetKeyData> setKeyDataList;
+  SetTimeLineFormCorrKeyUndo::SetFormCorrKeyData setKeyData;
+  setKeyData.shape = m_shape;
+  setKeyData.corrKeyFrames.clear();
+  setKeyData.formKeyFrames.clear();
+
+  // 各セルを見る
+  for (int f = 0; f < m_selectedFrames.size(); f++) {
+    int tmpFrame = m_selectedFrames.at(f);
+
+    // 形状キー
+    //  キーでないときのみ追加
+    if (m_isFormKeySelected &&
+        !m_shape.shapePairP->isFormKey(tmpFrame, m_shape.fromTo)) {
+      setKeyData.formKeyFrames[tmpFrame] =
+          m_shape.shapePairP->getBezierPointList(tmpFrame, m_shape.fromTo);
+      somethingChanged = true;
+    }
+
+    // 対応点キー
+    //  キーでないときのみ追加
+    if (!m_isFormKeySelected &&
+        !m_shape.shapePairP->isCorrKey(tmpFrame, m_shape.fromTo)) {
+      setKeyData.corrKeyFrames[tmpFrame] =
+          m_shape.shapePairP->getCorrPointList(tmpFrame, m_shape.fromTo);
+      somethingChanged = true;
+    }
+  }
+  if (!somethingChanged) return;
+
+  // Undo追加 redoが呼ばれ、キーがセットされる
+  IwUndoManager::instance()->push(
+      new SetTimeLineFormCorrKeyUndo(setKeyData, project));
+}
+
+//------------------------------------------------
+// 選択セルのキーフレームを解除する
+//------------------------------------------------
+void IwTimeLineFormCorrKeySelection::removeKey() {
+  // プロジェクト無ければreturn
+  IwProject* project = IwApp::instance()->getCurrentProject()->getProject();
+  if (!project) return;
+
+  // シェイプ選択が無ければreturn
+  if (!m_shape.shapePairP) return;
+  // セル選択範囲が無ければreturn
+  if (m_selectedFrames.isEmpty()) return;
+
+  // 何かキーを追加した場合のフラグ
+  bool somethingChanged = false;
+
+  // Undoに格納するデータ
+  UnsetTimeLineFormCorrKeyUndo::UnsetFormCorrKeyData unsetKeyData;
+  unsetKeyData.shape = m_shape;
+
+  // 各セルを見る
+  for (int f = 0; f < m_selectedFrames.size(); f++) {
+    int tmpFrame = m_selectedFrames.at(f);
+
+    // 形状キー
+    //  キーのときのみ追加
+    if (m_isFormKeySelected &&
+        m_shape.shapePairP->isFormKey(tmpFrame, m_shape.fromTo)) {
+      unsetKeyData.formKeyFrames[tmpFrame] =
+          m_shape.shapePairP->getBezierPointList(tmpFrame, m_shape.fromTo);
+      somethingChanged = true;
+    }
+
+    // 対応点キー
+    //  キーのときのみ追加
+    if (!m_isFormKeySelected &&
+        m_shape.shapePairP->isCorrKey(tmpFrame, m_shape.fromTo)) {
+      unsetKeyData.corrKeyFrames[tmpFrame] =
+          m_shape.shapePairP->getCorrPointList(tmpFrame, m_shape.fromTo);
+      somethingChanged = true;
+    }
+  }
+
+  if (!somethingChanged) return;
+
+  // Undo追加 redoが呼ばれ、キーがセットされる
+  IwUndoManager::instance()->push(
+      new UnsetTimeLineFormCorrKeyUndo(unsetKeyData, project));
+
+  // 更新シグナルをエミット
+  IwApp::instance()->getCurrentProject()->notifyProjectChanged();
+}
+
+//---------------------------------------------------
+// 補間を0.5(線形)に戻す
+//---------------------------------------------------
+void IwTimeLineFormCorrKeySelection::resetInterpolation() {
+  if (m_selectedFrames.isEmpty()) return;
+  // プロジェクト無ければreturn
+  IwProject* project = IwApp::instance()->getCurrentProject()->getProject();
+  if (!project) return;
+  QMap<int, double> interps;
+  QList<int> frames = m_selectedFrames;
+  std::sort(frames.begin(), frames.end());
+  for (auto frame : frames) {
+    // 形状キーの場合
+    if (m_isFormKeySelected &&
+        m_shape.shapePairP->isFormKey(frame, m_shape.fromTo)) {
+      double interp =
+          m_shape.shapePairP->getBezierInterpolation(frame, m_shape.fromTo);
+      if (interp != 0.5) interps.insert(frame, interp);
+    }
+    if (!m_isFormKeySelected &&
+        m_shape.shapePairP->isCorrKey(frame, m_shape.fromTo)) {
+      double interp =
+          m_shape.shapePairP->getCorrInterpolation(frame, m_shape.fromTo);
+      if (interp != 0.5) interps.insert(frame, interp);
+    }
+  }
+  // 最初のフレームがキーフレームでなかった場合、そのセグメントのキーについても判定する
+  int firstFrame = frames.at(0);
+  if (m_isFormKeySelected &&
+      !m_shape.shapePairP->isFormKey(firstFrame, m_shape.fromTo)) {
+    int belongingKey =
+        m_shape.shapePairP->belongingFormKey(firstFrame, m_shape.fromTo);
+    if (belongingKey != -1) {
+      double interp = m_shape.shapePairP->getBezierInterpolation(
+          belongingKey, m_shape.fromTo);
+      if (interp != 0.5) interps.insert(belongingKey, interp);
+    }
+  } else if (!m_isFormKeySelected &&
+             !m_shape.shapePairP->isCorrKey(firstFrame, m_shape.fromTo)) {
+    int belongingKey =
+        m_shape.shapePairP->belongingCorrKey(firstFrame, m_shape.fromTo);
+    if (belongingKey != -1) {
+      double interp = m_shape.shapePairP->getCorrInterpolation(belongingKey,
+                                                               m_shape.fromTo);
+      if (interp != 0.5) interps.insert(belongingKey, interp);
+    }
+  }
+
+  if (interps.isEmpty()) return;
+
+  // Undo追加 redoが呼ばれ、補間値が0.5にリセットされる
+  IwUndoManager::instance()->push(new ResetInterpolationUndo(
+      m_shape, m_isFormKeySelected, interps, project));
+
+  // 更新シグナルをエミット
+  IwApp::instance()->getCurrentProject()->notifyProjectChanged();
+}
+
 //------------------------------------------------
 // コピー (Undoは無い)
 //------------------------------------------------
 
-void IwTimeLineKeySelection::copyKeyFrames() {
+void IwTimeLineFormCorrKeySelection::copyKeyFrames() {
   // セル選択範囲が無ければreturn
   if (m_selectedFrames.isEmpty()) return;
 
@@ -153,7 +307,7 @@ void IwTimeLineKeySelection::copyKeyFrames() {
 // ペースト
 //------------------------------------------------
 
-void IwTimeLineKeySelection::pasteKeyFrames() {
+void IwTimeLineFormCorrKeySelection::pasteKeyFrames() {
   // プロジェクト無ければreturn
   IwProject* project = IwApp::instance()->getCurrentProject()->getProject();
   if (!project) return;
@@ -192,7 +346,7 @@ void IwTimeLineKeySelection::pasteKeyFrames() {
 //------------------------------------------------
 // カット
 //------------------------------------------------
-void IwTimeLineKeySelection::cutKeyFrames() {
+void IwTimeLineFormCorrKeySelection::cutKeyFrames() {
   // プロジェクト無ければreturn
   IwProject* project = IwApp::instance()->getCurrentProject()->getProject();
   if (!project) return;
@@ -298,95 +452,109 @@ void IwTimeLineKeySelection::cutKeyFrames() {
 }
 
 //------------------------------------------------
-// 選択セルをキーフレームにする
+// これまでの選択を解除して、現在のシェイプを切り替える。
 //------------------------------------------------
-void IwTimeLineKeySelection::setKey() {
-  // プロジェクト無ければreturn
-  IwProject* project = IwApp::instance()->getCurrentProject()->getProject();
-  if (!project) return;
 
-  // シェイプ選択が無ければreturn
-  if (!m_shape.shapePairP) return;
-  // セル選択範囲が無ければreturn
-  if (m_selectedFrames.isEmpty()) return;
+void IwTimeLineFormCorrKeySelection::setShape(OneShape shape, bool isForm) {
+  if (shape == m_shape && isForm == m_isFormKeySelected) return;
 
-  // 何かキーを追加した場合のフラグ
-  bool somethingChanged = false;
-
-  // Undoに格納するデータ
-  // QList<SetTimeLineKeyUndo::SetKeyData> setKeyDataList;
-  SetTimeLineKeyUndo::SetKeyData setKeyData;
-  setKeyData.shape = m_shape;
-  setKeyData.corrKeyFrames.clear();
-  setKeyData.formKeyFrames.clear();
-
-  // 各セルを見る
-  for (int f = 0; f < m_selectedFrames.size(); f++) {
-    int tmpFrame = m_selectedFrames.at(f);
-
-    // 形状キー
-    //  キーでないときのみ追加
-    if (m_isFormKeySelected &&
-        !m_shape.shapePairP->isFormKey(tmpFrame, m_shape.fromTo)) {
-      setKeyData.formKeyFrames[tmpFrame] =
-          m_shape.shapePairP->getBezierPointList(tmpFrame, m_shape.fromTo);
-      somethingChanged = true;
-    }
-
-    // 対応点キー
-    //  キーでないときのみ追加
-    if (!m_isFormKeySelected &&
-        !m_shape.shapePairP->isCorrKey(tmpFrame, m_shape.fromTo)) {
-      setKeyData.corrKeyFrames[tmpFrame] =
-          m_shape.shapePairP->getCorrPointList(tmpFrame, m_shape.fromTo);
-      somethingChanged = true;
-    }
-  }
-  if (!somethingChanged) return;
-
-  // Undo追加 redoが呼ばれ、キーがセットされる
-  IwUndoManager::instance()->push(new SetTimeLineKeyUndo(setKeyData, project));
+  // 以下、新規キーフレームの行に切り替わった場合
+  selectNone();
+  m_shape                  = shape;
+  m_isFormKeySelected      = isForm;
+  m_rangeSelectionStartPos = -1;
 }
 
-//------------------------------------------------
-// 選択セルのキーフレームを解除する
-//------------------------------------------------
-void IwTimeLineKeySelection::removeKey() {
+//---------------------------------------------------
+//---------------------------------------------------
+// IwTimeLineEffectiveKeySelection
+//---------------------------------------------------
+
+IwTimeLineEffectiveKeySelection::IwTimeLineEffectiveKeySelection()
+    : IwTimeLineKeySelection(), m_shapePair(nullptr) {}
+
+//-----------------------------------------------------------------------------
+
+IwTimeLineEffectiveKeySelection* IwTimeLineEffectiveKeySelection::instance() {
+  static IwTimeLineEffectiveKeySelection _instance;
+  return &_instance;
+}
+
+void IwTimeLineEffectiveKeySelection::enableCommands() {
+  enableCommand(this, MI_Key,
+                &IwTimeLineEffectiveKeySelection::toggleEffectiveKey);
+  enableCommand(this, MI_Unkey,
+                &IwTimeLineEffectiveKeySelection::removeEffectiveKey);
+}
+
+bool IwTimeLineEffectiveKeySelection::isEmpty() const {
+  return m_shapePair == nullptr || m_selectedFrames.isEmpty();
+}
+
+// これまでの選択を解除して、現在のシェイプを切り替える。
+void IwTimeLineEffectiveKeySelection::setShapePair(ShapePair* shapePair) {
+  if (shapePair == m_shapePair) return;
+
+  // 以下、新規キーフレームの行に切り替わった場合
+  selectNone();
+  m_shapePair              = shapePair;
+  m_rangeSelectionStartPos = -1;
+}
+
+// 選択セルをキーフレームにし、有効無効を切り替える
+void IwTimeLineEffectiveKeySelection::toggleEffectiveKey() {
   // プロジェクト無ければreturn
   IwProject* project = IwApp::instance()->getCurrentProject()->getProject();
   if (!project) return;
 
   // シェイプ選択が無ければreturn
-  if (!m_shape.shapePairP) return;
+  if (!m_shapePair) return;
   // セル選択範囲が無ければreturn
   if (m_selectedFrames.isEmpty()) return;
 
-  // 何かキーを追加した場合のフラグ
-  bool somethingChanged = false;
-
   // Undoに格納するデータ
-  UnsetTimeLineKeyUndo::UnsetKeyData unsetKeyData;
-  unsetKeyData.shape = m_shape;
+  SetTimeLineEffectiveKeyUndo::SetEffectiveKeyData setKeyData;
+  setKeyData.shapePair = m_shapePair;
 
   // 各セルを見る
   for (int f = 0; f < m_selectedFrames.size(); f++) {
     int tmpFrame = m_selectedFrames.at(f);
 
-    // 形状キー
-    //  キーのときのみ追加
-    if (m_isFormKeySelected &&
-        m_shape.shapePairP->isFormKey(tmpFrame, m_shape.fromTo)) {
-      unsetKeyData.formKeyFrames[tmpFrame] =
-          m_shape.shapePairP->getBezierPointList(tmpFrame, m_shape.fromTo);
-      somethingChanged = true;
-    }
+    //  もともとキーだったときtrue
+    setKeyData.wasKeyframe.insert(tmpFrame,
+                                  m_shapePair->isEffectiveKey(tmpFrame));
+  }
+  // Undo追加 redoが呼ばれ、キーがセットされる
+  IwUndoManager::instance()->push(
+      new SetTimeLineEffectiveKeyUndo(setKeyData, project));
+}
 
-    // 対応点キー
+// 選択セルのキーフレームを解除する
+void IwTimeLineEffectiveKeySelection::removeEffectiveKey() {
+  // プロジェクト無ければreturn
+  IwProject* project = IwApp::instance()->getCurrentProject()->getProject();
+  if (!project) return;
+
+  // シェイプ選択が無ければreturn
+  if (!m_shapePair) return;
+  // セル選択範囲が無ければreturn
+  if (m_selectedFrames.isEmpty()) return;
+
+  // 何かキーを削除した場合のフラグ
+  bool somethingChanged = false;
+
+  // Undoに格納するデータ
+  UnsetTimeLineEffectiveKeyUndo::UnsetEffectiveKeyData unsetKeyData;
+  unsetKeyData.shapePair = m_shapePair;
+
+  // 各セルを見る
+  for (int f = 0; f < m_selectedFrames.size(); f++) {
+    int tmpFrame = m_selectedFrames.at(f);
+
     //  キーのときのみ追加
-    if (!m_isFormKeySelected &&
-        m_shape.shapePairP->isCorrKey(tmpFrame, m_shape.fromTo)) {
-      unsetKeyData.corrKeyFrames[tmpFrame] =
-          m_shape.shapePairP->getCorrPointList(tmpFrame, m_shape.fromTo);
+    if (m_shapePair->isEffectiveKey(tmpFrame)) {
+      unsetKeyData.beforeEffectiveKeyValues.insert(
+          tmpFrame, m_shapePair->isEffective(tmpFrame));
       somethingChanged = true;
     }
   }
@@ -395,65 +563,7 @@ void IwTimeLineKeySelection::removeKey() {
 
   // Undo追加 redoが呼ばれ、キーがセットされる
   IwUndoManager::instance()->push(
-      new UnsetTimeLineKeyUndo(unsetKeyData, project));
-
-  // 更新シグナルをエミット
-  IwApp::instance()->getCurrentProject()->notifyProjectChanged();
-}
-
-//---------------------------------------------------
-// 補間を0.5(線形)に戻す
-//---------------------------------------------------
-void IwTimeLineKeySelection::resetInterpolation() {
-  if (m_selectedFrames.isEmpty()) return;
-  // プロジェクト無ければreturn
-  IwProject* project = IwApp::instance()->getCurrentProject()->getProject();
-  if (!project) return;
-  QMap<int, double> interps;
-  QList<int> frames = m_selectedFrames;
-  std::sort(frames.begin(), frames.end());
-  for (auto frame : frames) {
-    // 形状キーの場合
-    if (m_isFormKeySelected &&
-        m_shape.shapePairP->isFormKey(frame, m_shape.fromTo)) {
-      double interp =
-          m_shape.shapePairP->getBezierInterpolation(frame, m_shape.fromTo);
-      if (interp != 0.5) interps.insert(frame, interp);
-    }
-    if (!m_isFormKeySelected &&
-        m_shape.shapePairP->isCorrKey(frame, m_shape.fromTo)) {
-      double interp =
-          m_shape.shapePairP->getCorrInterpolation(frame, m_shape.fromTo);
-      if (interp != 0.5) interps.insert(frame, interp);
-    }
-  }
-  // 最初のフレームがキーフレームでなかった場合、そのセグメントのキーについても判定する
-  int firstFrame = frames.at(0);
-  if (m_isFormKeySelected &&
-      !m_shape.shapePairP->isFormKey(firstFrame, m_shape.fromTo)) {
-    int belongingKey =
-        m_shape.shapePairP->belongingFormKey(firstFrame, m_shape.fromTo);
-    if (belongingKey != -1) {
-      double interp = m_shape.shapePairP->getBezierInterpolation(
-          belongingKey, m_shape.fromTo);
-      if (interp != 0.5) interps.insert(belongingKey, interp);
-    }
-  } else if (!m_isFormKeySelected &&
-             !m_shape.shapePairP->isCorrKey(firstFrame, m_shape.fromTo)) {
-    int belongingKey =
-        m_shape.shapePairP->belongingCorrKey(firstFrame, m_shape.fromTo);
-    if (belongingKey != -1) {
-      double interp = m_shape.shapePairP->getCorrInterpolation(belongingKey,
-                                                               m_shape.fromTo);
-      if (interp != 0.5) interps.insert(belongingKey, interp);
-    }
-  }
-
-  if (interps.isEmpty()) return;
-
-  // Undo追加 redoが呼ばれ、補間値が0.5にリセットされる
-  IwUndoManager::instance()->push(new ResetInterpolationUndo(
-      m_shape, m_isFormKeySelected, interps, project));
+      new UnsetTimeLineEffectiveKeyUndo(unsetKeyData, project));
 
   // 更新シグナルをエミット
   IwApp::instance()->getCurrentProject()->notifyProjectChanged();
@@ -548,12 +658,12 @@ void TimeLineKeyEditUndo::redo() {
 //------------------------------------------------
 // 選択セルをキーフレームにする のUndo
 //------------------------------------------------
-SetTimeLineKeyUndo::SetTimeLineKeyUndo(SetKeyData& setKeyData,
-                                       IwProject* project)
+SetTimeLineFormCorrKeyUndo::SetTimeLineFormCorrKeyUndo(
+    SetFormCorrKeyData& setKeyData, IwProject* project)
     : m_setKeyData(setKeyData), m_project(project) {}
 
 // キーフレームを解除する
-void SetTimeLineKeyUndo::undo() {
+void SetTimeLineFormCorrKeyUndo::undo() {
   // シェイプ
   OneShape shape = m_setKeyData.shape;
   // 形状キーを入れたフレーム
@@ -572,7 +682,7 @@ void SetTimeLineKeyUndo::undo() {
 }
 
 // キーフレームをセットする
-void SetTimeLineKeyUndo::redo() {
+void SetTimeLineFormCorrKeyUndo::redo() {
   // シェイプ
   OneShape shape = m_setKeyData.shape;
   // 形状キーを入れたフレーム
@@ -601,12 +711,12 @@ void SetTimeLineKeyUndo::redo() {
 //------------------------------------------------
 // 選択セルのキーフレームを解除する のUndo
 //------------------------------------------------
-UnsetTimeLineKeyUndo::UnsetTimeLineKeyUndo(UnsetKeyData& unsetKeyData,
-                                           IwProject* project)
+UnsetTimeLineFormCorrKeyUndo::UnsetTimeLineFormCorrKeyUndo(
+    UnsetFormCorrKeyData& unsetKeyData, IwProject* project)
     : m_unsetKeyData(unsetKeyData), m_project(project) {}
 
 // キーフレームをセットする
-void UnsetTimeLineKeyUndo::undo() {
+void UnsetTimeLineFormCorrKeyUndo::undo() {
   // シェイプ
   OneShape shape = m_unsetKeyData.shape;
   // 形状キーを消したフレーム
@@ -637,7 +747,7 @@ void UnsetTimeLineKeyUndo::undo() {
 }
 
 // キーフレームを解除する (最後の1つは消さない)
-void UnsetTimeLineKeyUndo::redo() {
+void UnsetTimeLineFormCorrKeyUndo::redo() {
   // シェイプ
   OneShape shape = m_unsetKeyData.shape;
   // 形状キーを消したフレーム
@@ -662,6 +772,110 @@ void UnsetTimeLineKeyUndo::redo() {
     IwApp::instance()->getCurrentProject()->notifyProjectChanged();
     IwTriangleCache::instance()->invalidateShapeCache(
         m_project->getParentShape(shape.shapePairP));
+  }
+}
+
+//------------------------------------------------
+// 選択セルに有効／無効キーをセットする のUndo
+//------------------------------------------------
+SetTimeLineEffectiveKeyUndo::SetTimeLineEffectiveKeyUndo(
+    SetEffectiveKeyData& setKeyData, IwProject* project)
+    : m_setKeyData(setKeyData), m_project(project) {}
+
+// キーフレームを解除する
+void SetTimeLineEffectiveKeyUndo::undo() {
+  // シェイプ
+  ShapePair* shapePair = m_setKeyData.shapePair;
+
+  // 値を全てひっくり返す
+  for (auto f : m_setKeyData.wasKeyframe.keys()) {
+    assert(shapePair->isEffectiveKey(f));
+    shapePair->setEffectiveKey(f, !shapePair->isEffective(f));
+  }
+  // キーが無かったフレームからキーを解除
+  for (auto f : m_setKeyData.wasKeyframe.keys()) {
+    // すでにキーが打たれていた場合はスキップ
+    if (m_setKeyData.wasKeyframe.value(f)) continue;
+    // キーを解除
+    shapePair->removeEffectiveKey(f);
+  }
+
+  // このプロジェクトがカレントなら更新シグナルをエミット
+  if (m_project->isCurrent()) {
+    IwApp::instance()->getCurrentProject()->notifyProjectChanged();
+    IwTriangleCache::instance()->invalidateShapeCache(
+        m_project->getParentShape(shapePair));
+  }
+}
+
+// キーフレームをセットする
+void SetTimeLineEffectiveKeyUndo::redo() {
+  // シェイプ
+  ShapePair* shapePair = m_setKeyData.shapePair;
+
+  // まず、キーが無いフレームにキーをセット
+  for (auto f : m_setKeyData.wasKeyframe.keys()) {
+    // すでにキーが打たれている場合はスキップ
+    if (m_setKeyData.wasKeyframe.value(f)) continue;
+    // キーを打つ
+    shapePair->setEffectiveKey(f, shapePair->isEffective(f));
+  }
+
+  // 次に、値をすべてひっくり返す
+  for (auto f : m_setKeyData.wasKeyframe.keys()) {
+    shapePair->setEffectiveKey(f, !shapePair->isEffective(f));
+  }
+
+  // このプロジェクトがカレントなら更新シグナルをエミット
+  if (m_project->isCurrent()) {
+    IwApp::instance()->getCurrentProject()->notifyProjectChanged();
+    IwTriangleCache::instance()->invalidateShapeCache(
+        m_project->getParentShape(shapePair));
+  }
+}
+
+//------------------------------------------------
+// 選択セルの有効／無効キーを解除する のUndo
+//------------------------------------------------
+UnsetTimeLineEffectiveKeyUndo::UnsetTimeLineEffectiveKeyUndo(
+    UnsetEffectiveKeyData& unsetKeyData, IwProject* project)
+    : m_unsetKeyData(unsetKeyData), m_project(project) {}
+
+// キーフレームをセットする
+void UnsetTimeLineEffectiveKeyUndo::undo() {
+  // シェイプ
+  ShapePair* shapePair = m_unsetKeyData.shapePair;
+
+  // キーを再設定
+  for (auto f : m_unsetKeyData.beforeEffectiveKeyValues.keys()) {
+    shapePair->setEffectiveKey(
+        f, m_unsetKeyData.beforeEffectiveKeyValues.value(f));
+  }
+
+  // このプロジェクトがカレントなら更新シグナルをエミット
+  if (m_project->isCurrent()) {
+    IwApp::instance()->getCurrentProject()->notifyProjectChanged();
+    IwTriangleCache::instance()->invalidateShapeCache(
+        m_project->getParentShape(shapePair));
+  }
+}
+
+// キーフレームを解除する
+void UnsetTimeLineEffectiveKeyUndo::redo() {
+  // シェイプ
+  ShapePair* shapePair = m_unsetKeyData.shapePair;
+
+  // キーが無かったフレームからキーを解除
+  for (auto f : m_unsetKeyData.beforeEffectiveKeyValues.keys()) {
+    // キーを解除
+    shapePair->removeEffectiveKey(f);
+  }
+
+  // このプロジェクトがカレントなら更新シグナルをエミット
+  if (m_project->isCurrent()) {
+    IwApp::instance()->getCurrentProject()->notifyProjectChanged();
+    IwTriangleCache::instance()->invalidateShapeCache(
+        m_project->getParentShape(shapePair));
   }
 }
 

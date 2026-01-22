@@ -114,7 +114,8 @@ bool IwTriangleCache::isFrameValid(int frame) {
       if (!shape || !shape->isParent()) continue;
 
       // レンダリングの対象になっていなければスキップ
-      if (!shape->isRenderTarget(targetShapeTag)) continue;
+      if (!shape->isRenderTarget(targetShapeTag) || !shape->isEffective(frame))
+        continue;
 
       // キャッシュが無いか、最新でなければfalseを返す
       if (!isValid(frame, shape)) return false;

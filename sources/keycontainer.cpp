@@ -494,6 +494,30 @@ CorrPointList KeyContainer<CorrPointList>::getData(int frame, int maxValue,
   }
 }
 
+// シェイプがEffectiveかどうか
+template <>
+bool KeyContainer<bool>::getData(int frame, int, double smoothness) {
+  // キーフレームが無い場合、有効
+  if (m_data.isEmpty()) {
+    return true;
+  }
+
+  // キーフレームの場合はその値。
+  if (m_data.contains(frame))
+    return m_data.value(frame);
+  else {
+    // 直近で1つ上のキーフレームを得る
+    QMap<int, bool>::iterator afterKey = m_data.lowerBound(frame);
+
+    // もし、afterKeyが先頭のアイテムのとき
+    // キーフレーム範囲の外側ということ。
+    // trueを返す
+    if (afterKey == m_data.begin()) return true;
+    // それ以外の場合は、1つ前のキーフレームの値を返す
+    return (afterKey - 1).value();
+  }
+}
+
 namespace {
 double marume(double val) { return (abs(val) < 0.00001) ? 0.0 : val; }
 };  // namespace
@@ -661,8 +685,41 @@ void KeyContainer<CorrPointList>::loadData(QXmlStreamReader &reader) {
       reader.skipCurrentElement();
   }
 }
+//-----------------------------------------------------------------------------
+template <>
+void KeyContainer<bool>::saveData(QXmlStreamWriter &writer) {
+  QMap<int, bool>::const_iterator i = m_data.constBegin();
+  while (i != m_data.constEnd()) {
+    writer.writeStartElement("EffectiveKey");
 
+    // キーフレームは１足していることに注意。ロード時に１引くこと
+    writer.writeAttribute("frame", QString::number(i.key() + 1));
+    writer.writeTextElement("value", (i.value()) ? "1" : "0");
+    writer.writeEndElement();
+    ++i;
+  }
+}
+template <>
+void KeyContainer<bool>::loadData(QXmlStreamReader &reader) {
+  while (reader.readNextStartElement()) {
+    if (reader.name() == "EffectiveKey") {
+      // Save時に１足したので、ロード時に１引く
+      int frame = reader.attributes().value("frame").toString().toInt() - 1;
+
+      while (reader.readNextStartElement()) {
+        if (reader.name() == "value") {
+          bool value = reader.readElementText().toInt() > 0;
+          // キーフレームの格納
+          setKeyData(frame, value);
+        } else
+          reader.skipCurrentElement();
+      }
+    } else
+      reader.skipCurrentElement();
+  }
+}
 // VisualC で、テンプレートの実装をCPPに書きたいとき、
 // 以下のように、実体化したいクラスを明文化する必要
 template class KeyContainer<BezierPointList>;
 template class KeyContainer<CorrPointList>;
+template class KeyContainer<bool>;

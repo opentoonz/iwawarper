@@ -13,24 +13,13 @@
 #include <QUndoCommand>
 
 class IwTimeLineKeySelection : public IwSelection {
-  OneShape m_shape;
+protected:
   QList<int> m_selectedFrames;
-  bool m_isFormKeySelected;
 
   int m_rangeSelectionStartPos;
 
-  IwTimeLineKeySelection();
-
 public:
-  static IwTimeLineKeySelection* instance();
-
-  void enableCommands();
-  bool isEmpty() const;
-
-  // これまでの選択を解除して、現在のシェイプを切り替える。
-  void setShape(OneShape shape, bool isForm);
-  OneShape getShape() { return m_shape; }
-  bool isFormKeySelected() { return m_isFormKeySelected; }
+  IwTimeLineKeySelection();
 
   // 単に選択フレームの追加
   void selectFrame(int selectedFrame);
@@ -50,23 +39,62 @@ public:
   // そのフレームが選択されているか
   bool isFrameSelected(int frame);
 
+  void setRangeSelectionStartPos(int pos = -1) {
+    m_rangeSelectionStartPos = pos;
+  }
+};
+
+//---------------------------------------------------
+class IwTimeLineFormCorrKeySelection : public IwTimeLineKeySelection {
+  OneShape m_shape;
+  bool m_isFormKeySelected;
+  IwTimeLineFormCorrKeySelection();
+
+public:
+  static IwTimeLineFormCorrKeySelection* instance();
+
+  void enableCommands() final override;
+  bool isEmpty() const final override;
+
+  // これまでの選択を解除して、現在のシェイプを切り替える。
+  void setShape(OneShape shape, bool isForm);
+  OneShape getShape() { return m_shape; }
+  bool isFormKeySelected() { return m_isFormKeySelected; }
+
+  // 選択セルをキーフレームにする
+  void setKey();
+  // 選択セルのキーフレームを解除する
+  void removeKey();
+
+  // 補間を0.5(線形)に戻す
+  void resetInterpolation();
   // コピー
   void copyKeyFrames();
   // ペースト
   void pasteKeyFrames();
   // カット
   void cutKeyFrames();
+};
 
-  // 選択セルをキーフレームにする
-  void setKey();
+//---------------------------------------------------
+class IwTimeLineEffectiveKeySelection : public IwTimeLineKeySelection {
+  ShapePair* m_shapePair;
+  IwTimeLineEffectiveKeySelection();
+
+public:
+  static IwTimeLineEffectiveKeySelection* instance();
+
+  void enableCommands() final override;
+  bool isEmpty() const final override;
+
+  // これまでの選択を解除して、現在のシェイプを切り替える。
+  void setShapePair(ShapePair* shapePair);
+  ShapePair* getShapePair() { return m_shapePair; }
+
+  // 選択セルをキーフレームにし、有効無効を切り替える
+  void toggleEffectiveKey();
   // 選択セルのキーフレームを解除する
-  void removeKey();
-  // 補間を0.5(線形)に戻す
-  void resetInterpolation();
-
-  void setRangeSelectionStartPos(int pos = -1) {
-    m_rangeSelectionStartPos = pos;
-  }
+  void removeEffectiveKey();
 };
 
 //---------------------------------------------------
@@ -108,10 +136,10 @@ public:
 //------------------------------------------------
 // 選択セルをキーフレームにする のUndo
 //------------------------------------------------
-class SetTimeLineKeyUndo : public QUndoCommand {
+class SetTimeLineFormCorrKeyUndo : public QUndoCommand {
 public:
   // キーフレームにしたフレームのリスト
-  struct SetKeyData {
+  struct SetFormCorrKeyData {
     OneShape shape;
     QMap<int, BezierPointList> formKeyFrames;
     QMap<int, CorrPointList> corrKeyFrames;
@@ -120,10 +148,11 @@ public:
 private:
   IwProject* m_project;
   // QList<SetKeyData> m_setKeyData;
-  SetKeyData m_setKeyData;
+  SetFormCorrKeyData m_setKeyData;
 
 public:
-  SetTimeLineKeyUndo(SetKeyData& setKeyData, IwProject* project);
+  SetTimeLineFormCorrKeyUndo(SetFormCorrKeyData& setKeyData,
+                             IwProject* project);
   void undo();
   void redo();
 };
@@ -131,10 +160,10 @@ public:
 //------------------------------------------------
 // 選択セルのキーフレームを解除する のUndo
 //------------------------------------------------
-class UnsetTimeLineKeyUndo : public QUndoCommand {
+class UnsetTimeLineFormCorrKeyUndo : public QUndoCommand {
 public:
   // キーを解除したフレームのリスト
-  struct UnsetKeyData {
+  struct UnsetFormCorrKeyData {
     OneShape shape;
     QMap<int, BezierPointList> formKeyFrames;
     QMap<int, CorrPointList> corrKeyFrames;
@@ -142,10 +171,56 @@ public:
 
 private:
   IwProject* m_project;
-  UnsetKeyData m_unsetKeyData;
+  UnsetFormCorrKeyData m_unsetKeyData;
 
 public:
-  UnsetTimeLineKeyUndo(UnsetKeyData& unsetKeyData, IwProject* project);
+  UnsetTimeLineFormCorrKeyUndo(UnsetFormCorrKeyData& unsetKeyData,
+                               IwProject* project);
+  void undo();
+  void redo();
+};
+
+//------------------------------------------------
+// 選択セルに有効／無効キーをセットする のUndo
+//------------------------------------------------
+class SetTimeLineEffectiveKeyUndo : public QUndoCommand {
+public:
+  // キーフレームにしたフレームのリスト
+  struct SetEffectiveKeyData {
+    ShapePair* shapePair;
+    QMap<int, bool> wasKeyframe;  // セット前もキーフレームだったらtrue
+  };
+
+private:
+  IwProject* m_project;
+  SetEffectiveKeyData m_setKeyData;
+
+public:
+  SetTimeLineEffectiveKeyUndo(SetEffectiveKeyData& setKeyData,
+                              IwProject* project);
+  void undo();
+  void redo();
+};
+
+//------------------------------------------------
+// 選択セルのキーフレームを解除する のUndo
+//------------------------------------------------
+class UnsetTimeLineEffectiveKeyUndo : public QUndoCommand {
+public:
+  // キーを解除したフレームのリスト
+  struct UnsetEffectiveKeyData {
+    ShapePair* shapePair;
+    QMap<int, bool>
+        beforeEffectiveKeyValues;  // キーフレームのみ、消去前の値を格納
+  };
+
+private:
+  IwProject* m_project;
+  UnsetEffectiveKeyData m_unsetKeyData;
+
+public:
+  UnsetTimeLineEffectiveKeyUndo(UnsetEffectiveKeyData& unsetKeyData,
+                                IwProject* project);
   void undo();
   void redo();
 };

@@ -244,15 +244,21 @@ void IwRenderInstance::doRender() {
       if (isCanceled()) return;
       ShapePair* shape = layer->getShapePair(s);
       if (!shape) continue;
-      // シェイプをリストに追加
-      tmpShapes.append(shape);
-      // 子シェイプのとき、リストに追加して次のシェイプへ
-      if (!shape->isParent()) continue;
+      // 子シェイプのとき、シェイプが有効ならリストに追加して次のシェイプへ
+      if (!shape->isParent()) {
+        if (shape->isEffective(m_frame))
+          // シェイプをリストに追加
+          tmpShapes.append(shape);
+        continue;
+      }
       // 親シェイプのとき、ワープ処理を行う
       else {
+        // シェイプをリストに追加
+        tmpShapes.append(shape);
         std::cout << shape->getName().toStdString() << std::endl;
         // 親シェイプがターゲットになっていない場合、全ての子シェイプもレンダリングしない
-        if (shape->isRenderTarget(targetShapeTag)) {
+        if (shape->isRenderTarget(targetShapeTag) &&
+            shape->isEffective(m_frame)) {
           // レイヤの画像をワープする
           QPoint origin;
           TRaster64P warpedLayerRas =
@@ -307,14 +313,20 @@ void IwRenderInstance::doPreview() {
     for (int s = layer->getShapePairCount() - 1; s >= 0; s--) {
       ShapePair* shape = layer->getShapePair(s);
       if (!shape) continue;
-      // シェイプをリストに追加
-      tmpShapes.append(shape);
-      // 子シェイプのとき、リストに追加して次のシェイプへ
-      if (!shape->isParent()) continue;
+      // 子シェイプのとき、シェイプが有効ならリストに追加して次のシェイプへ
+      if (!shape->isParent()) {
+        if (shape->isEffective(m_frame))
+          // シェイプをリストに追加
+          tmpShapes.append(shape);
+        continue;
+      }
       // 親シェイプのとき、ワープ処理を行う
       else {
+        // シェイプをリストに追加
+        tmpShapes.append(shape);
         // 親シェイプがターゲットになっていない場合、全ての子シェイプもレンダリングしない
-        if (shape->isRenderTarget(targetShapeTag)) {
+        if (shape->isRenderTarget(targetShapeTag) &&
+            shape->isEffective(m_frame)) {
           QPoint dummyOrigin;
           // レイヤの画像をワープする
           warpLayer(layer, tmpShapes, true, dummyOrigin);

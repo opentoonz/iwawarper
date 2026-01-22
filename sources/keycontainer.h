@@ -102,5 +102,7 @@ BezierPointList KeyContainer<BezierPointList>::getData(int frame, int maxValue,
 template <>
 CorrPointList KeyContainer<CorrPointList>::getData(int frame, int maxValue,
                                                    double smoothness);
+template <>
+bool KeyContainer<bool>::getData(int frame, int maxValue, double smoothness);
 
 #endif

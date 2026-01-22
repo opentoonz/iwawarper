@@ -367,6 +367,7 @@ bool TransformTool::leftButtonUp(const QPointF& pos, const QMouseEvent* e) {
         QRectF(m_rubberStartPos, m_currentMousePos).normalized();
 
     IwProject* project = IwApp::instance()->getCurrentProject()->getProject();
+    int frame          = project->getViewFrame();
 
     IwLayer* layer = IwApp::instance()->getCurrentLayer()->getLayer();
 
@@ -384,7 +385,7 @@ bool TransformTool::leftButtonUp(const QPointF& pos, const QMouseEvent* e) {
     for (int s = 0; s < layer->getShapePairCount(); s++) {
       ShapePair* shapePair = layer->getShapePair(s);
       if (!shapePair) continue;
-      if (!shapePair->isVisible()) continue;
+      if (!shapePair->isVisible() || !shapePair->isEffective(frame)) continue;
 
       for (int fromTo = 0; fromTo < 2; fromTo++) {
         // ƒƒbƒN‚³‚ê‚Ä‚¢‚½‚ç”ò‚Î‚·
