@@ -1227,6 +1227,7 @@ void SceneViewer::drawShapes() {
       m_line_vbo->unmap();
       glDrawArrays(GL_LINES, 0, 2);
     }
+    setLineStipple(1, 0xFFFF);
   }
 
   PRINT_LOG("  Draw Tools")
