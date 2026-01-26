@@ -256,6 +256,7 @@ void IwTool::drawJoinLine(ShapePair* shapePair) {
       shapePair->getDiscreteCorrValues(onePix, frame, 1);
 
   m_viewer->setLineStipple(2, 0xCCCC);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   // 各ベジエ座標を繋ぐ
   for (int d = 0; d < discreteCorrValues1.size(); d++) {

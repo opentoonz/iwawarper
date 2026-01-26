@@ -53,6 +53,11 @@ const int LockPos     = 40;
 const int PinPos      = 70;
 const int CorrIndent  = 100;
 
+const double epsilon = 1e-8;
+inline bool areAlmostEqual(double A, double B, double err = epsilon) {
+  return std::abs(A - B) <= epsilon;
+}
+
 // ●直線を作る
 
 // verticePに、Start, Endをリニア補間した座標を格納していく
@@ -139,7 +144,7 @@ QRectF getBezierBBox(QPointF p0, QPointF p1, QPointF p2, QPointF p3) {
     valVec.push_back(v3);
 
     // 重解の場合
-    if (a == 0.0) {
+    if (areAlmostEqual(a, 0.0)) {
       double d = 2.0 * (v2 - 2.0 * v1 + v0);
       if (d != 0.0) {
         double t = -(v1 - v0) / d;
