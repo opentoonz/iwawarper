@@ -484,6 +484,8 @@ void SceneViewer::renderText(double x, double y, const QString& str,
   m_p->setFont(font);
   m_p->drawText(x, this->height() - y, str);
   m_p->beginNativePainting();
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 //----------------------------------
