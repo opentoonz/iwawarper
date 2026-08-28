@@ -28,6 +28,7 @@ struct pickedNameUB {
 class QOpenGLShaderProgram;
 class QOpenGLBuffer;
 class QOpenGLVertexArrayObject;
+class QOpenGLFramebufferObject;
 
 class SceneViewer : public QOpenGLWidget, protected QOpenGLFunctions_4_1_Core {
   Q_OBJECT
@@ -105,6 +106,11 @@ class SceneViewer : public QOpenGLWidget, protected QOpenGLFunctions_4_1_Core {
 
   bool m_isPicking;
   QStack<GLuint> m_nameStack;
+
+  // ピッキング用のオフスクリーンバッファ。
+  // マウスを動かすたびに作り直すとメモリを圧迫するため、
+  // サイズが変わったときだけ作り直して使いまわす
+  QOpenGLFramebufferObject *m_pickFbo = nullptr;
 
 public:
   SceneViewer(QWidget *parent);
@@ -216,7 +222,7 @@ public slots:
   // カレントレイヤを変える
   void onChangeCurrentLayer();
 
-  void cleanup() {}
+  void cleanup();
 };
 
 #endif

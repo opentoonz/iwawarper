@@ -87,6 +87,9 @@ public:
   QMap<int, QMap<ShapePair*, Vertices>>::iterator removeFrameCache(int frame);
   QMap<ShapePair*, Vertices>::iterator removeCache(int frame, ShapePair* shape);
   void removeInvalid(int frame);
+  // shape に関連する全フレームのキャッシュを解放する
+  // (shape の破棄時に呼ぶ。呼ばないとキャッシュが残り続けリークする)
+  void removeShapeCache(ShapePair* shape);
 
   // invalidate cache
   void invalidateAllCache();
