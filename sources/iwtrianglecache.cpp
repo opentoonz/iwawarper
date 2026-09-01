@@ -178,6 +178,21 @@ QMap<ShapePair*, Vertices>::iterator IwTriangleCache::removeCache(
 
 //---------------
 
+// shape に関連する全フレームのキャッシュを解放する
+// (shape の破棄時に呼ぶ。呼ばないとキャッシュが残り続けリークする)
+void IwTriangleCache::removeShapeCache(ShapePair* shape) {
+  if (!shape) return;
+  lock();
+  QMap<int, QMap<ShapePair*, Vertices>>::iterator i = m_data.begin();
+  while (i != m_data.end()) {
+    if (i.value().contains(shape)) removeCache(i.key(), shape);
+    ++i;
+  }
+  unlock();
+}
+
+//---------------
+
 void IwTriangleCache::removeInvalid(int frame) {
   if (!m_data.contains(frame)) return;
   QMap<ShapePair*, Vertices>::iterator i = m_data[frame].begin();

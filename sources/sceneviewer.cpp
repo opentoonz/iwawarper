@@ -187,6 +187,17 @@ SceneViewer::SceneViewer(QWidget* parent)
 SceneViewer::~SceneViewer() {}
 
 //----------------------------------
+// GL コンテキストが破棄される前に GL リソースを解放する
+//----------------------------------
+void SceneViewer::cleanup() {
+  if (!m_pickFbo) return;
+  makeCurrent();
+  delete m_pickFbo;
+  m_pickFbo = nullptr;
+  doneCurrent();
+}
+
+//----------------------------------
 // 登録テクスチャの消去
 //----------------------------------
 void SceneViewer::deleteTextures() {
@@ -244,6 +255,8 @@ void SceneViewer::initializeGL() {
     m_vbo->bind();
   else
     std::cout << "failed to bind QOpenGLBuffer" << std::endl;
+  // 内容を描画のたびに書き換えるので DynamicDraw を宣言しておく
+  m_vbo->setUsagePattern(QOpenGLBuffer::DynamicDraw);
   m_vbo->allocate(vertexBufferSize * sizeof(MeshVertex));
 
   // 頂点インデックスオブジェクト
@@ -256,6 +269,7 @@ void SceneViewer::initializeGL() {
     m_ibo->bind();
   else
     std::cout << "failed to bind IndexBuffer" << std::endl;
+  m_ibo->setUsagePattern(QOpenGLBuffer::DynamicDraw);
   m_ibo->allocate(vertexBufferSize * sizeof(GLint));
 
   // Create Vertex Array Object
@@ -325,6 +339,7 @@ void SceneViewer::initializeGL() {
     m_line_vbo->bind();
   else
     std::cout << "failed to bind QOpenGLBuffer" << std::endl;
+  m_line_vbo->setUsagePattern(QOpenGLBuffer::DynamicDraw);
   m_line_vbo->allocate(vertexBufferSize * sizeof(QVector3D));
 
   // Create Vertex Array Object
@@ -408,6 +423,9 @@ void SceneViewer::resizeGL(int w, int h) {
   m_viewProjMatrix = QMatrix4x4();
   m_viewProjMatrix.ortho(0, w, 0, h, -4000, 4000);
 
+  // resizeGL はリサイズのたびに呼ばれるので、push するだけでは
+  // スタックが積まれっぱなしになる。常にベースの行列 1 枚の状態にリセットする
+  m_modelMatrix.clear();
   m_modelMatrix.push(QMatrix4x4());
   m_modelMatrix.top().translate(w * 0.5, h * 0.5, 0);
 }
@@ -519,9 +537,10 @@ void SceneViewer::doDrawLine(GLenum mode, QVector3D* verts, int vertCount) {
       u_line_mousePos, QPoint(m_mousePos.x(), height() - m_mousePos.y()));
   m_program_line->setUniformValue(u_line_objName, getName());
 
-  auto ptr = m_line_vbo->map(QOpenGLBuffer::WriteOnly);
-  memcpy(ptr, verts, sizeof(QVector3D) * vertCount);
-  m_line_vbo->unmap();
+  // map() はバッファ全体 (= vertexBufferSize 個分) をマップしてしまうため、
+  // 書き込む量が少なくても描画ごとに全体の退避/転送が発生する。
+  // 実際に使う範囲だけを書き込む write() を使うこと
+  m_line_vbo->write(0, verts, sizeof(QVector3D) * vertCount);
   glDrawArrays(mode, 0, vertCount);
 }
 void SceneViewer::doDrawFill(GLenum mode, QVector3D* verts, int vertCount,
@@ -536,9 +555,7 @@ void SceneViewer::doDrawFill(GLenum mode, QVector3D* verts, int vertCount,
   m_line_vbo->bind();
   m_line_vao->bind();
 
-  auto ptr = m_line_vbo->map(QOpenGLBuffer::WriteOnly);
-  memcpy(ptr, verts, sizeof(QVector3D) * vertCount);
-  m_line_vbo->unmap();
+  m_line_vbo->write(0, verts, sizeof(QVector3D) * vertCount);
 
   glDrawArrays(mode, 0, vertCount);
 
@@ -621,9 +638,7 @@ void SceneViewer::drawImage() {
           MeshVertex(QVector3D(texCornerPos.x(), texCornerPos.y(), 0.),
                      QVector2D(1., 1.))};
 
-      auto ptr = m_vbo->map(QOpenGLBuffer::WriteOnly);
-      memcpy(ptr, verts, sizeof(MeshVertex) * 4);
-      m_vbo->unmap();
+      m_vbo->write(0, verts, sizeof(MeshVertex) * 4);
       glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
       layerImage.texture->release();
@@ -740,9 +755,7 @@ void SceneViewer::drawGLPreview() {
               QVector3D(layerCornerPos.x(), layerCornerPos.y(), 0.),
               QVector2D(1.0 - texClipMargin[0], 1.0 - texClipMargin[1]))};
 
-      auto ptr = m_vbo->map(QOpenGLBuffer::WriteOnly);
-      memcpy(ptr, verts, sizeof(MeshVertex) * 4);
-      m_vbo->unmap();
+      m_vbo->write(0, verts, sizeof(MeshVertex) * 4);
       glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
       m_modelMatrix.pop();
@@ -813,9 +826,7 @@ void SceneViewer::drawGLPreview() {
             IwTriangleCache::instance()->vertexData(frame, shape);
         int* ids = IwTriangleCache::instance()->idsData(frame, shape);
 
-        auto vptr = m_vbo->map(QOpenGLBuffer::WriteOnly);
-        memcpy(vptr, vertex, sizeof(MeshVertex) * pointCount);
-        m_vbo->unmap();
+        m_vbo->write(0, vertex, sizeof(MeshVertex) * pointCount);
 
         m_ibo->bind();
 
@@ -825,9 +836,7 @@ void SceneViewer::drawGLPreview() {
         while (restVertCount > 0) {
           int tmpVertCount = std::min(restVertCount, maxVertCount);
 
-          auto iptr = m_ibo->map(QOpenGLBuffer::WriteOnly);
-          memcpy(iptr, &ids[doneVertCount], sizeof(int) * tmpVertCount);
-          m_ibo->unmap();
+          m_ibo->write(0, &ids[doneVertCount], sizeof(int) * tmpVertCount);
 
           glDrawElements(GL_TRIANGLES, tmpVertCount, GL_UNSIGNED_INT, (void*)0);
 
@@ -926,9 +935,7 @@ void SceneViewer::drawWorkArea() {
   QVector3D verts[4]{QVector3D(1.0, 0.0, 0.0), QVector3D(1.0, 1.0, 0.0),
                      QVector3D(0.0, 1.0, 0.0), QVector3D(0.0, 0.0, 0.0)};
 
-  auto ptr = m_line_vbo->map(QOpenGLBuffer::WriteOnly);
-  memcpy(ptr, verts, sizeof(QVector3D) * 4);
-  m_line_vbo->unmap();
+  m_line_vbo->write(0, verts, sizeof(QVector3D) * 4);
   glDrawArrays(GL_LINE_LOOP, 0, 4);
 
   m_line_vao->release();
@@ -946,10 +953,8 @@ void SceneViewer::drawShapes() {
     QVector3D* vertexArray =
         shape.shapePairP->getVertexArray(frame, shape.fromTo, m_project);
 
-    auto ptr       = m_line_vbo->map(QOpenGLBuffer::WriteOnly);
     int vertAmount = shape.shapePairP->getVertexAmount(m_project);
-    memcpy(ptr, vertexArray, sizeof(QVector3D) * vertAmount);
-    m_line_vbo->unmap();
+    m_line_vbo->write(0, vertexArray, sizeof(QVector3D) * vertAmount);
     if (shape.shapePairP->isClosed())
       glDrawArrays(GL_LINE_LOOP, 0, vertAmount);
     else
@@ -1186,10 +1191,8 @@ void SceneViewer::drawShapes() {
 
       double g = m_hRuler->getGuide(gId);
 
-      auto ptr = m_line_vbo->map(QOpenGLBuffer::WriteOnly);
       QVector3D verts[2]{QVector3D(g, minV, 0.0), QVector3D(g, maxV, 0.0)};
-      memcpy(ptr, verts, sizeof(QVector3D) * 2);
-      m_line_vbo->unmap();
+      m_line_vbo->write(0, verts, sizeof(QVector3D) * 2);
       glDrawArrays(GL_LINES, 0, 2);
     }
 
@@ -1205,10 +1208,8 @@ void SceneViewer::drawShapes() {
 
       double g = m_vRuler->getGuide(gId);
 
-      auto ptr = m_line_vbo->map(QOpenGLBuffer::WriteOnly);
       QVector3D verts[2]{QVector3D(minV, g, 0.0), QVector3D(maxV, g, 0.0)};
-      memcpy(ptr, verts, sizeof(QVector3D) * 2);
-      m_line_vbo->unmap();
+      m_line_vbo->write(0, verts, sizeof(QVector3D) * 2);
       glDrawArrays(GL_LINES, 0, 2);
     }
     setLineStipple(1, 0xFFFF);
@@ -1851,14 +1852,22 @@ QList<int> SceneViewer::pickAll(const QPoint& pos) {
 
   // 2. 画面と同サイズのオフスクリーンFBOを作成
   // (デプスバッファ付き、マルチサンプルなし)
-  QOpenGLFramebufferObjectFormat format;
-  format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
-  format.setInternalTextureFormat(GL_RGBA8);
+  // ピッキングはマウスを動かすたびに呼ばれるため、そのたびに FBO を
+  // 作り直すとメモリを圧迫する。サイズが変わったときだけ作り直し、
+  // それ以外は作成済みのものを使いまわす
+  if (!m_pickFbo || m_pickFbo->width() != pWidth ||
+      m_pickFbo->height() != pHeight) {
+    delete m_pickFbo;
 
-  QOpenGLFramebufferObject fbo(pWidth, pHeight, format);
+    QOpenGLFramebufferObjectFormat format;
+    format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
+    format.setInternalTextureFormat(GL_RGBA8);
+
+    m_pickFbo = new QOpenGLFramebufferObject(pWidth, pHeight, format);
+  }
 
   // 3. FBOをレンダリングターゲットとしてバインド
-  if (!fbo.bind()) {
+  if (!m_pickFbo->bind()) {
     return keepList;  // バインド失敗時は安全に終了
   }
 
@@ -1892,7 +1901,7 @@ QList<int> SceneViewer::pickAll(const QPoint& pos) {
                pixels.data());
 
   // 8. FBOのバインドを解除（レンダリングターゲットを通常の画面に戻す）
-  fbo.release();
+  m_pickFbo->release();
 
   // 9. CPU側での近傍判定と重複排除
   QList<int> nameLists[3];
@@ -2003,10 +2012,8 @@ void SceneViewer::doShapeRender() {
     QVector3D* vertexArray =
         shape.shapePairP->getVertexArray(frame, shape.fromTo, m_project);
 
-    auto ptr       = m_line_vbo->map(QOpenGLBuffer::WriteOnly);
     int vertAmount = shape.shapePairP->getVertexAmount(m_project);
-    memcpy(ptr, vertexArray, sizeof(QVector3D) * vertAmount);
-    m_line_vbo->unmap();
+    m_line_vbo->write(0, vertexArray, sizeof(QVector3D) * vertAmount);
     if (shape.shapePairP->isClosed())
       glDrawArrays(GL_LINE_LOOP, 0, vertAmount);
     else

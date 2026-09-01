@@ -92,6 +92,8 @@ public:
   // コピーコンストラクタ
   ShapePair(ShapePair* src);
 
+  ~ShapePair();
+
   ShapePair* clone();
 
   // あるフレームでのベジエ形状を返す
